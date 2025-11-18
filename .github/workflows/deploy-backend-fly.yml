@@ -1,0 +1,54 @@
+name: Deploy Backend (Fly.io)
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Deploy ${{ matrix.service }}
+    runs-on: ubuntu-latest
+    if: ${{ secrets.FLY_API_TOKEN != '' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - api-gateway
+          - auth-service
+          - products-service
+          - finance-service
+          - logistics-service
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Detect Fly config
+        id: detect
+        run: |
+          config="apps/backend/${{ matrix.service }}/fly.toml"
+          if [ -f "$config" ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+            echo "config=$config" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Skip (fly.toml missing)
+        if: steps.detect.outputs.present == 'false'
+        run: echo "No fly.toml for ${{ matrix.service }} yet. Skipping deploy."
+
+      - name: Setup Flyctl
+        if: steps.detect.outputs.present == 'true'
+        uses: superfly/flyctl-actions/setup-flyctl@v1
+
+      - name: Deploy service
+        if: steps.detect.outputs.present == 'true'
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+        run: |
+          flyctl deploy --config ${{ steps.detect.outputs.config }} --remote-only --strategy immediate --build-only

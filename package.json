@@ -1,0 +1,17 @@
+{
+  "name": "puente-platform",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@9.12.0",
+  "scripts": {
+  "lint": "corepack pnpm -r run lint",
+  "test": "corepack pnpm -r run test",
+  "typecheck": "corepack pnpm -r run typecheck",
+  "build": "corepack pnpm -r run build"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.30",
+    "typescript": "^5.5.4",
+    "vitest": "^1.6.0"
+  }
+}

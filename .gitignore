@@ -4,3 +4,6 @@ dist
 .DS_Store
 coverage
 ARCHITECTURE.md
+AGENT_LOGS.md
+TASKS.md
+TASKS_LOGS.md

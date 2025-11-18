@@ -1,0 +1,11 @@
+{
+  "name": "@puente/auth-service",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "lint": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
+    "build": "tsc --project tsconfig.json",
+    "test": "vitest run"
+  }
+}

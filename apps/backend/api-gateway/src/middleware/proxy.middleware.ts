@@ -1,6 +1,14 @@
 import { ConfigService } from '@nestjs/config';
 import { createProxyMiddleware } from 'http-proxy-middleware';
 
+/**
+ * Creates a proxy middleware for forwarding requests to microservices.
+ * Injects security headers (X-Gateway-Secret) and user context (X-User-Id, X-User-Role).
+ *
+ * @param targetUrl - The base URL of the target microservice.
+ * @param configService - The configuration service to retrieve secrets.
+ * @returns A configured http-proxy-middleware instance.
+ */
 export function createServiceProxy(targetUrl: string, configService: ConfigService) {
   const proxy = createProxyMiddleware({
     target: targetUrl,

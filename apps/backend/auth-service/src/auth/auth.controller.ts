@@ -9,17 +9,32 @@ import { LoginDto } from './dto/login.dto';
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
+  /**
+   * Registers a new user.
+   * @param registerDto - The registration payload.
+   * @returns The access and refresh tokens.
+   */
   @Post('register')
   async register(@Body() registerDto: RegisterDto) {
     return this.authService.register(registerDto);
   }
 
+  /**
+   * Authenticates a user.
+   * @param loginDto - The login payload.
+   * @returns The access and refresh tokens.
+   */
   @Post('login')
   @HttpCode(HttpStatus.OK)
   async login(@Body() loginDto: LoginDto) {
     return this.authService.login(loginDto);
   }
 
+  /**
+   * Logs out the current user.
+   * @param req - The request object containing the user ID.
+   * @returns void
+   */
   @UseGuards(AuthGuard('jwt'))
   @Post('logout')
   @HttpCode(HttpStatus.OK)
@@ -28,6 +43,11 @@ export class AuthController {
     return this.authService.logout(userId);
   }
 
+  /**
+   * Refreshes the access token.
+   * @param req - The request object containing the user ID and refresh token.
+   * @returns New access and refresh tokens.
+   */
   @UseGuards(AuthGuard('jwt-refresh'))
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
@@ -37,18 +57,33 @@ export class AuthController {
     return this.authService.refreshTokens(userId, refreshToken);
   }
 
+  /**
+   * Initiates password recovery.
+   * @param email - The user's email.
+   * @returns Status message.
+   */
   @Post('forgot-password')
   @HttpCode(HttpStatus.OK)
   async forgotPassword(@Body('email') email: string) {
     return this.authService.forgotPassword(email);
   }
 
+  /**
+   * Resets the password.
+   * @param body - Object containing email, token, and newPassword.
+   * @returns Status message.
+   */
   @Post('reset-password')
   @HttpCode(HttpStatus.OK)
   async resetPassword(@Body() body: any) {
     return this.authService.resetPassword(body.email, body.token, body.newPassword);
   }
 
+  /**
+   * Verifies the email address.
+   * @param email - The email to verify.
+   * @returns Status message.
+   */
   @Post('verify-email')
   @HttpCode(HttpStatus.OK)
   async verifyEmail(@Body('email') email: string) {

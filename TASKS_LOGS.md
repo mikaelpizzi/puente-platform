@@ -144,3 +144,30 @@
      pnpm --filter @puente/auth-service test
      ```
      Output shows passing tests for `UsersService`.
+
+## Task 21: CI/CD Pipelines (GitHub Actions)
+- **Mission / New capability:** Automate the software delivery lifecycle. Now, every Pull Request is automatically verified (Lint, Test, Build), and every merge to main triggers the build and publication of Docker images to GitHub Container Registry (GHCR).
+- **Context (Why it matters):** Manual deployments are error-prone and slow. ARCHITECTURE.md mandates a 'Senior' level CI/CD pipeline. This task ensures that no broken code reaches main and that production artifacts (Docker images, PWA build) are always available and versioned.
+- **Implementation details (How it was built):**
+  1. **Continuous Integration (ci.yml):**
+     - Triggers on push and pull_request to main.
+     - Installs dependencies with pnpm install --frozen-lockfile.
+     - Runs global linting (pnpm lint) and tests (pnpm test).
+     - Builds the PWA (pnpm --filter ./apps/frontend/pwa build) and uploads the dist folder as an artifact (pwa-dist) for review.
+  2. **Docker Build & Push (docker-build-push.yml):**
+     - Triggers on push to main (if Dockerfiles change) or manual dispatch.
+     - Uses a **Matrix Strategy** to build all 6 images in parallel (api-gateway, auth-service, products-service, finance-service, logistics-service, pwa).
+     - Authenticates with GHCR using GITHUB_TOKEN.
+     - Builds multi-stage images and pushes them to ghcr.io/<owner>/puente-<service>:latest (and sha tag).
+     - Includes a step to lowercase the repository owner name to comply with Docker registry standards.
+- **Outcome:** Completed 100%. The pipelines are defined in .github/workflows/ and ready to run on GitHub.
+- **Testing / Evidence:**
+  1. **CI Workflow:**
+     - Create a PR (like this one).
+     - Verify that the 'CI' workflow runs and passes all jobs (Lint, Test, Build PWA).
+     - Download the pwa-dist artifact from the workflow summary to verify the frontend build.
+  2. **Docker Workflow:**
+     - Merge to main.
+     - Verify that 'Docker Build & Push' runs.
+     - Check GitHub Packages to see the new images puente-api-gateway, etc.
+

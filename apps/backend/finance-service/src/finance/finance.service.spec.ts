@@ -98,6 +98,32 @@ describe('FinanceService', () => {
     expect(result).toEqual(mockOrder);
   });
 
+  it('should generate payment link for an order', async () => {
+    const orderId = 'order1';
+    const mockOrder = { id: orderId, totalAmount: 100 };
+    const mockPaymentResponse = { id: 'pay1', init_point: 'http://link' };
+
+    prisma.order.findUnique.mockResolvedValue(mockOrder);
+    mockPaymentService.createPaymentLink.mockResolvedValue(mockPaymentResponse);
+
+    const result = await service.generatePaymentForOrder(orderId);
+
+    expect(prisma.order.findUnique).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: orderId } }),
+    );
+    expect(mockPaymentService.createPaymentLink).toHaveBeenCalledWith(
+      orderId,
+      expect.stringContaining('Order #order1'),
+      100,
+    );
+    expect(result).toEqual(mockPaymentResponse);
+  });
+
+  it('should throw if order not found during payment generation', async () => {
+    prisma.order.findUnique.mockResolvedValue(null);
+    await expect(service.generatePaymentForOrder('invalid')).rejects.toThrow('Order not found');
+  });
+
   it('should compensate an order (Saga pattern)', async () => {
     const orderId = 'order1';
     const mockOrder = {
@@ -158,5 +184,21 @@ describe('FinanceService', () => {
         }),
       }),
     );
+  });
+
+  it('should not compensate if order is already failed or cancelled', async () => {
+    const orderId = 'order1';
+    const mockOrder = {
+      id: orderId,
+      status: OrderStatus.FAILED,
+      ledgerEntries: [],
+    };
+
+    prisma.order.findUnique.mockResolvedValue(mockOrder);
+
+    await service.compensateOrder(orderId, 'Retry');
+
+    expect(prisma.order.update).not.toHaveBeenCalled();
+    expect(prisma.ledgerEntry.create).not.toHaveBeenCalled();
   });
 });

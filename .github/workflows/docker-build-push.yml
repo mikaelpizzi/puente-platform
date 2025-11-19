@@ -1,0 +1,87 @@
+name: Docker Build & Push
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/backend/**/Dockerfile'
+      - 'apps/frontend/pwa/Dockerfile'
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - name: api-gateway
+            context: .
+            file: apps/backend/api-gateway/Dockerfile
+            image: puente-api-gateway
+          - name: auth-service
+            context: .
+            file: apps/backend/auth-service/Dockerfile
+            image: puente-auth-service
+          - name: products-service
+            context: .
+            file: apps/backend/products-service/Dockerfile
+            image: puente-products-service
+          - name: finance-service
+            context: .
+            file: apps/backend/finance-service/Dockerfile
+            image: puente-finance-service
+          - name: logistics-service
+            context: .
+            file: apps/backend/logistics-service/Dockerfile
+            image: puente-logistics-service
+          - name: pwa
+            context: .
+            file: apps/frontend/pwa/Dockerfile
+            image: puente-pwa
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Lowercase Owner
+        run: |
+          echo "OWNER=${OWNER,,}" >>${GITHUB_ENV}
+        env:
+          OWNER: '${{ github.repository_owner }}'
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.OWNER }}/${{ matrix.service.image }}
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=sha
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ matrix.service.context }}
+          file: ${{ matrix.service.file }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

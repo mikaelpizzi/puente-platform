@@ -1,8 +1,19 @@
-import { Controller, Post, Body, Param, Put, HttpException, HttpStatus } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Param,
+  Put,
+  HttpException,
+  HttpStatus,
+  UseGuards,
+} from '@nestjs/common';
 import { FinanceService } from './finance.service';
 import { CreateOrderDto } from './dto/create-order.dto';
+import { ServiceAuthGuard } from '../common/guards/service-auth.guard';
 
 @Controller('finance')
+@UseGuards(ServiceAuthGuard)
 export class FinanceController {
   constructor(private readonly financeService: FinanceService) {}
 

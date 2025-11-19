@@ -9,15 +9,30 @@ import { UpdateProductDto } from './dto/update-product.dto';
 export class ProductsService {
   constructor(@InjectModel(Product.name) private productModel: Model<Product>) {}
 
+  /**
+   * Creates a new product.
+   * @param createProductDto - The data to create the product.
+   * @returns The created Product document.
+   */
   async create(createProductDto: CreateProductDto): Promise<Product> {
     const createdProduct = new this.productModel(createProductDto);
     return createdProduct.save();
   }
 
+  /**
+   * Retrieves all products.
+   * @returns An array of Product documents.
+   */
   async findAll(): Promise<Product[]> {
     return this.productModel.find().exec();
   }
 
+  /**
+   * Retrieves a single product by ID.
+   * @param id - The ID of the product.
+   * @returns The Product document.
+   * @throws NotFoundException - If the product is not found.
+   */
   async findOne(id: string): Promise<Product> {
     const product = await this.productModel.findById(id).exec();
     if (!product) {
@@ -26,6 +41,13 @@ export class ProductsService {
     return product;
   }
 
+  /**
+   * Updates a product by ID.
+   * @param id - The ID of the product.
+   * @param updateProductDto - The data to update.
+   * @returns The updated Product document.
+   * @throws NotFoundException - If the product is not found.
+   */
   async update(id: string, updateProductDto: UpdateProductDto): Promise<Product> {
     const updatedProduct = await this.productModel
       .findByIdAndUpdate(id, updateProductDto, { new: true })
@@ -36,6 +58,12 @@ export class ProductsService {
     return updatedProduct;
   }
 
+  /**
+   * Removes a product by ID.
+   * @param id - The ID of the product.
+   * @returns The deleted Product document.
+   * @throws NotFoundException - If the product is not found.
+   */
   async remove(id: string): Promise<Product> {
     const deletedProduct = await this.productModel.findByIdAndDelete(id).exec();
     if (!deletedProduct) {
@@ -44,6 +72,13 @@ export class ProductsService {
     return deletedProduct;
   }
 
+  /**
+   * Reserves stock for a list of items.
+   * @param items - Array of items with productId and quantity.
+   * @returns True if reservation is successful.
+   * @throws NotFoundException - If a product is not found.
+   * @throws BadRequestException - If stock is insufficient or concurrent update fails.
+   */
   async reserveStock(items: { productId: string; quantity: number }[]): Promise<boolean> {
     const reservedItems: { productId: string; quantity: number }[] = [];
 
@@ -85,6 +120,11 @@ export class ProductsService {
     }
   }
 
+  /**
+   * Releases reserved stock for a list of items.
+   * @param items - Array of items with productId and quantity.
+   * @returns void
+   */
   async releaseStock(items: { productId: string; quantity: number }[]): Promise<void> {
     for (const item of items) {
       await this.productModel.findByIdAndUpdate(item.productId, {
@@ -93,6 +133,11 @@ export class ProductsService {
     }
   }
 
+  /**
+   * Confirms stock deduction (completes a sale).
+   * @param items - Array of items with productId and quantity.
+   * @returns void
+   */
   async confirmStock(items: { productId: string; quantity: number }[]): Promise<void> {
     for (const item of items) {
       await this.productModel.findByIdAndUpdate(item.productId, {

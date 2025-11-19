@@ -28,4 +28,8 @@ export class CreateProductDto {
   @IsString()
   @IsNotEmpty()
   sellerId!: string;
+
+  @IsNumber()
+  @IsOptional()
+  stock?: number;
 }

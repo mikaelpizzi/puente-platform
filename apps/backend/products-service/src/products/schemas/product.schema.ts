@@ -29,6 +29,12 @@ export class Product {
 
   @Prop({ required: true })
   sellerId!: string; // Reference to the seller in auth-service
+
+  @Prop({ default: 0, min: 0 })
+  stock!: number;
+
+  @Prop({ default: 0, min: 0 })
+  reservedStock!: number;
 }
 
 export const ProductSchema = SchemaFactory.createForClass(Product);

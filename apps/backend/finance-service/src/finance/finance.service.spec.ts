@@ -2,9 +2,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { FinanceService } from './finance.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { OrderStatus, LedgerType, LedgerCategory } from '@prisma/client';
+import { PaymentService } from '../payment/payment.service';
 
-const mockPrismaService = {
-  $transaction: vi.fn((callback) => callback(mockPrismaService)),
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const mockPrismaService: any = {
   order: {
     create: vi.fn(),
     findUnique: vi.fn(),
@@ -17,6 +18,11 @@ const mockPrismaService = {
     create: vi.fn(),
   },
 };
+mockPrismaService.$transaction = vi.fn((callback) => callback(mockPrismaService));
+
+const mockPaymentService = {
+  createPaymentLink: vi.fn(),
+};
 
 describe('FinanceService', () => {
   let service: FinanceService;
@@ -24,7 +30,11 @@ describe('FinanceService', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [FinanceService, { provide: PrismaService, useValue: mockPrismaService }],
+      providers: [
+        FinanceService,
+        { provide: PrismaService, useValue: mockPrismaService },
+        { provide: PaymentService, useValue: mockPaymentService },
+      ],
     }).compile();
 
     service = module.get<FinanceService>(FinanceService);

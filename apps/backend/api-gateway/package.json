@@ -6,6 +6,34 @@
     "lint": "tsc --noEmit",
     "typecheck": "tsc --noEmit",
     "build": "tsc --project tsconfig.json",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:e2e": "vitest run --config ./test/vitest.e2e.config.ts"
+  },
+  "dependencies": {
+    "@nestjs/common": "^11.1.9",
+    "@nestjs/config": "^4.0.2",
+    "@nestjs/core": "^11.1.9",
+    "@nestjs/passport": "^11.0.5",
+    "@nestjs/platform-express": "^11.1.9",
+    "@types/jsonwebtoken": "^9.0.10",
+    "http-proxy-middleware": "^3.0.5",
+    "joi": "^18.0.1",
+    "jsonwebtoken": "^9.0.2",
+    "passport": "^0.7.0",
+    "passport-jwt": "^4.0.1",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2"
+  },
+  "devDependencies": {
+    "@nestjs/testing": "^11.1.9",
+    "@swc/core": "^1.15.2",
+    "@types/express": "^5.0.5",
+    "@types/http-proxy-middleware": "^1.0.0",
+    "@types/node": "^20.11.30",
+    "@types/passport-jwt": "^4.0.1",
+    "@types/supertest": "^6.0.3",
+    "supertest": "^7.1.4",
+    "unplugin-swc": "^1.5.8",
+    "vitest": "^1.6.0"
   }
 }

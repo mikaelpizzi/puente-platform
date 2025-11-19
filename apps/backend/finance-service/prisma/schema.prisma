@@ -1,0 +1,79 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  CONFIRMED
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  REFUNDED
+  FAILED
+}
+
+model Order {
+  id          String      @id @default(uuid())
+  sellerId    String
+  buyerId     String
+  totalAmount Decimal
+  status      OrderStatus @default(PENDING)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  
+  sagaId      String?
+  
+  items       OrderItem[]
+  commission  Commission?
+  ledgerEntries LedgerEntry[]
+}
+
+model OrderItem {
+  id        String  @id @default(uuid())
+  orderId   String
+  order     Order   @relation(fields: [orderId], references: [id])
+  productId String
+  quantity  Int
+  price     Decimal
+}
+
+model Commission {
+  id        String   @id @default(uuid())
+  orderId   String   @unique
+  order     Order    @relation(fields: [orderId], references: [id])
+  amount    Decimal
+  rate      Decimal
+  createdAt DateTime @default(now())
+}
+
+enum LedgerType {
+  CREDIT
+  DEBIT
+}
+
+enum LedgerCategory {
+  SALE
+  COMMISSION
+  PAYOUT
+  REFUND
+  ADJUSTMENT
+}
+
+model LedgerEntry {
+  id          String         @id @default(uuid())
+  userId      String
+  amount      Decimal
+  type        LedgerType
+  category    LedgerCategory
+  description String?
+  orderId     String?
+  order       Order?         @relation(fields: [orderId], references: [id])
+  createdAt   DateTime       @default(now())
+  referenceId String?
+}

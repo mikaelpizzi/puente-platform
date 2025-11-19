@@ -2,13 +2,17 @@ import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { OrderStatus, LedgerType, LedgerCategory } from '@prisma/client';
+import { PaymentService } from '../payment/payment.service';
 
 @Injectable()
 export class FinanceService {
   private readonly logger = new Logger(FinanceService.name);
   private readonly COMMISSION_RATE = 0.05; // 5%
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly paymentService: PaymentService,
+  ) {}
 
   async createOrder(dto: CreateOrderDto) {
     const totalAmount = dto.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
@@ -71,6 +75,22 @@ export class FinanceService {
       );
       return order;
     });
+  }
+
+  async generatePaymentForOrder(orderId: string) {
+    const order = await this.prisma.order.findUnique({
+      where: { id: orderId },
+      include: { items: true },
+    });
+
+    if (!order) {
+      throw new Error('Order not found');
+    }
+
+    // Create a generic title for the payment
+    const title = `Order #${order.id} - Puente Platform`;
+
+    return this.paymentService.createPaymentLink(order.id, title, Number(order.totalAmount));
   }
 
   // Saga Compensation Pattern

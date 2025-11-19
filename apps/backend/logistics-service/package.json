@@ -7,5 +7,22 @@
     "typecheck": "tsc --noEmit",
     "build": "tsc --project tsconfig.json",
     "test": "vitest run"
+  },
+  "dependencies": {
+    "@nestjs/common": "^11.1.9",
+    "@nestjs/config": "^4.0.2",
+    "@nestjs/core": "^11.1.9",
+    "@nestjs/platform-express": "^11.1.9",
+    "ioredis": "^5.8.2",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2"
+  },
+  "devDependencies": {
+    "@nestjs/testing": "^11.1.9",
+    "@swc/core": "^1.15.2",
+    "@types/node": "^20.11.30",
+    "typescript": "^5.5.4",
+    "unplugin-swc": "^1.5.8",
+    "vitest": "^1.6.0"
   }
 }

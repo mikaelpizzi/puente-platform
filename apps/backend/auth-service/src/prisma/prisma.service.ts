@@ -3,6 +3,18 @@ import { PrismaClient } from '../generated/client/client';
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
+  constructor() {
+    const url = process.env.AUTH_DATABASE_URL ?? process.env.DATABASE_URL;
+    if (!url) {
+      throw new Error('Missing AUTH_DATABASE_URL or DATABASE_URL for Prisma client.');
+    }
+    super({
+      datasources: {
+        db: { url },
+      },
+    });
+  }
+
   /**
    * Connects to the database when the module is initialized.
    */

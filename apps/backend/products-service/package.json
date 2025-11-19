@@ -25,6 +25,8 @@
     "@nestjs/testing": "^11.1.9",
     "@swc/core": "^1.15.2",
     "@types/node": "^20.11.30",
+    "@types/supertest": "^6.0.3",
+    "supertest": "^7.1.4",
     "unplugin-swc": "^1.5.8",
     "vitest": "^1.6.0"
   }

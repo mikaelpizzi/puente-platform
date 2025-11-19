@@ -1,0 +1,51 @@
+name: Frontend Render Deploy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/frontend/pwa/**'
+      - '.github/workflows/deploy-frontend-render.yml'
+  workflow_dispatch:
+
+jobs:
+  deploy-pwa:
+    name: Deploy PWA to Render
+    runs-on: ubuntu-latest
+    environment: render-production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 9
+
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build PWA
+        run: pnpm --filter ./apps/frontend/pwa build
+
+      - name: Upload PWA Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pwa-dist-deploy
+          path: apps/frontend/pwa/dist
+          retention-days: 30
+
+      - name: Trigger Render Deploy
+        run: |
+          if [ -n "${{ secrets.RENDER_DEPLOY_HOOK_URL }}" ]; then
+            curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"
+            echo "Render deploy triggered successfully."
+          else
+            echo "RENDER_DEPLOY_HOOK_URL is not set. Skipping deploy trigger."
+            exit 1
+          fi

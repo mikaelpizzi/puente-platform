@@ -4,7 +4,12 @@ const NUM_DRIVERS = 100;
 const INTERVAL_MS = 5000;
 const URL = 'http://localhost:3000'; // Assuming default NestJS port
 
-const drivers = [];
+interface DriverSocket {
+  id: string;
+  socket: ReturnType<typeof io>;
+}
+
+const drivers: DriverSocket[] = [];
 
 console.log(`Starting load test with ${NUM_DRIVERS} drivers...`);
 

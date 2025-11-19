@@ -15,11 +15,12 @@ import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { StockOperationDto } from './dto/stock-operation.dto';
 import { RolesGuard } from '../common/guards/roles.guard';
+import { ServiceAuthGuard } from '../common/guards/service-auth.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { Role } from '../common/enums/role.enum';
 
 @Controller('products')
-@UseGuards(RolesGuard)
+@UseGuards(ServiceAuthGuard, RolesGuard)
 export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
 

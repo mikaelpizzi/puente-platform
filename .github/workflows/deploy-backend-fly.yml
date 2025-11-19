@@ -1,0 +1,39 @@
+name: Backend Fly Deploy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/backend/**'
+      - '.github/workflows/deploy-backend-fly.yml'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy ${{ matrix.service }}
+    runs-on: ubuntu-latest
+    environment: fly-production
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - api-gateway
+          - auth-service
+          - products-service
+          - finance-service
+          - logistics-service
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Deploy to Fly.io
+        run: |
+          flyctl deploy \
+            --remote-only \
+            --config apps/backend/${{ matrix.service }}/fly.toml \
+            --dockerfile apps/backend/${{ matrix.service }}/Dockerfile \
+            --strategy immediate \
+            --ha=false
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}

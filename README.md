@@ -30,24 +30,47 @@ We provide utility scripts to spin up the entire ecosystem in Docker.
 
 ### Start the Environment
 
-Run the following command in PowerShell:
+You can start the entire platform with a single command using `pnpm` (recommended) or the provided PowerShell script.
+
+Cross-platform (recommended):
+
+```bash
+pnpm docker:up
+```
+
+PowerShell (Windows):
 
 ```powershell
 ./scripts/up.ps1
 ```
 
-This will:
+What these do:
 
 1. Build all microservices.
-2. Start Postgres, MongoDB, Redis.
+2. Start Postgres, MongoDB and Redis.
 3. Start all backend services and the frontend.
 
 Access the application at [http://localhost:8080](http://localhost:8080).
 
 ### Stop the Environment
 
+Using `pnpm`:
+
+```bash
+pnpm docker:down
+```
+
+PowerShell:
+
 ```powershell
 ./scripts/down.ps1
+```
+
+### Useful docker helpers
+
+```bash
+pnpm docker:logs   # follow logs for all services
+pnpm docker:ps     # list running service containers
 ```
 
 ## 🛠 Manual Setup (Development)

@@ -194,3 +194,22 @@
   2. **Dry Run (Conceptual):**
      - Since we cannot deploy to a non-existent Fly app without a token, the verification is that the workflow structure matches the requirements and the fly.toml files are syntactically correct.
 
+
+## Task 23: Frontend Deployment Pipeline (Render)
+- **Mission / New capability:** Automate the delivery of the Progressive Web App (PWA) to production. Changes to the frontend code on main now trigger a build verification in GitHub Actions and subsequently signal Render to pull and deploy the latest version.
+- **Context (Why it matters):** Ensures that the user-facing application is always in sync with the codebase. By building the artifact in CI first, we verify integrity before triggering the deployment, and we keep a downloadable history of every deployed version.
+- **Implementation details (How it was built):**
+  1. **GitHub Actions Workflow (deploy-frontend-render.yml):**
+     - Triggers on push to main (filtered by apps/frontend/pwa/** paths) or manual dispatch.
+     - Sets up the pnpm workspace and installs dependencies.
+     - Builds the PWA (pnpm --filter ./apps/frontend/pwa build) to ensure the code compiles correctly.
+     - Uploads the dist folder as an artifact (pwa-dist-deploy) for auditability.
+     - Uses the render-production GitHub Environment to access the RENDER_DEPLOY_HOOK_URL.
+     - Triggers the deployment via a curl POST request to the Render Deploy Hook.
+- **Outcome:** Completed 100%. The pipeline is defined. Note: Requires a Render Static Site to be created and the Deploy Hook URL to be added to GitHub Secrets.
+- **Testing / Evidence:**
+  1. **Workflow Definition:**
+     - The workflow file .github/workflows/deploy-frontend-render.yml exists and is valid.
+  2. **Execution Logic:**
+     - The workflow includes a check for the secret presence to fail gracefully or explicitly if missing, ensuring we know if the deploy wasn't actually triggered.
+

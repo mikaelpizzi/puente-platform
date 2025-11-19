@@ -171,3 +171,26 @@
      - Verify that 'Docker Build & Push' runs.
      - Check GitHub Packages to see the new images puente-api-gateway, etc.
 
+
+## Task 22: Backend Deployment Pipeline (Fly.io)
+- **Mission / New capability:** Enable continuous deployment for all backend microservices. Now, changes to the backend code on main are automatically deployed to Fly.io, ensuring the production environment is always up-to-date with the latest stable code.
+- **Context (Why it matters):** Manual deployments are not scalable and lack auditability. This task implements the 'Deploy' phase of the CI/CD pipeline described in ARCHITECTURE.md, using a secure, automated workflow that respects the 'cost-zero' constraints (shared-cpu-1x VMs).
+- **Implementation details (How it was built):**
+  1. **Fly.io Configuration (fly.toml):**
+     - Created a fly.toml for each service (api-gateway, auth-service, products-service, finance-service, logistics-service).
+     - Configured to use the multi-stage Dockerfiles created in Task 20.
+     - Set internal ports (3000-3004) and resource limits (shared-cpu-1x, 256MB RAM) to fit within the free tier.
+     - Enabled auto_stop_machines and auto_start_machines to optimize resource usage.
+  2. **GitHub Actions Workflow (deploy-backend-fly.yml):**
+     - Triggers on push to main (filtered by apps/backend/** paths) or manual dispatch.
+     - Uses a Matrix Strategy to deploy all 5 services.
+     - Uses the fly-production GitHub Environment to securely access the FLY_API_TOKEN.
+     - Executes flyctl deploy --remote-only --strategy immediate to minimize downtime (though rolling is preferred for prod, immediate is faster for dev/demos).
+- **Outcome:** Completed 100%. The deployment pipeline is ready. Note: The actual deployment requires the Fly apps to be created and the FLY_API_TOKEN to be set in the repository secrets.
+- **Testing / Evidence:**
+  1. **Workflow Definition:**
+     - The workflow file .github/workflows/deploy-backend-fly.yml exists and is valid.
+     - It references the correct fly.toml and Dockerfile paths for each service.
+  2. **Dry Run (Conceptual):**
+     - Since we cannot deploy to a non-existent Fly app without a token, the verification is that the workflow structure matches the requirements and the fly.toml files are syntactically correct.
+

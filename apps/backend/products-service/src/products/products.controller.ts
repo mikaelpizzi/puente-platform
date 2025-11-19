@@ -8,13 +8,18 @@ import {
   Post,
   HttpCode,
   HttpStatus,
+  UseGuards,
 } from '@nestjs/common';
 import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { StockOperationDto } from './dto/stock-operation.dto';
+import { RolesGuard } from '../common/guards/roles.guard';
+import { Roles } from '../common/decorators/roles.decorator';
+import { Role } from '../common/enums/role.enum';
 
 @Controller('products')
+@UseGuards(RolesGuard)
 export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
 
@@ -24,6 +29,7 @@ export class ProductsController {
    * @returns The created product.
    */
   @Post()
+  @Roles(Role.ADMIN, Role.SELLER)
   async create(@Body() createProductDto: CreateProductDto) {
     return this.productsService.create(createProductDto);
   }
@@ -54,6 +60,7 @@ export class ProductsController {
    * @returns The updated product.
    */
   @Patch(':id')
+  @Roles(Role.ADMIN, Role.SELLER)
   async update(@Param('id') id: string, @Body() updateProductDto: UpdateProductDto) {
     return this.productsService.update(id, updateProductDto);
   }
@@ -64,6 +71,7 @@ export class ProductsController {
    * @returns The deleted product.
    */
   @Delete(':id')
+  @Roles(Role.ADMIN, Role.SELLER)
   async remove(@Param('id') id: string) {
     return this.productsService.remove(id);
   }
@@ -74,7 +82,10 @@ export class ProductsController {
    * @returns Success message.
    */
   @Post('stock/reserve')
-  @HttpCode(HttpStatus.OK)
+  @Roles(Role.ADMIN, Role.SELLER, Role.BUYER) // Buyers might trigger reservation via order service?
+  // Actually, usually the Order Service calls this, and Order Service has a role or system key.
+  // For now, let's assume the Gateway forwards the user's role.
+  // If a Buyer places an order, the request might come from them.
   async reserveStock(@Body() stockOperationDto: StockOperationDto) {
     await this.productsService.reserveStock(stockOperationDto.items);
     return { success: true, message: 'Stock reserved' };
@@ -86,7 +97,7 @@ export class ProductsController {
    * @returns Success message.
    */
   @Post('stock/release')
-  @HttpCode(HttpStatus.OK)
+  @Roles(Role.ADMIN, Role.SELLER) // Usually system or admin/seller manual override
   async releaseStock(@Body() stockOperationDto: StockOperationDto) {
     await this.productsService.releaseStock(stockOperationDto.items);
     return { success: true, message: 'Stock released' };
@@ -98,7 +109,7 @@ export class ProductsController {
    * @returns Success message.
    */
   @Post('stock/confirm')
-  @HttpCode(HttpStatus.OK)
+  @Roles(Role.ADMIN, Role.SELLER)
   async confirmStock(@Body() stockOperationDto: StockOperationDto) {
     await this.productsService.confirmStock(stockOperationDto.items);
     return { success: true, message: 'Stock confirmed' };

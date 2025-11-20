@@ -8,7 +8,11 @@
     "test": "corepack pnpm -r run test",
     "typecheck": "corepack pnpm -r run typecheck",
     "build": "corepack pnpm -r run build",
-    "prepare": "husky"
+    "prepare": "husky",
+    "docker:up": "docker-compose up -d --build",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f",
+    "docker:ps": "docker-compose ps"
   },
   "devDependencies": {
     "@commitlint/cli": "^20.1.0",

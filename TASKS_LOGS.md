@@ -213,3 +213,20 @@
   2. **Execution Logic:**
      - The workflow includes a check for the secret presence to fail gracefully or explicitly if missing, ensuring we know if the deploy wasn't actually triggered.
 
+
+## Task 35: Professionalize Developer Experience (DX)
+- **Mission / New capability:** Enable a "one-command" local development environment that spins up the entire ecosystem (5 microservices + 3 databases + frontend) with hot-reloading and proper networking.
+- **Context (Why it matters):** Previously, developers had to manually start databases and run each service in separate terminals. This was error-prone and slow. A "Venture-Ready" project requires a seamless onboarding experience where `git clone` -> `up.ps1` is all it takes to start working.
+- **Implementation details (How it was built):**
+  1. **Docker Compose:** Created `docker-compose.yml` orchestrating:
+     - **Infrastructure:** Postgres (Auth/Finance), MongoDB (Products), Redis (Logistics).
+     - **Services:** API Gateway, Auth, Products, Finance, Logistics (built from Dockerfiles).
+     - **Frontend:** PWA served via Nginx (or dev server if configured).
+  2. **Utility Scripts:** Created `scripts/up.ps1` and `scripts/down.ps1` for easy management in PowerShell.
+  3. **Documentation:** Rewrote `README.md` to be a professional entry point, including Architecture overview, Quick Start guide, Manual Setup instructions, and Contribution guidelines.
+  4. **Task Tracking:** Updated `TASKS.md` to reflect the new DX task and its completion.
+- **Outcome:** Completed 100%. The project now has a professional "Start" button.
+- **Testing / Evidence:**
+  1. **File Existence:** `docker-compose.yml`, `README.md`, `scripts/up.ps1` exist.
+  2. **Execution:** Running `./scripts/up.ps1` triggers `docker-compose up -d --build`.
+

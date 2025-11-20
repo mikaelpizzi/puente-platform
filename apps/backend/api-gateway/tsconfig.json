@@ -2,7 +2,10 @@
   "extends": "../../../tsconfig.base.json",
   "compilerOptions": {
     "outDir": "dist",
-    "rootDir": "."
+    "rootDir": ".",
+    "types": ["vitest/globals", "node"],
+    "strictPropertyInitialization": false,
+    "skipLibCheck": true
   },
   "include": ["src/**/*.ts", "test/**/*.ts"],
   "exclude": ["dist"]

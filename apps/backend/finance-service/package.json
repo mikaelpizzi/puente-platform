@@ -6,6 +6,7 @@
     "lint": "tsc --noEmit",
     "typecheck": "tsc --noEmit",
     "build": "tsc --project tsconfig.json",
+    "postinstall": "prisma generate || true",
     "test": "vitest run"
   },
   "dependencies": {
@@ -30,6 +31,7 @@
     "@types/node": "^20.11.30",
     "dotenv": "^17.2.3",
     "prisma": "^6.19.0",
+    "@prisma/client": "^6.19.0",
     "unplugin-swc": "^1.5.8",
     "vitest": "^1.6.0"
   }

@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateOrderDto } from './dto/create-order.dto';
-import { OrderStatus, LedgerType, LedgerCategory } from '@prisma/client';
+import { OrderStatus, LedgerType, LedgerCategory } from '../types/prisma-enums';
 import { PaymentService } from '../payment/payment.service';
 
 @Injectable()

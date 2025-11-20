@@ -1,0 +1,23 @@
+export enum OrderStatus {
+  PENDING = 'PENDING',
+  PAID = 'PAID',
+  CONFIRMED = 'CONFIRMED',
+  SHIPPED = 'SHIPPED',
+  DELIVERED = 'DELIVERED',
+  CANCELLED = 'CANCELLED',
+  REFUNDED = 'REFUNDED',
+  FAILED = 'FAILED',
+}
+
+export enum LedgerType {
+  CREDIT = 'CREDIT',
+  DEBIT = 'DEBIT',
+}
+
+export enum LedgerCategory {
+  SALE = 'SALE',
+  COMMISSION = 'COMMISSION',
+  PAYOUT = 'PAYOUT',
+  REFUND = 'REFUND',
+  ADJUSTMENT = 'ADJUSTMENT',
+}

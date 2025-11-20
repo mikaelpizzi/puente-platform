@@ -1,4 +1,13 @@
-import { Body, Controller, Post, HttpCode, HttpStatus, UseGuards, Req } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Post,
+  HttpCode,
+  HttpStatus,
+  UseGuards,
+  Req,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import type { Request } from 'express';
 import { AuthService } from './auth.service';
@@ -39,7 +48,9 @@ export class AuthController {
   @Post('logout')
   @HttpCode(HttpStatus.OK)
   async logout(@Req() req: Request) {
-    const userId = req.user['userId'];
+    const user = (req.user ?? {}) as Record<string, any>;
+    const userId = user.userId ?? user.sub;
+    if (!userId) throw new UnauthorizedException('Missing authenticated user');
     return this.authService.logout(userId);
   }
 
@@ -52,8 +63,10 @@ export class AuthController {
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
   async refreshTokens(@Req() req: Request) {
-    const userId = req.user['sub'];
-    const refreshToken = req.user['refreshToken'];
+    const user = (req.user ?? {}) as Record<string, any>;
+    const userId = user.sub ?? user.userId;
+    const refreshToken = user.refreshToken;
+    if (!userId || !refreshToken) throw new UnauthorizedException('Missing refresh token or user');
     return this.authService.refreshTokens(userId, refreshToken);
   }
 

@@ -1,9 +1,26 @@
-import { Body, Controller, Post, HttpCode, HttpStatus, UseGuards, Req } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Post,
+  HttpCode,
+  HttpStatus,
+  UseGuards,
+  Req,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import type { Request } from 'express';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+
+type JwtUserPayload = {
+  userId?: string;
+  sub?: string;
+  refreshToken?: string;
+};
+
+type RequestWithUser = Request & { user?: JwtUserPayload };
 
 @Controller('auth')
 export class AuthController {
@@ -38,8 +55,13 @@ export class AuthController {
   @UseGuards(AuthGuard('jwt'))
   @Post('logout')
   @HttpCode(HttpStatus.OK)
-  async logout(@Req() req: Request) {
-    const userId = req.user['userId'];
+  async logout(@Req() req: RequestWithUser) {
+    const userId = req.user?.userId ?? req.user?.sub;
+
+    if (!userId) {
+      throw new UnauthorizedException('Authenticated user context missing user id');
+    }
+
     return this.authService.logout(userId);
   }
 
@@ -51,9 +73,14 @@ export class AuthController {
   @UseGuards(AuthGuard('jwt-refresh'))
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
-  async refreshTokens(@Req() req: Request) {
-    const userId = req.user['sub'];
-    const refreshToken = req.user['refreshToken'];
+  async refreshTokens(@Req() req: RequestWithUser) {
+    const userId = req.user?.userId ?? req.user?.sub;
+    const refreshToken = req.user?.refreshToken;
+
+    if (!userId || !refreshToken) {
+      throw new UnauthorizedException('Missing credentials to refresh the session');
+    }
+
     return this.authService.refreshTokens(userId, refreshToken);
   }
 

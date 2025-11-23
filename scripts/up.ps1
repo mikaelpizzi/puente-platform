@@ -1,5 +1,19 @@
-Write-Host "🚀 Starting Puente Platform Ecosystem..." -ForegroundColor Cyan
-docker-compose up -d --build
-Write-Host "✅ Ecosystem is up and running!" -ForegroundColor Green
-Write-Host "🌍 Frontend: http://localhost:8080" -ForegroundColor Green
-Write-Host "🔌 API Gateway: http://localhost:3000" -ForegroundColor Green
+param(
+	[switch]$SkipInfra
+)
+
+Write-Host "🚀 Bootstrapping Puente dev stack" -ForegroundColor Cyan
+
+if (-not $SkipInfra) {
+	Write-Host "📦 Starting local databases (Postgres, Mongo, Redis)..." -ForegroundColor Yellow
+	docker compose up -d postgres mongo redis
+}
+
+Write-Host "🔍 Verifying infra health..." -ForegroundColor Yellow
+pnpm provision:data
+
+Write-Host "🧱 Syncing Prisma schemas (auth + finance)..." -ForegroundColor Yellow
+pnpm dev:db
+
+Write-Host "🔥 Starting backend services with hot reload..." -ForegroundColor Green
+pnpm dev:backend

@@ -28,67 +28,89 @@ We provide utility scripts to spin up the entire ecosystem in Docker.
 - [Node.js v20+](https://nodejs.org/)
 - [PNPM](https://pnpm.io/) (`npm install -g pnpm`)
 
-### Start the Environment
+## 🚀 Quick Start (developer loop in seconds)
 
-You can start the entire platform with a single command using `pnpm` (recommended) or the provided PowerShell script.
+### Prerequisites
 
-Cross-platform (recommended):
+- [Docker Desktop](https://www.docker.com/products/docker-desktop) (only infrastructure containers run inside Docker)
+- [Node.js v20+](https://nodejs.org/)
+- [PNPM](https://pnpm.io/) (`corepack enable pnpm` is recommended)
+
+### 1. Copy the env template & install deps
 
 ```bash
-pnpm docker:up
+cp .env.example .env   # Windows: copy .env.example .env
+pnpm install
 ```
 
-PowerShell (Windows):
+### 2. One command to start everything
+
+```bash
+pnpm dev:stack
+```
+
+or, on Windows, run the PowerShell helper (same steps under the hood):
 
 ```powershell
 ./scripts/up.ps1
 ```
 
-What these do:
+This workflow performs four stages sequentially:
 
-1. Build all microservices.
-2. Start Postgres, MongoDB and Redis.
-3. Start all backend services and the frontend.
+1. `docker compose up -d postgres mongo redis`
+2. `pnpm provision:data` → verifies Postgres/Mongo/Redis connectivity and logs to `docs/data/tenants.md`
+3. `pnpm dev:db` → applies Prisma schemas for **auth-service** and **finance-service**
+4. `pnpm dev:backend` → starts API Gateway + all microservices with `nest start --watch`
 
-Access the application at [http://localhost:8080](http://localhost:8080).
+### 3. Verify each service with HTTP
 
-### Stop the Environment
-
-Using `pnpm`:
+Every service now exposes a `/health` endpoint. You can validate them individually without going through the gateway:
 
 ```bash
-pnpm docker:down
+# Auth (no headers required)
+
+
+# Products (Mongo-backed)
+2. **Start Infrastructure Only**
+
+# Finance (needs the shared secret like the real Gateway would)
+   You can use `docker-compose` to start only the databases:
+
+# Logistics (Redis-backed)
+
+
+# API Gateway
+curl http://localhost:3000/health
 ```
 
-PowerShell:
+### 4. Stopping the stack
+
+```bash
+pnpm dev:infra:down
+```
+
+or on Windows:
 
 ```powershell
 ./scripts/down.ps1
 ```
 
-### Useful docker helpers
+> ℹ️ The NestJS services run on your host machine. Stop them with `Ctrl+C` in the terminal that executed `pnpm dev:stack`/`scripts/up.ps1`.
+
+### 5. Exercising the APIs with Postman
+
+Once the stack is up, follow `docs/backend/postman-guide.md` for a step-by-step walkthrough that covers environment setup, auth token capture, and the happy-path requests for every microservice via the API Gateway.
+
+### Docker helpers (infra only)
 
 ```bash
-pnpm docker:logs   # follow logs for all services
-pnpm docker:ps     # list running service containers
+pnpm docker:logs   # follow container logs (databases only)
+pnpm docker:ps     # list running infra containers
 ```
 
-## 🛠 Manual Setup (Development)
-
-If you prefer to run services individually for development:
-
-1. **Install Dependencies**
-
-   ```bash
-   pnpm install
-   ```
-
-2. **Start Infrastructure Only**
-   You can use `docker-compose` to start only the databases:
-
-   ```bash
-   docker-compose up -d postgres mongo redis
-   ```
+```bash
+docker-compose up -d postgres mongo redis
+```
 
 3. **Run Migrations**
 

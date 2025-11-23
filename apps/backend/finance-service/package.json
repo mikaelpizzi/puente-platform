@@ -6,6 +6,8 @@
     "lint": "tsc --noEmit",
     "typecheck": "tsc --noEmit",
     "build": "tsc --project tsconfig.json",
+    "start": "nest start",
+    "start:dev": "nest start --watch",
     "test": "vitest run"
   },
   "dependencies": {

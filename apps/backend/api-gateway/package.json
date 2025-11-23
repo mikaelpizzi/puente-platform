@@ -6,6 +6,8 @@
     "lint": "tsc --noEmit",
     "typecheck": "tsc --noEmit",
     "build": "tsc --project tsconfig.json",
+    "start": "nest start",
+    "start:dev": "nest start --watch",
     "test": "vitest run",
     "test:e2e": "vitest run --config ./test/vitest.e2e.config.ts"
   },
@@ -25,6 +27,7 @@
     "rxjs": "^7.8.2"
   },
   "devDependencies": {
+    "@nestjs/cli": "^11.0.11",
     "@nestjs/testing": "^11.1.9",
     "@swc/core": "^1.15.2",
     "@types/express": "^5.0.5",

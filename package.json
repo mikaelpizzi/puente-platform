@@ -9,10 +9,16 @@
     "typecheck": "corepack pnpm -r run typecheck",
     "build": "corepack pnpm -r run build",
     "prepare": "husky",
-    "docker:up": "docker-compose up -d --build",
-    "docker:down": "docker-compose down",
-    "docker:logs": "docker-compose logs -f",
-    "docker:ps": "docker-compose ps"
+    "provision:data": "tsx ./scripts/provision-data.ts",
+    "dev:infra": "docker compose up -d postgres mongo redis",
+    "dev:infra:down": "docker compose down",
+    "dev:db": "pnpm --filter @puente/auth-service prisma db push && pnpm --filter @puente/finance-service prisma db push",
+    "dev:backend": "tsx ./scripts/dev-backend.ts",
+    "dev:stack": "pnpm dev:backend",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs -f",
+    "docker:ps": "docker compose ps"
   },
   "devDependencies": {
     "@commitlint/cli": "^20.1.0",
@@ -30,6 +36,7 @@
     "pg": "^8.16.3",
     "prettier": "^3.6.2",
     "ts-node": "^10.9.2",
+    "tsx": "^4.19.1",
     "typescript": "^5.5.4",
     "typescript-eslint": "^8.47.0",
     "vitest": "^1.6.0"

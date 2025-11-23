@@ -1,39 +1,45 @@
-# Docker Images Playbook
+# Lightweight Docker Stack for Development
 
-Task 20 asked for production-ready Dockerfiles for every backend microservice and the React PWA. Each service now lives in its own multi-stage build located next to the code under `apps/**/Dockerfile`.
+Task 20 was re-scoped to prioritise a **fast local feedback loop** instead of heavy production builds. Rather than launching seven containers every time, we now keep Docker responsible only for the stateful dependencies (Postgres, MongoDB, Redis) and run the NestJS services directly on the host with hot reload.
 
-## Build strategy
+## What `docker-compose.yml` does now
 
-- **Builder stage (Node 20 Alpine + pnpm):** Installs dependencies with `pnpm install --filter <package>...`, compiles TypeScript (`pnpm --filter <package>... build`) and uses `pnpm deploy --prod` to capture only the runtime files.
-- **Runtime stage:** Copies the prepared artifact into a minimal Node 20 Alpine image (for NestJS apps) or `nginx:1.27-alpine` (for the PWA). Default `PORT` matches the values defined in `.env.example`.
-- **Caching:** The root `.dockerignore` excludes `node_modules`, build artifacts and git metadata so Docker only sends the files that matter.
+- Spins up **Postgres 16**, **MongoDB 6** and **Redis 7** with sensible defaults declared in `.env` / `.env.example`.
+- All databases share a single bridge network `puente-dev`, expose their default ports to `localhost`, and persist data via named volumes (`postgres_data`, `mongo_data`, `redis_data`).
+- Postgres includes a health check so Prisma migrations wait until the server is ready.
 
-## Build commands
+```bash
+# Start only the infra layer (used by pnpm dev:stack and scripts/up.ps1)
+pnpm dev:infra
 
-Run the following from the repository root (GitHub Flow expects `docker build` logs attached to the PR):
-
-```powershell
-# API Gateway
-docker build -f apps/backend/api-gateway/Dockerfile -t puente/api-gateway:local .
-
-# Auth Service
-docker build -f apps/backend/auth-service/Dockerfile -t puente/auth-service:local .
-
-# Products Service
-docker build -f apps/backend/products-service/Dockerfile -t puente/products-service:local .
-
-# Finance Service
-docker build -f apps/backend/finance-service/Dockerfile -t puente/finance-service:local .
-
-# Logistics Service
-docker build -f apps/backend/logistics-service/Dockerfile -t puente/logistics-service:local .
-
-# Frontend PWA (served by nginx on port 4173)
-docker build -f apps/frontend/pwa/Dockerfile -t puente/pwa:local .
+# Tear it down when finished
+pnpm dev:infra:down
 ```
 
-## Runtime notes
+## Full workflow (one command)
 
-- Set the relevant `*_DATABASE_URL`, `PRODUCTS_MONGO_URI`, or `LOGISTICS_VALKEY_URL` variables at `docker run` time. The containers intentionally fail fast if the variables are missing.
-- The NestJS images expose ports `3000-3004` respectively; the PWA image exposes `4173` via nginx with SPA routing fallback.
-- The `pnpm deploy` step strips devDependencies, so the final images only contain production code plus the compiled `dist/` directory.
+```
+pnpm dev:stack
+```
+
+Behind the scenes this executes:
+
+1. `pnpm dev:infra` → `docker compose up -d postgres mongo redis`
+2. `pnpm provision:data` → smoke-tests Postgres/Mongo/Redis connectivity and writes `docs/data/tenants.md`
+3. `pnpm dev:db` → runs `prisma db push` for **auth-service** and **finance-service** so schemas are in sync
+4. `pnpm dev:backend` → starts all NestJS microservices with `nest start --watch` in parallel (API Gateway, Auth, Products, Finance, Logistics)
+
+From there you can hit the new `/health` endpoint exposed by every service:
+
+```bash
+curl http://localhost:3001/health
+curl -H "x-gateway-secret: dev-gateway-secret" http://localhost:3003/health
+```
+
+## Why this matters
+
+- **Start in seconds:** Databases warm up once and stay running; services restart instantly via hot reload.
+- **Debuggable:** Because services run on the host, you can attach debuggers, use breakpoints, and inspect stack traces without rebuilding containers.
+- **Production ready later:** The original multi-stage Dockerfiles still live next to each service for future deployment work, but they are no longer part of the inner dev loop.
+
+For more context and troubleshooting steps, see `README.md` (Quick Start) and `scripts/up.ps1`, which now orchestrates the same workflow for Windows users.

@@ -12,5 +12,5 @@ export enum DeliveryStatus {
 export class UpdateStatusDto {
   @IsEnum(DeliveryStatus)
   @IsNotEmpty()
-  status: DeliveryStatus;
+  status!: DeliveryStatus;
 }

@@ -22,7 +22,7 @@ const config: runtime.GetPrismaClientConfig = {
     },
     output: {
       value:
-        'C:\\Users\\Mikael\\Documents\\Projects\\puente-platform\\apps\\backend\\auth-service\\src\\generated\\client',
+        'C:\\Users\\Mikael\\Documents\\Projects\\puente-platform-fintech\\apps\\backend\\auth-service\\src\\generated\\client',
       fromEnvVar: null,
     },
     config: {
@@ -37,7 +37,7 @@ const config: runtime.GetPrismaClientConfig = {
     ],
     previewFeatures: [],
     sourceFilePath:
-      'C:\\Users\\Mikael\\Documents\\Projects\\puente-platform\\apps\\backend\\auth-service\\prisma\\schema.prisma',
+      'C:\\Users\\Mikael\\Documents\\Projects\\puente-platform-fintech\\apps\\backend\\auth-service\\prisma\\schema.prisma',
     isCustomOutput: true,
   },
   relativePath: '../../../prisma',
@@ -45,18 +45,17 @@ const config: runtime.GetPrismaClientConfig = {
   engineVersion: '2ba551f319ab1df4bc874a89965d8b3641056773',
   datasourceNames: ['db'],
   activeProvider: 'postgresql',
-  postinstall: false,
   inlineDatasources: {
     db: {
       url: {
-        fromEnvVar: 'DATABASE_URL',
+        fromEnvVar: 'AUTH_DATABASE_URL',
         value: null,
       },
     },
   },
   inlineSchema:
-    '// This is your Prisma schema file,\n// learn more about it in the docs: https://pris.ly/d/prisma-schema\n\n// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?\n// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init\n\ngenerator client {\n  provider = "prisma-client"\n  output   = "../src/generated/client"\n}\n\ndatasource db {\n  provider = "postgresql"\n  url      = env("DATABASE_URL")\n}\n\nenum Role {\n  ADMIN\n  SELLER\n  BUYER\n  COURIER\n}\n\nmodel User {\n  id       String @id @default(uuid())\n  email    String @unique\n  password String\n  role     Role   @default(BUYER)\n\n  hashedRefreshToken String?\n\n  passwordResetToken   String?\n  passwordResetExpires DateTime?\n\n  isEmailVerified        Boolean @default(false)\n  emailVerificationToken String?\n\n  createdAt DateTime @default(now())\n  updatedAt DateTime @updatedAt\n\n  @@map("users")\n}\n',
-  inlineSchemaHash: '2d5667247f61000b5176ef5da7ba3a73726b05e96130208232193fa05ecd49d1',
+    '// This is your Prisma schema file,\n// learn more about it in the docs: https://pris.ly/d/prisma-schema\n\n// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?\n// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init\n\ngenerator client {\n  provider = "prisma-client"\n  output   = "../src/generated/client"\n}\n\ndatasource db {\n  provider = "postgresql"\n  url      = env("AUTH_DATABASE_URL")\n}\n\nenum Role {\n  ADMIN\n  SELLER\n  BUYER\n  COURIER\n}\n\nmodel User {\n  id       String @id @default(uuid())\n  email    String @unique\n  password String\n  role     Role   @default(BUYER)\n\n  hashedRefreshToken String?\n\n  passwordResetToken   String?\n  passwordResetExpires DateTime?\n\n  isEmailVerified        Boolean @default(false)\n  emailVerificationToken String?\n\n  createdAt DateTime @default(now())\n  updatedAt DateTime @updatedAt\n\n  @@map("users")\n}\n',
+  inlineSchemaHash: '8e696d7e59c24746e736747222cf95af1ef9ebe39316c64180f898d580267606',
   copyEngine: true,
   runtimeDataModel: {
     models: {},

@@ -1,135 +1,57 @@
-version: '3.8'
+version: '3.9'
 
 services:
-  # ---------------------------------------------------------------------------
-  # INFRASTRUCTURE
-  # ---------------------------------------------------------------------------
   postgres:
-    image: postgres:15-alpine
-    environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: puente_db
+    image: postgres:16-alpine
+    container_name: puente-dev-postgres
+    restart: unless-stopped
     ports:
-      - '5432:5432'
+      - '${POSTGRES_PORT:-5432}:5432'
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-puente}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-puente}
+      POSTGRES_DB: ${POSTGRES_DB:-puente}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U user -d puente_db']
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-puente} -d ${POSTGRES_DB:-puente}']
       interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 10
+    networks:
+      - puente-dev
 
   mongo:
     image: mongo:6
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: user
-      MONGO_INITDB_ROOT_PASSWORD: password
+    container_name: puente-dev-mongo
+    restart: unless-stopped
     ports:
-      - '27017:27017'
+      - '${MONGO_PORT:-27017}:27017'
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER:-puente}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:-puente}
     volumes:
       - mongo_data:/data/db
+    networks:
+      - puente-dev
 
   redis:
     image: redis:7-alpine
+    container_name: puente-dev-redis
+    restart: unless-stopped
     ports:
-      - '6379:6379'
+      - '${REDIS_PORT:-6379}:6379'
+    command: redis-server --save "" --appendonly no
+    networks:
+      - puente-dev
     volumes:
       - redis_data:/data
-
-  # ---------------------------------------------------------------------------
-  # SERVICES
-  # ---------------------------------------------------------------------------
-  api-gateway:
-    build:
-      context: .
-      dockerfile: apps/backend/api-gateway/Dockerfile
-      target: runner
-    environment:
-      NODE_ENV: production
-      API_GATEWAY_PORT: 3000
-      AUTH_SERVICE_URL: http://auth-service:3001
-      PRODUCTS_SERVICE_URL: http://products-service:3002
-      FINANCE_SERVICE_URL: http://finance-service:3003
-      LOGISTICS_SERVICE_URL: http://logistics-service:3004
-    ports:
-      - '3000:3000'
-    depends_on:
-      - auth-service
-      - products-service
-      - finance-service
-      - logistics-service
-
-  auth-service:
-    build:
-      context: .
-      dockerfile: apps/backend/auth-service/Dockerfile
-      target: runner
-    environment:
-      NODE_ENV: production
-      AUTH_SERVICE_PORT: 3001
-      AUTH_DATABASE_URL: postgres://user:password@postgres:5432/puente_db?schema=auth
-      AUTH_JWT_ACCESS_SECRET: dev-secret
-      AUTH_JWT_REFRESH_SECRET: dev-refresh-secret
-    ports:
-      - '3001:3001'
-    depends_on:
-      postgres:
-        condition: service_healthy
-
-  products-service:
-    build:
-      context: .
-      dockerfile: apps/backend/products-service/Dockerfile
-      target: runner
-    environment:
-      NODE_ENV: production
-      PRODUCTS_SERVICE_PORT: 3002
-      PRODUCTS_MONGO_URI: mongodb://user:password@mongo:27017/products?authSource=admin
-    ports:
-      - '3002:3002'
-    depends_on:
-      - mongo
-
-  finance-service:
-    build:
-      context: .
-      dockerfile: apps/backend/finance-service/Dockerfile
-      target: runner
-    environment:
-      NODE_ENV: production
-      FINANCE_SERVICE_PORT: 3003
-      FINANCE_DATABASE_URL: postgres://user:password@postgres:5432/puente_db?schema=finance
-    ports:
-      - '3003:3003'
-    depends_on:
-      postgres:
-        condition: service_healthy
-
-  logistics-service:
-    build:
-      context: .
-      dockerfile: apps/backend/logistics-service/Dockerfile
-      target: runner
-    environment:
-      NODE_ENV: production
-      LOGISTICS_SERVICE_PORT: 3004
-      LOGISTICS_VALKEY_URL: redis://redis:6379
-    ports:
-      - '3004:3004'
-    depends_on:
-      - redis
-
-  frontend:
-    build:
-      context: .
-      dockerfile: apps/frontend/pwa/Dockerfile
-    ports:
-      - '8080:80'
-    depends_on:
-      - api-gateway
 
 volumes:
   postgres_data:
   mongo_data:
   redis_data:
+
+networks:
+  puente-dev:
+    driver: bridge

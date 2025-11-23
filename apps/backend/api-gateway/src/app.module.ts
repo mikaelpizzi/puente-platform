@@ -3,11 +3,13 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import * as Joi from 'joi';
 import { createServiceProxy } from './middleware/proxy.middleware';
 import { AuthMiddleware } from './middleware/auth.middleware';
+import { HealthController } from './health/health.controller';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      envFilePath: ['.env.local', '.env', '../../.env', '../../../.env'],
       validationSchema: Joi.object({
         API_GATEWAY_PORT: Joi.number().default(3000),
         AUTH_JWT_ACCESS_SECRET: Joi.string().required(),
@@ -19,6 +21,7 @@ import { AuthMiddleware } from './middleware/auth.middleware';
       }),
     }),
   ],
+  controllers: [HealthController],
 })
 export class AppModule {
   constructor(private configService: ConfigService) {}
@@ -29,16 +32,16 @@ export class AppModule {
       .apply(
         createServiceProxy(this.configService.get('AUTH_SERVICE_URL') || '', this.configService),
       )
-      .forRoutes({ path: 'auth/*', method: RequestMethod.ALL });
+      .forRoutes({ path: 'auth/*path', method: RequestMethod.ALL });
 
     // Protected Routes (Products, Finance, Logistics)
     // Apply AuthMiddleware BEFORE ProxyMiddleware
     consumer
       .apply(AuthMiddleware)
       .forRoutes(
-        { path: 'products/*', method: RequestMethod.ALL },
-        { path: 'finance/*', method: RequestMethod.ALL },
-        { path: 'logistics/*', method: RequestMethod.ALL },
+        { path: 'products/*path', method: RequestMethod.ALL },
+        { path: 'finance/*path', method: RequestMethod.ALL },
+        { path: 'logistics/*path', method: RequestMethod.ALL },
       );
 
     consumer
@@ -48,13 +51,13 @@ export class AppModule {
           this.configService,
         ),
       )
-      .forRoutes({ path: 'products/*', method: RequestMethod.ALL });
+      .forRoutes({ path: 'products/*path', method: RequestMethod.ALL });
 
     consumer
       .apply(
         createServiceProxy(this.configService.get('FINANCE_SERVICE_URL') || '', this.configService),
       )
-      .forRoutes({ path: 'finance/*', method: RequestMethod.ALL });
+      .forRoutes({ path: 'finance/*path', method: RequestMethod.ALL });
 
     consumer
       .apply(
@@ -63,6 +66,6 @@ export class AppModule {
           this.configService,
         ),
       )
-      .forRoutes({ path: 'logistics/*', method: RequestMethod.ALL });
+      .forRoutes({ path: 'logistics/*path', method: RequestMethod.ALL });
   }
 }

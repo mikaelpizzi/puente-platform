@@ -3,26 +3,26 @@ import { Type } from 'class-transformer';
 
 class OrderItemDto {
   @IsString()
-  productId: string;
+  productId!: string;
 
   @IsNumber()
-  quantity: number;
+  quantity!: number;
 
   @IsNumber()
-  price: number;
+  price!: number;
 }
 
 export class CreateOrderDto {
   @IsString()
-  sellerId: string;
+  sellerId!: string;
 
   @IsString()
-  buyerId: string;
+  buyerId!: string;
 
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => OrderItemDto)
-  items: OrderItemDto[];
+  items!: OrderItemDto[];
 
   @IsOptional()
   @IsString()

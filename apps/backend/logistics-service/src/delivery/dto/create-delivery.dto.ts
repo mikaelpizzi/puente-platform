@@ -3,24 +3,24 @@ import { Type } from 'class-transformer';
 
 class LocationDto {
   @IsNumber()
-  lat: number;
+  lat!: number;
 
   @IsNumber()
-  lng: number;
+  lng!: number;
 }
 
 export class CreateDeliveryDto {
   @IsString()
   @IsNotEmpty()
-  orderId: string;
+  orderId!: string;
 
   @ValidateNested()
   @Type(() => LocationDto)
-  pickupLocation: LocationDto;
+  pickupLocation!: LocationDto;
 
   @ValidateNested()
   @Type(() => LocationDto)
-  dropoffLocation: LocationDto;
+  dropoffLocation!: LocationDto;
 
   @IsString()
   @IsOptional()

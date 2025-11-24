@@ -230,3 +230,24 @@
   1. **File Existence:** `docker-compose.yml`, `README.md`, `scripts/up.ps1` exist.
   2. **Execution:** Running `./scripts/up.ps1` triggers `docker-compose up -d --build`.
 
+## Task: Docker Infrastructure and Local Backend Stabilization
+- **What:** The local development environment was configured and stabilized using Docker Compose to orchestrate 5 microservices (Auth, Finance, Products, Logistics, Gateway) and 3 databases (Postgres, MongoDB, Redis).
+
+- **Why:** The previous environment was unstable due to discrepancies between Windows/Linux and Docker, TypeScript configuration conflicts (nested paths), and a lack of CLI tools in the containers. This was necessary to enable frontend development.
+
+- **How/Tools:**
+- Standardization of `tsconfig.json` (`rootDir: "src"`) across all services.
+
+- Correction of Dockerfiles to use absolute paths and specific copying of artifacts (`dist`, `prisma`). - Implementation of the unified script `pnpm dev:backend` in `package.json` root.
+
+- Temporary relaxation of strict TS rules to unlock the build.
+
+- **Result:** Completed (Yes). Aligned with Section 4.1 of ARCHITECTURE.md.
+
+- **Test:**
+
+- `docker compose ps` shows all services in "Up/Healthy" state.
+
+- Postman receives `201 Created` response on `POST http://localhost:3000/auth/register`.
+
+- Prisma migrations successfully applied to Auth and Finance.

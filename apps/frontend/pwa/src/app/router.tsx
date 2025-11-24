@@ -1,16 +1,26 @@
 import { createBrowserRouter } from 'react-router-dom';
-import { MainLayout } from '@/layouts/MainLayout';
+import { MainLayout } from '../layouts/MainLayout';
+import { LoginPage } from '../features/auth/LoginPage';
+import { RequireAuth } from '../features/auth/RequireAuth';
 
 export const router = createBrowserRouter([
   {
+    path: '/login',
+    element: <LoginPage />,
+  },
+  {
     path: '/',
-    element: <MainLayout />,
+    element: (
+      <RequireAuth>
+        <MainLayout />
+      </RequireAuth>
+    ),
     children: [
       {
         index: true,
-        element: <div className="p-4">Dashboard Placeholder</div>,
+        element: <div>Dashboard (Protected)</div>,
       },
-      // Other routes will be added here
+      // Add other protected routes here
     ],
   },
 ]);

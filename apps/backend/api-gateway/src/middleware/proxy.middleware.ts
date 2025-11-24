@@ -13,10 +13,6 @@ export function createServiceProxy(targetUrl: string, configService: ConfigServi
   const proxy = createProxyMiddleware({
     target: targetUrl,
     changeOrigin: true,
-    pathRewrite: (path) => {
-      // Remove the prefix (e.g., /auth) from the path
-      return path.replace(/^\/[^/]+/, '');
-    },
     on: {
       proxyReq: (proxyReq, req: any, res) => {
         // Inject Service-to-Service Security Header

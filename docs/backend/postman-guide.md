@@ -58,6 +58,52 @@ This checklist explains how to boot the entire backend locally (Docker infra + f
 6. **Refresh token flow (optional):**
    - `POST {{auth_service_url}}/auth/refresh` with the refresh token to obtain a new access token.
 
+### Example payloads (copy/paste ready)
+
+```http
+# Login (POST {{auth_service_url}}/auth/login)
+{
+   "email": "vendedor@postman.com",
+   "password": "ChangeMe123!"
+}
+
+# Create product (POST {{api_gateway_url}}/products)
+{
+   "name": "Mochila Artesanal",
+   "description": "Hecha a mano con cuero local",
+   "price": 45.0,
+   "sku": "MOCH-001",
+   "vertical": "fashion",
+   "sellerId": "<uuid-del-vendedor>",
+   "stock": 10,
+   "attributes": {
+      "color": "marron",
+      "material": "cuero"
+   }
+}
+
+# Finance order (POST {{api_gateway_url}}/finance/orders)
+{
+   "sellerId": "<uuid-del-vendedor>",
+   "buyerId": "<uuid-del-comprador>",
+   "items": [
+      {
+         "productId": "<uuid-producto>",
+         "quantity": 1,
+         "price": 45
+      }
+   ]
+}
+
+# Logistics delivery (POST {{api_gateway_url}}/deliveries)
+{
+   "orderId": "<uuid-orden>",
+   "pickupLocation": { "lat": -12.0464, "lng": -77.0428 },
+   "dropoffLocation": { "lat": -12.0780, "lng": -77.0500 },
+   "driverId": "<uuid-repartidor>"
+}
+```
+
 ## 5. Edge-case drills (recommended Postman tests)
 
 Run these after the happy-path sequence to ensure the backend enforces validation, authorization, and compensating logic. Document failures in your PRs.

@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import * as Joi from 'joi';
 import { createServiceProxy } from './middleware/proxy.middleware';
 import { AuthMiddleware } from './middleware/auth.middleware';
+import { SanityCheckMiddleware } from './middleware/sanity-check.middleware';
 import { HealthController } from './health/health.controller';
 
 @Module({
@@ -27,6 +28,9 @@ export class AppModule {
   constructor(private configService: ConfigService) {}
 
   configure(consumer: MiddlewareConsumer) {
+    // Global sanity checks first
+    consumer.apply(SanityCheckMiddleware).forRoutes('*');
+
     // Public Routes (Auth Service)
     consumer
       .apply(
@@ -39,8 +43,14 @@ export class AppModule {
     consumer
       .apply(AuthMiddleware)
       .forRoutes(
+        { path: 'products', method: RequestMethod.ALL },
+        { path: 'products/', method: RequestMethod.ALL },
         { path: 'products/*path', method: RequestMethod.ALL },
+        { path: 'finance', method: RequestMethod.ALL },
+        { path: 'finance/', method: RequestMethod.ALL },
         { path: 'finance/*path', method: RequestMethod.ALL },
+        { path: 'logistics', method: RequestMethod.ALL },
+        { path: 'logistics/', method: RequestMethod.ALL },
         { path: 'logistics/*path', method: RequestMethod.ALL },
       );
 
@@ -51,13 +61,21 @@ export class AppModule {
           this.configService,
         ),
       )
-      .forRoutes({ path: 'products/*path', method: RequestMethod.ALL });
+      .forRoutes(
+        { path: 'products', method: RequestMethod.ALL },
+        { path: 'products/', method: RequestMethod.ALL },
+        { path: 'products/*path', method: RequestMethod.ALL },
+      );
 
     consumer
       .apply(
         createServiceProxy(this.configService.get('FINANCE_SERVICE_URL') || '', this.configService),
       )
-      .forRoutes({ path: 'finance/*path', method: RequestMethod.ALL });
+      .forRoutes(
+        { path: 'finance', method: RequestMethod.ALL },
+        { path: 'finance/', method: RequestMethod.ALL },
+        { path: 'finance/*path', method: RequestMethod.ALL },
+      );
 
     consumer
       .apply(
@@ -66,6 +84,10 @@ export class AppModule {
           this.configService,
         ),
       )
-      .forRoutes({ path: 'logistics/*path', method: RequestMethod.ALL });
+      .forRoutes(
+        { path: 'logistics', method: RequestMethod.ALL },
+        { path: 'logistics/', method: RequestMethod.ALL },
+        { path: 'logistics/*path', method: RequestMethod.ALL },
+      );
   }
 }

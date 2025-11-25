@@ -1,4 +1,4 @@
-import { createBrowserRouter } from 'react-router-dom';
+import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { MainLayout } from '../layouts/MainLayout';
 import { PublicLayout } from '../layouts/PublicLayout';
 import { LoginPage } from '../features/auth/LoginPage';
@@ -11,6 +11,8 @@ import { FinancePage } from '../pages/FinancePage';
 import { LogisticsPage } from '../pages/LogisticsPage';
 import { NotFoundPage } from '../pages/NotFoundPage';
 import { TrackingPage } from '../features/tracking/TrackingPage';
+import { DashboardHome } from '../pages/DashboardHome';
+import { ProfilePage } from '../features/profile/ProfilePage';
 
 export const router = createBrowserRouter([
   {
@@ -45,6 +47,10 @@ export const router = createBrowserRouter([
     children: [
       {
         index: true,
+        element: <DashboardHome />,
+      },
+      {
+        path: 'inventory',
         element: <InventoryDashboard />,
       },
       {
@@ -58,6 +64,10 @@ export const router = createBrowserRouter([
       {
         path: 'logistics',
         element: <LogisticsPage />,
+      },
+      {
+        path: 'profile',
+        element: <ProfilePage />,
       },
     ],
   },

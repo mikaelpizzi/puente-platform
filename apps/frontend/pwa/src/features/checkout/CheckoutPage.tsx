@@ -11,6 +11,7 @@ import {
 } from './cartSlice';
 import { PaymentFlow } from '../finance/PaymentFlow';
 import { ShoppingCart, Trash2, Plus, Minus, ArrowLeft, Calculator } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 export const CheckoutPage: React.FC = () => {
   const dispatch = useDispatch();
@@ -21,14 +22,34 @@ export const CheckoutPage: React.FC = () => {
   const [view, setView] = useState<'cart' | 'keypad' | 'payment'>('cart');
 
   const handleAddToCart = (product: any) => {
+    const existingItem = cartItems.find((item) => item.id === product.id);
+    const currentQty = existingItem ? existingItem.quantity : 0;
+
+    if (currentQty + 1 > product.stock) {
+      toast.error('No hay suficiente stock');
+      return;
+    }
+
     dispatch(
       addToCart({
         id: product.id,
         name: product.name,
-        price: product.price,
+        price: Number(product.price),
         quantity: 1,
       }),
     );
+    toast.success('Producto agregado');
+  };
+
+  const handleIncrement = (item: any) => {
+    const product = products?.find((p) => p.id === item.id);
+    if (!product) return;
+
+    if (item.quantity + 1 > product.stock) {
+      toast.error('No hay suficiente stock');
+      return;
+    }
+    dispatch(updateQuantity({ id: item.id, quantity: item.quantity + 1 }));
   };
 
   const handlePayment = () => {
@@ -139,10 +160,13 @@ export const CheckoutPage: React.FC = () => {
                       {item.quantity}
                     </span>
                     <button
-                      onClick={() =>
-                        dispatch(updateQuantity({ id: item.id, quantity: item.quantity + 1 }))
-                      }
-                      className="p-1 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300"
+                      onClick={() => handleIncrement(item)}
+                      className={`p-1 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 ${
+                        products?.find((p) => p.id === item.id)?.stock === item.quantity
+                          ? 'opacity-50 cursor-not-allowed'
+                          : ''
+                      }`}
+                      disabled={products?.find((p) => p.id === item.id)?.stock === item.quantity}
                     >
                       <Plus className="w-4 h-4" />
                     </button>

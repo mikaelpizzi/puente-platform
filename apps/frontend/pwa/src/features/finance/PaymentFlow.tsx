@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { PosKeypad } from './PosKeypad';
 import { PaymentQR } from './PaymentQR';
 import { useCreateOrderMutation, useGetOrderStatusQuery } from './financeApi';
+import toast from 'react-hot-toast';
 
 export interface PaymentFlowProps {
   initialAmount?: number;
@@ -10,23 +11,22 @@ export interface PaymentFlowProps {
 }
 
 export const PaymentFlow: React.FC<PaymentFlowProps> = ({ initialAmount, onBack, onComplete }) => {
-  const [step, setStep] = useState<'AMOUNT' | 'QR' | 'SUCCESS'>(initialAmount ? 'QR' : 'AMOUNT');
-  const [amount, setAmount] = useState(initialAmount ? initialAmount.toString() : '');
+  // 1. State Local: Controlamos el flujo con el ID de la orden actual
   const [currentOrderId, setCurrentOrderId] = useState<string | null>(null);
+  const [amount, setAmount] = useState(initialAmount ? initialAmount.toString() : '');
 
   // API Mutations
   const [createOrder, { isLoading: isCreating }] = useCreateOrderMutation();
 
-  // Polling Query
-  // Only poll if we have an Order ID and we are in the QR step
-  const { data: orderStatus, stopPolling } = useGetOrderStatusQuery(currentOrderId!, {
-    skip: !currentOrderId || step !== 'QR',
-    pollingInterval: 5000, // Poll every 5s
+  // Polling Query: Solo buscamos la orden actual si existe
+  const { data: orderStatus } = useGetOrderStatusQuery(currentOrderId!, {
+    skip: !currentOrderId,
+    pollingInterval: 3000,
   });
 
-  // Auto-create order if initialAmount is provided and we haven't created one yet
+  // Auto-create order if initialAmount is provided
   useEffect(() => {
-    if (initialAmount && step === 'QR' && !currentOrderId && !isCreating) {
+    if (initialAmount && !currentOrderId && !isCreating) {
       createOrder({
         amount: initialAmount,
         description: 'Venta desde Carrito',
@@ -35,40 +35,22 @@ export const PaymentFlow: React.FC<PaymentFlowProps> = ({ initialAmount, onBack,
         .then((result) => setCurrentOrderId(result.id))
         .catch((err) => {
           console.error('Error creating order:', err);
-          alert('Error al generar la orden.');
+          toast.error('Error al generar la orden');
           if (onBack) onBack();
         });
     }
-  }, [initialAmount, step, currentOrderId, isCreating, createOrder, onBack]);
+  }, [initialAmount, currentOrderId, isCreating, createOrder, onBack]);
 
-  // Effect: Handle Status Changes
+  // Haptic Feedback on Success
   useEffect(() => {
-    if (orderStatus?.status === 'PAID') {
-      setStep('SUCCESS');
-      // Haptic Feedback for Success
-      if (navigator.vibrate) {
-        navigator.vibrate([100, 50, 100, 50, 200]);
-      }
+    if (orderStatus?.status === 'PAID' && navigator.vibrate) {
+      navigator.vibrate([100, 50, 100, 50, 200]);
     }
-  }, [orderStatus]);
-
-  // Effect: Handle Visibility Change (Screen Off/On)
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible' && step === 'QR' && currentOrderId) {
-        // Force a refetch when coming back to foreground to check status immediately
-        // RTK Query handles polling resume automatically, but a manual refetch is good for UX
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [step, currentOrderId]);
+  }, [orderStatus?.status]);
 
   const handleKeyPress = (key: string) => {
     if (key === '.' && amount.includes('.')) return;
-    if (amount.length >= 8) return; // Max length
-    // Prevent multiple leading zeros
+    if (amount.length >= 8) return;
     if (amount === '0' && key !== '.') {
       setAmount(key);
       return;
@@ -80,6 +62,7 @@ export const PaymentFlow: React.FC<PaymentFlowProps> = ({ initialAmount, onBack,
     setAmount((prev) => prev.slice(0, -1));
   };
 
+  // 2. Al Crear: Guardamos el ID en el estado local
   const handleSubmitAmount = async () => {
     try {
       const result = await createOrder({
@@ -88,10 +71,9 @@ export const PaymentFlow: React.FC<PaymentFlowProps> = ({ initialAmount, onBack,
       }).unwrap();
 
       setCurrentOrderId(result.id);
-      setStep('QR');
     } catch (err) {
       console.error('Error creating order:', err);
-      alert('Error al generar la orden. Intente nuevamente.');
+      toast.error('Error al generar la orden');
     }
   };
 
@@ -99,52 +81,50 @@ export const PaymentFlow: React.FC<PaymentFlowProps> = ({ initialAmount, onBack,
     if (onBack) {
       onBack();
     } else {
-      setStep('AMOUNT');
       setCurrentOrderId(null);
     }
-    // Ideally call an API to cancel the order on backend too
   };
 
+  // 4. Reset: Limpiamos el estado para una nueva venta
   const handleReset = () => {
+    setCurrentOrderId(null);
+    setAmount('');
     if (onComplete) {
       onComplete();
-    } else {
-      setStep('AMOUNT');
-      setAmount('');
-      setCurrentOrderId(null);
     }
   };
 
-  if (step === 'AMOUNT') {
+  // 3. Renderizado Condicional: Si hay orden, mostramos QR/Éxito. Si no, el teclado.
+  if (currentOrderId) {
     return (
-      <PosKeypad
-        amount={amount}
-        onKeyPress={handleKeyPress}
-        onClear={handleClear}
-        onSubmit={handleSubmitAmount}
-        isLoading={isCreating}
-      />
+      <div className="h-full flex flex-col">
+        {onBack && (
+          <button onClick={onBack} className="p-4 text-white bg-gray-900 font-bold">
+            &larr; Volver
+          </button>
+        )}
+        <PaymentQR
+          qrData={
+            orderStatus?.qrCode ||
+            orderStatus?.paymentLink ||
+            `https://puente.app/pay/${currentOrderId}`
+          }
+          amount={parseFloat(amount)}
+          status={orderStatus?.status || 'PENDING'}
+          onCancel={handleCancel}
+          onReset={handleReset}
+        />
+      </div>
     );
   }
 
   return (
-    <div className="h-full flex flex-col">
-      {onBack && step === 'QR' && (
-        <button onClick={onBack} className="p-4 text-white bg-gray-900 font-bold">
-          &larr; Volver
-        </button>
-      )}
-      <PaymentQR
-        qrData={
-          orderStatus?.qrCode ||
-          orderStatus?.paymentLink ||
-          `https://puente.app/pay/${currentOrderId}`
-        }
-        amount={parseFloat(amount)}
-        status={orderStatus?.status || 'PENDING'}
-        onCancel={handleCancel}
-        onReset={handleReset}
-      />
-    </div>
+    <PosKeypad
+      amount={amount}
+      onKeyPress={handleKeyPress}
+      onClear={handleClear}
+      onSubmit={handleSubmitAmount}
+      isLoading={isCreating}
+    />
   );
 };

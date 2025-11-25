@@ -9,7 +9,7 @@ import {
   retryErrorProduct,
   removeErrorProduct,
 } from './inventorySlice';
-import { Clock, AlertTriangle, CheckCircle, X } from 'lucide-react';
+import { Clock, AlertTriangle, CheckCircle, X, Plus } from 'lucide-react';
 
 export const InventoryDashboard: React.FC = () => {
   const dispatch = useDispatch();
@@ -199,6 +199,17 @@ export const InventoryDashboard: React.FC = () => {
           ))
         )}
       </div>
+      {/* Floating Action Button */}
+      <button
+        onClick={() => {
+          resetForm();
+          setIsModalOpen(true);
+        }}
+        className="fixed bottom-20 right-4 bg-indigo-600 text-white p-4 rounded-full shadow-lg hover:bg-indigo-700 active:scale-95 transition-transform z-30 flex items-center justify-center"
+        aria-label="Nuevo Producto"
+      >
+        <Plus className="w-6 h-6" />
+      </button>
       {/* Create Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-end sm:items-center justify-center p-4 backdrop-blur-sm">

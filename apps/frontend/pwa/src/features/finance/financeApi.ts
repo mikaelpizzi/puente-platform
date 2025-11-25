@@ -10,9 +10,16 @@ export interface Order {
   createdAt: string;
 }
 
+export interface OrderItem {
+  productId: string;
+  quantity: number;
+  price: number;
+}
+
 export interface CreateOrderRequest {
-  amount: number;
-  description: string;
+  sellerId: string;
+  buyerId?: string;
+  items: OrderItem[];
 }
 
 export const financeApi = api.injectEndpoints({

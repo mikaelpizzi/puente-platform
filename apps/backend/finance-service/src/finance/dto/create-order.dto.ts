@@ -16,8 +16,9 @@ export class CreateOrderDto {
   @IsString()
   sellerId!: string;
 
+  @IsOptional()
   @IsString()
-  buyerId!: string;
+  buyerId?: string;
 
   @IsArray()
   @ValidateNested({ each: true })

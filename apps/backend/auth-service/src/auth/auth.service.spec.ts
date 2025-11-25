@@ -4,7 +4,7 @@ import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as argon2 from 'argon2';
-import { Role } from '../generated/client/client';
+import { Role } from '@prisma/auth-client';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 vi.mock('argon2');

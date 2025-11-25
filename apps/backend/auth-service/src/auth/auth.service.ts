@@ -11,7 +11,7 @@ import * as argon2 from 'argon2';
 import { UsersService } from '../users/users.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
-import { User } from '../generated/client/client';
+import { User } from '@prisma/auth-client';
 
 @Injectable()
 export class AuthService {

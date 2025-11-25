@@ -1,19 +1,44 @@
 import React, { useState, useEffect } from 'react';
+import { useSelector } from 'react-redux';
 import { PosKeypad } from './PosKeypad';
 import { PaymentQR } from './PaymentQR';
 import { useCreateOrderMutation, useGetOrderStatusQuery } from './financeApi';
+import { selectCurrentUser } from '../auth/authSlice';
+import { CartItem } from '../checkout/cartSlice';
 import toast from 'react-hot-toast';
 
 export interface PaymentFlowProps {
   initialAmount?: number;
+  cartItems?: CartItem[];
   onBack?: () => void;
   onComplete?: () => void;
 }
 
-export const PaymentFlow: React.FC<PaymentFlowProps> = ({ initialAmount, onBack, onComplete }) => {
+export const PaymentFlow: React.FC<PaymentFlowProps> = ({
+  initialAmount,
+  cartItems,
+  onBack,
+  onComplete,
+}) => {
   // 1. State Local: Controlamos el flujo con el ID de la orden actual
-  const [currentOrderId, setCurrentOrderId] = useState<string | null>(null);
+  const user = useSelector(selectCurrentUser);
+
+  // Initialize state from localStorage if available
+  const [currentOrderId, setCurrentOrderId] = useState<string | null>(() => {
+    return localStorage.getItem('pos_current_order_id');
+  });
+
   const [amount, setAmount] = useState(initialAmount ? initialAmount.toString() : '');
+  const hasAttemptedAutoCreate = React.useRef(false);
+
+  // Persist currentOrderId to localStorage whenever it changes
+  useEffect(() => {
+    if (currentOrderId) {
+      localStorage.setItem('pos_current_order_id', currentOrderId);
+    } else {
+      localStorage.removeItem('pos_current_order_id');
+    }
+  }, [currentOrderId]);
 
   // API Mutations
   const [createOrder, { isLoading: isCreating }] = useCreateOrderMutation();
@@ -26,20 +51,37 @@ export const PaymentFlow: React.FC<PaymentFlowProps> = ({ initialAmount, onBack,
 
   // Auto-create order if initialAmount is provided
   useEffect(() => {
-    if (initialAmount && !currentOrderId && !isCreating) {
+    // Only auto-create if we don't already have an active order ID (from state or localStorage)
+    if (initialAmount && !currentOrderId && !isCreating && !hasAttemptedAutoCreate.current) {
+      hasAttemptedAutoCreate.current = true;
+
+      const items =
+        cartItems && cartItems.length > 0
+          ? cartItems.map((item) => ({
+              productId: String(item.id),
+              quantity: item.quantity,
+              price: item.price,
+            }))
+          : [{ productId: 'manual-pos', quantity: 1, price: initialAmount }];
+
       createOrder({
-        amount: initialAmount,
-        description: 'Venta desde Carrito',
+        sellerId: user?.id || 'unknown',
+        items,
       })
         .unwrap()
         .then((result) => setCurrentOrderId(result.id))
         .catch((err) => {
           console.error('Error creating order:', err);
-          toast.error('Error al generar la orden');
+          const errorMessage = err.data?.message
+            ? Array.isArray(err.data.message)
+              ? err.data.message.join(', ')
+              : err.data.message
+            : 'Error desconocido';
+          toast.error(`Error: ${errorMessage}`);
           if (onBack) onBack();
         });
     }
-  }, [initialAmount, currentOrderId, isCreating, createOrder, onBack]);
+  }, [initialAmount, currentOrderId, isCreating, createOrder, onBack, cartItems, user]);
 
   // Haptic Feedback on Success
   useEffect(() => {
@@ -66,14 +108,19 @@ export const PaymentFlow: React.FC<PaymentFlowProps> = ({ initialAmount, onBack,
   const handleSubmitAmount = async () => {
     try {
       const result = await createOrder({
-        amount: parseFloat(amount),
-        description: 'Venta en mostrador',
+        sellerId: user?.id || 'unknown',
+        items: [{ productId: 'manual-pos', quantity: 1, price: parseFloat(amount) }],
       }).unwrap();
 
       setCurrentOrderId(result.id);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error creating order:', err);
-      toast.error('Error al generar la orden');
+      const errorMessage = err.data?.message
+        ? Array.isArray(err.data.message)
+          ? err.data.message.join(', ')
+          : err.data.message
+        : 'Error desconocido';
+      toast.error(`Error: ${errorMessage}`);
     }
   };
 

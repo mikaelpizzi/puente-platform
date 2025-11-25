@@ -13,6 +13,7 @@ import { NotFoundPage } from '../pages/NotFoundPage';
 import { TrackingPage } from '../features/tracking/TrackingPage';
 import { DashboardHome } from '../pages/DashboardHome';
 import { ProfilePage } from '../features/profile/ProfilePage';
+import { MarketplacePage } from '../features/marketplace/MarketplacePage';
 
 export const router = createBrowserRouter([
   {
@@ -50,20 +51,44 @@ export const router = createBrowserRouter([
         element: <DashboardHome />,
       },
       {
+        path: 'marketplace',
+        element: (
+          <RequireAuth allowedRoles={['BUYER']}>
+            <MarketplacePage />
+          </RequireAuth>
+        ),
+      },
+      {
         path: 'inventory',
-        element: <InventoryDashboard />,
+        element: (
+          <RequireAuth allowedRoles={['SELLER']}>
+            <InventoryDashboard />
+          </RequireAuth>
+        ),
       },
       {
         path: 'checkout',
-        element: <CheckoutPage />,
+        element: (
+          <RequireAuth allowedRoles={['SELLER']}>
+            <CheckoutPage />
+          </RequireAuth>
+        ),
       },
       {
         path: 'finance',
-        element: <FinancePage />,
+        element: (
+          <RequireAuth allowedRoles={['SELLER']}>
+            <FinancePage />
+          </RequireAuth>
+        ),
       },
       {
         path: 'logistics',
-        element: <LogisticsPage />,
+        element: (
+          <RequireAuth allowedRoles={['SELLER', 'COURIER']}>
+            <LogisticsPage />
+          </RequireAuth>
+        ),
       },
       {
         path: 'profile',

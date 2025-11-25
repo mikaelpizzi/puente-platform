@@ -41,6 +41,7 @@ export const PosKeypad: React.FC<PosKeypadProps> = ({
       <div className="grid grid-cols-3 gap-px bg-gray-200 dark:bg-gray-700 p-px flex-grow max-h-[60vh] transition-colors duration-200">
         {keys.map((key) => (
           <button
+            type="button"
             key={key}
             onClick={() => onKeyPress(key)}
             className="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 active:bg-gray-100 dark:active:bg-gray-600 text-3xl font-semibold text-gray-700 dark:text-gray-200 py-6 flex items-center justify-center transition-colors"
@@ -51,6 +52,7 @@ export const PosKeypad: React.FC<PosKeypadProps> = ({
 
         {/* Backspace Button */}
         <button
+          type="button"
           onClick={onClear}
           className="bg-white dark:bg-gray-800 hover:bg-red-50 dark:hover:bg-red-900/20 active:bg-red-100 dark:active:bg-red-900/40 text-gray-500 dark:text-gray-400 py-6 flex items-center justify-center transition-colors"
         >
@@ -61,7 +63,12 @@ export const PosKeypad: React.FC<PosKeypadProps> = ({
       {/* Submit Button */}
       <div className="p-4 bg-white dark:bg-gray-800 transition-colors duration-200">
         <button
-          onClick={onSubmit}
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onSubmit();
+          }}
           disabled={!amount || parseFloat(amount) === 0 || isLoading}
           className="w-full bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 disabled:bg-gray-300 dark:disabled:bg-gray-600 text-white text-xl font-bold py-4 rounded-xl shadow-lg active:scale-[0.98] transition-all flex items-center justify-center gap-2"
         >

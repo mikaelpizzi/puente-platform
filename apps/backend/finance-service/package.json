@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "lint": "tsc --noEmit",
+    "prisma": "prisma",
     "typecheck": "tsc --noEmit",
     "build": "tsc --project tsconfig.json",
     "start": "nest start",

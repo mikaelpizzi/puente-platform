@@ -32,7 +32,7 @@ export const CheckoutPage: React.FC = () => {
 
     dispatch(
       addToCart({
-        id: product.id,
+        id: String(product.id),
         name: product.name,
         price: Number(product.price),
         quantity: 1,
@@ -64,7 +64,12 @@ export const CheckoutPage: React.FC = () => {
 
   if (view === 'payment') {
     return (
-      <PaymentFlow initialAmount={total} onBack={() => setView('cart')} onComplete={handleFinish} />
+      <PaymentFlow
+        initialAmount={total}
+        cartItems={cartItems}
+        onBack={() => setView('cart')}
+        onComplete={handleFinish}
+      />
     );
   }
 
@@ -112,9 +117,9 @@ export const CheckoutPage: React.FC = () => {
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {products?.map((product) => (
+              {products?.map((product, index) => (
                 <button
-                  key={product.id}
+                  key={`${product.id}-${index}`}
                   onClick={() => handleAddToCart(product)}
                   className="flex flex-col items-start p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm hover:border-indigo-500 active:bg-indigo-50 dark:active:bg-indigo-900 transition-colors text-left"
                 >
@@ -139,8 +144,8 @@ export const CheckoutPage: React.FC = () => {
             <div className="text-center py-8 text-gray-400">El carrito está vacío</div>
           ) : (
             <div className="space-y-4">
-              {cartItems.map((item) => (
-                <div key={item.id} className="flex justify-between items-center">
+              {cartItems.map((item, index) => (
+                <div key={`${item.id}-${index}`} className="flex justify-between items-center">
                   <div className="flex-1">
                     <div className="font-medium text-gray-900 dark:text-white">{item.name}</div>
                     <div className="text-sm text-gray-500 dark:text-gray-400">

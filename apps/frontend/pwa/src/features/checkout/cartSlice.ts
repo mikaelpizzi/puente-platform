@@ -12,8 +12,20 @@ interface CartState {
   items: CartItem[];
 }
 
+const loadCartFromStorage = (): CartItem[] => {
+  try {
+    const serializedCart = localStorage.getItem('shopping_cart');
+    if (serializedCart === null) {
+      return [];
+    }
+    return JSON.parse(serializedCart);
+  } catch (err) {
+    return [];
+  }
+};
+
 const initialState: CartState = {
-  items: [],
+  items: loadCartFromStorage(),
 };
 
 export const cartSlice = createSlice({
@@ -27,9 +39,11 @@ export const cartSlice = createSlice({
       } else {
         state.items.push({ ...action.payload, quantity: 1 });
       }
+      localStorage.setItem('shopping_cart', JSON.stringify(state.items));
     },
     removeFromCart: (state, action: PayloadAction<string>) => {
       state.items = state.items.filter((item) => item.id !== action.payload);
+      localStorage.setItem('shopping_cart', JSON.stringify(state.items));
     },
     updateQuantity: (state, action: PayloadAction<{ id: string; quantity: number }>) => {
       const item = state.items.find((item) => item.id === action.payload.id);
@@ -39,9 +53,11 @@ export const cartSlice = createSlice({
           state.items = state.items.filter((i) => i.id !== action.payload.id);
         }
       }
+      localStorage.setItem('shopping_cart', JSON.stringify(state.items));
     },
     clearCart: (state) => {
       state.items = [];
+      localStorage.removeItem('shopping_cart');
     },
   },
 });

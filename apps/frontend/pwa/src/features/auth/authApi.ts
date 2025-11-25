@@ -30,7 +30,14 @@ export const authApi = api.injectEndpoints({
         body: userData,
       }),
     }),
+    recoverPassword: builder.mutation<{ message: string }, { email: string }>({
+      query: (data) => ({
+        url: '/auth/recover-password', // Assuming this endpoint exists or will exist
+        method: 'POST',
+        body: data,
+      }),
+    }),
   }),
 });
 
-export const { useLoginMutation, useRegisterMutation } = authApi;
+export const { useLoginMutation, useRegisterMutation, useRecoverPasswordMutation } = authApi;

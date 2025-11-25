@@ -1,4 +1,4 @@
-import { IsBoolean, IsNotEmpty, IsNumber, IsObject, IsOptional, IsString } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsObject, IsOptional, IsString } from 'class-validator';
 
 export class CreateProductDto {
   @IsString()
@@ -23,11 +23,12 @@ export class CreateProductDto {
 
   @IsObject()
   @IsOptional()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   attributes?: Record<string, any>;
 
   @IsString()
-  @IsNotEmpty()
-  sellerId!: string;
+  @IsOptional()
+  sellerId?: string;
 
   @IsNumber()
   @IsOptional()

@@ -6,9 +6,9 @@ import {
   Param,
   Patch,
   Post,
-  HttpCode,
-  HttpStatus,
   UseGuards,
+  Headers,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
@@ -27,12 +27,26 @@ export class ProductsController {
   /**
    * Creates a new product.
    * @param createProductDto - The product creation payload.
+   * @param userId - The user ID from the gateway header.
    * @returns The created product.
    */
   @Post()
   @Roles(Role.ADMIN, Role.SELLER)
-  async create(@Body() createProductDto: CreateProductDto) {
-    return this.productsService.create(createProductDto);
+  async create(@Body() createProductDto: CreateProductDto, @Headers('x-user-id') userId: string) {
+    if (!userId && !createProductDto.sellerId) {
+      // Fallback for local testing if header is missing and not in body
+      // In production, Gateway ensures header is present for auth'd routes
+      throw new UnauthorizedException('Missing user context (x-user-id)');
+    }
+
+    // Enforce sellerId from token if present, otherwise trust body (only for internal/admin?)
+    // For now, prefer header.
+    const finalSellerId = userId || createProductDto.sellerId;
+
+    return this.productsService.create({
+      ...createProductDto,
+      sellerId: finalSellerId!,
+    });
   }
 
   /**

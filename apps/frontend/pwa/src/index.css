@@ -1,0 +1,24 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Mobile-first radical styles */
+html, body {
+  height: 100%;
+  width: 100%;
+  overflow-x: hidden;
+  touch-action: manipulation; /* Improve touch response */
+}
+
+/* Global smooth transition for Dark Mode */
+@layer base {
+  *, ::before, ::after {
+    @apply transition-colors duration-300 ease-in-out;
+  }
+}
+
+#root {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}

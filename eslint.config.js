@@ -4,7 +4,19 @@ const prettier = require('eslint-config-prettier');
 
 module.exports = [
   {
-    ignores: ['**/node_modules/', '**/dist/', '**/coverage/', '**/.pnpm-store/'],
+    ignores: [
+      '**/node_modules/',
+      '**/dist/',
+      '**/coverage/',
+      '**/.pnpm-store/',
+      // generated clients, prisma artifacts and wasm/runtime files
+      'apps/**/src/generated/**',
+      '**/generated/**',
+      '**/client_fix/**',
+      '**/src/**/client_fix/**',
+      '**/*.wasm',
+      '**/query_engine_*.js',
+    ],
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,

@@ -1,139 +1,205 @@
-import { Client } from 'pg';
-import { MongoClient } from 'mongodb';
-import Redis from 'ioredis';
-import * as fs from 'fs';
-import * as path from 'path';
 import { URL } from 'url';
 
-// Configuration - In a real scenario, these would come from environment variables or a secure vault
-// For this "dry-run" script, we will use placeholders or local fallbacks to demonstrate connectivity logic
-const redisUrl =
-  process.env.REDIS_URL || process.env.LOGISTICS_VALKEY_URL || 'redis://localhost:6379';
-const parsedRedisUrl = new URL(redisUrl);
+const API_URL = 'http://localhost:3000';
 
-const CONFIG = {
-  postgres: {
-    host: process.env.PG_HOST || process.env.POSTGRES_HOST || 'localhost',
-    port: parseInt(process.env.PG_PORT || process.env.POSTGRES_PORT || '5432', 10),
-    user: process.env.PG_USER || process.env.POSTGRES_USER || 'puente',
-    password: process.env.PG_PASSWORD || process.env.POSTGRES_PASSWORD || 'puente',
-    database: process.env.PG_DATABASE || process.env.POSTGRES_DB || 'puente',
+const USERS = [
+  {
+    email: 'maria_vendedora@puente.com',
+    password: 'password123',
+    role: 'SELLER',
+    name: 'Maria Vendedora',
   },
-  mongo: {
-    uri:
-      process.env.MONGO_URI ||
-      process.env.PRODUCTS_MONGO_URI ||
-      `mongodb://${process.env.MONGO_ROOT_USER || 'puente'}:${process.env.MONGO_ROOT_PASSWORD || 'puente'}@${
-        process.env.MONGO_HOST || 'localhost'
-      }:${process.env.MONGO_PORT || '27017'}/admin?authSource=admin`,
+  {
+    email: 'luis_repartidor@puente.com',
+    password: 'password123',
+    role: 'COURIER',
+    name: 'Luis Repartidor',
   },
-  redis: {
-    host: process.env.REDIS_HOST || parsedRedisUrl.hostname,
-    port: parseInt(process.env.REDIS_PORT || parsedRedisUrl.port || '6379', 10),
-    url: redisUrl,
+  {
+    email: 'carlos_cliente@puente.com',
+    password: 'password123',
+    role: 'BUYER',
+    name: 'Carlos Comprador',
   },
-};
+];
 
-async function checkPostgres() {
-  console.log('Checking PostgreSQL connection...');
-  const client = new Client(CONFIG.postgres);
-  try {
-    await client.connect();
-    const res = await client.query('SELECT NOW()');
-    console.log(`✅ PostgreSQL connected successfully. Server time: ${res.rows[0].now}`);
-    return true;
-  } catch (err: any) {
-    console.error(`❌ PostgreSQL connection failed: ${err.message}`);
-    return false;
-  } finally {
-    await client.end();
+const PRODUCTS = [
+  {
+    name: 'Mochila Wayuu',
+    description: 'Mochila artesanal tejida a mano por comunidades indígenas.',
+    price: 45.0,
+    stock: 100,
+    sku: 'MOCH-001',
+    vertical: 'fashion',
+  },
+  {
+    name: 'Café Orgánico',
+    description: 'Grano entero de altura, tostado medio.',
+    price: 12.5,
+    stock: 50,
+    sku: 'COFFEE-002',
+    vertical: 'food',
+  },
+  {
+    name: 'Pulsera Tejida',
+    description: 'Pulsera colorida hecha a mano',
+    price: 5.0,
+    stock: 100,
+    sku: 'PULS-003',
+    vertical: 'fashion',
+  },
+];
+
+const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+async function request(endpoint: string, method: string, body?: any, token?: string) {
+  const headers: any = {
+    'Content-Type': 'application/json',
+  };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
   }
-}
 
-async function checkMongo() {
-  console.log('Checking MongoDB connection...');
-  const client = new MongoClient(CONFIG.mongo.uri);
-  try {
-    await client.connect();
-    await client.db('admin').command({ ping: 1 });
-    console.log('✅ MongoDB connected successfully.');
-    return true;
-  } catch (err: any) {
-    console.error(`❌ MongoDB connection failed: ${err.message}`);
-    return false;
-  } finally {
-    await client.close();
-  }
-}
-
-async function checkRedis() {
-  console.log('Checking Redis connection...');
-  const redis = new Redis({
-    host: CONFIG.redis.host,
-    port: CONFIG.redis.port,
-    lazyConnect: true,
-    showFriendlyErrorStack: true,
-  });
+  const url = `${API_URL}${endpoint}`;
 
   try {
-    await redis.connect();
-    const res = await redis.ping();
-    console.log(`✅ Redis connected successfully. PING response: ${res}`);
-    redis.disconnect();
-    return true;
-  } catch (err: any) {
-    console.error(`❌ Redis connection failed: ${err.message}`);
-    return false;
+    const response = await fetch(url, {
+      method,
+      headers,
+      body: body ? JSON.stringify(body) : undefined,
+    });
+
+    let data;
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      data = await response.json();
+    } else {
+      data = await response.text();
+    }
+
+    if (!response.ok) {
+      // Handle 409 Conflict (User already exists) gracefully
+      if (response.status === 409) {
+        return { skipped: true, ...data };
+      }
+
+      console.error(`\n❌ HTTP Error: ${response.status} ${response.statusText}`);
+      console.error(`   Endpoint: ${method} ${url}`);
+      console.error(`   Body:`, JSON.stringify(data, null, 2));
+      throw new Error(`Request failed with status ${response.status}`);
+    }
+
+    return data;
+  } catch (error: any) {
+    // If it's not the error we just threw
+    if (!error.message.includes('Request failed')) {
+      console.error(`❌ Network/Fetch Error in ${method} ${url}:`, error.message);
+    }
+    throw error;
   }
-}
-
-async function generateReport(results: { pg: boolean; mongo: boolean; redis: boolean }) {
-  const reportPath = path.join(__dirname, '../../docs/data/tenants.md');
-  const sanitizedMongoUri = CONFIG.mongo.uri.replace(/:\/\/([^:@]+):([^@]+)@/, '://$1:****@');
-  const sanitizedRedis = CONFIG.redis.url.replace(/:\/\/([^:@]+):([^@]+)@/, '://$1:****@');
-  const content = `# Data Provisioning Report
-Date: ${new Date().toISOString()}
-
-## Connection Status
-- **PostgreSQL**: ${results.pg ? '✅ Connected' : '❌ Failed'}
-- **MongoDB**: ${results.mongo ? '✅ Connected' : '❌ Failed'}
-- **Redis**: ${results.redis ? '✅ Connected' : '❌ Failed'}
-
-## Configuration Used (Sanitized)
-- PG Host: ${CONFIG.postgres.host}:${CONFIG.postgres.port}
-- Mongo URI: ${sanitizedMongoUri}
-- Redis: ${sanitizedRedis}
-
-## Notes
-This report was generated automatically by the provisioning script.
-`;
-
-  // Ensure directory exists
-  const dir = path.dirname(reportPath);
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
-  }
-
-  fs.writeFileSync(reportPath, content);
-  console.log(`\n📄 Report generated at: ${reportPath}`);
 }
 
 async function main() {
-  console.log('🚀 Starting Data Provisioning Dry-Run...\n');
+  console.log('🚀 Starting Data Provisioning (Robust Mode)...\n');
 
-  const pgResult = await checkPostgres();
-  const mongoResult = await checkMongo();
-  const redisResult = await checkRedis();
+  const tokens: Record<string, string> = {};
+  const userIds: Record<string, string> = {};
 
-  await generateReport({ pg: pgResult, mongo: mongoResult, redis: redisResult });
+  // 1. Register & Login Users
+  console.log('👤 Provisioning Users...');
+  for (const user of USERS) {
+    try {
+      console.log(`   👉 Processing ${user.email}...`);
 
-  if (pgResult && mongoResult && redisResult) {
-    console.log('\n✨ All systems operational!');
-    process.exit(0);
-  } else {
-    console.error('\n⚠️ Some systems failed to connect. Check the report for details.');
-    process.exit(1);
+      // Register
+      const regRes = await request('/auth/register', 'POST', {
+        email: user.email,
+        password: user.password,
+        role: user.role,
+      });
+
+      if (regRes.skipped) {
+        console.log(`      ⚠️ User already exists (Skipping registration).`);
+      } else {
+        console.log(`      ✅ Registration successful.`);
+      }
+
+      // Wait for consistency
+      await wait(500);
+
+      // Login
+      console.log(`      🔑 Attempting login...`);
+      const loginRes = await request('/auth/login', 'POST', {
+        email: user.email,
+        password: user.password,
+      });
+
+      if (loginRes.accessToken) {
+        tokens[user.email] = loginRes.accessToken;
+
+        // Decode token to get ID
+        try {
+          const payload = JSON.parse(atob(loginRes.accessToken.split('.')[1]));
+          userIds[user.email] = payload.sub;
+          console.log(`      ✅ Login successful (ID: ${payload.sub})`);
+        } catch (e) {
+          console.error(`      ❌ Failed to decode token for ${user.email}`);
+        }
+      } else {
+        console.error(`      ❌ Login response missing accessToken`);
+      }
+    } catch (error) {
+      console.error(`      ❌ Failed to provision ${user.email}. Skipping.`);
+    }
   }
+
+  // 2. Create Products (Maria)
+  console.log('\n📦 Provisioning Products (Maria)...');
+  const mariaToken = tokens['maria_vendedora@puente.com'];
+
+  if (mariaToken) {
+    for (const product of PRODUCTS) {
+      try {
+        await request('/products', 'POST', product, mariaToken);
+        console.log(`   ✅ Created product: ${product.name}`);
+      } catch (error) {
+        console.log(`   ⚠️ Failed to create ${product.name} (check logs above if critical)`);
+      }
+    }
+  } else {
+    console.log('   ❌ Maria not logged in (Token missing). Skipping products.');
+  }
+
+  // 3. Fund Accounts
+  console.log('\n💰 Funding Accounts...');
+  const usersToFund = ['carlos_cliente@puente.com', 'maria_vendedora@puente.com'];
+
+  for (const email of usersToFund) {
+    const userId = userIds[email];
+    const token = tokens[email]; // Use user's own token if needed, or admin/service token if available.
+    // Here we use user's token assuming endpoint is accessible or public-ish for dev.
+
+    if (userId) {
+      try {
+        await request(
+          '/finance/dev/fund',
+          'POST',
+          {
+            userId,
+            amount: 500.0,
+          },
+          token,
+        );
+        console.log(`   ✅ Added $500 to ${email}`);
+      } catch (error) {
+        console.error(`   ❌ Failed to fund ${email}`);
+      }
+    } else {
+      console.log(`   ⚠️ Skipping funding for ${email} (User ID not found)`);
+    }
+  }
+
+  console.log('\n✨ Provisioning Complete!');
 }
 
 main();

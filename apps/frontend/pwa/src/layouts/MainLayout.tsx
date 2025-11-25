@@ -28,13 +28,16 @@ export const MainLayout: React.FC = () => {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  const navItems = [
-    { to: '/', icon: Home, label: 'Inicio' },
-    { to: '/inventory', icon: Package, label: 'Inventario' },
-    { to: '/checkout', icon: ShoppingCart, label: 'Cobrar' },
-    { to: '/finance', icon: DollarSign, label: 'Finanzas' },
-    { to: '/logistics', icon: Truck, label: 'Envíos' },
+  const allNavItems = [
+    { to: '/', icon: Home, label: 'Inicio', roles: ['SELLER', 'BUYER'] },
+    { to: '/marketplace', icon: ShoppingCart, label: 'Comprar', roles: ['BUYER'] },
+    { to: '/inventory', icon: Package, label: 'Inventario', roles: ['SELLER'] },
+    { to: '/checkout', icon: ShoppingCart, label: 'Cobrar', roles: ['SELLER'] },
+    { to: '/finance', icon: DollarSign, label: 'Finanzas', roles: ['SELLER'] },
+    { to: '/logistics', icon: Truck, label: 'Envíos', roles: ['SELLER', 'COURIER'] },
   ];
+
+  const navItems = allNavItems.filter((item) => user?.role && item.roles.includes(user.role));
 
   const handleLogout = () => {
     dispatch(logout());

@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { PrismaClient, Role } from '../src/generated/client';
+import { PrismaClient, Role } from '../src/generated/client_fix';
 import * as argon2 from 'argon2';
 
 const prisma = new PrismaClient();

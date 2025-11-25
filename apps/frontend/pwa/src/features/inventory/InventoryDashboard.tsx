@@ -9,7 +9,8 @@ import {
   retryErrorProduct,
   removeErrorProduct,
 } from './inventorySlice';
-import { Clock, AlertTriangle, CheckCircle, X, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
+import { ProductCard } from '../../components/ProductCard';
 
 export const InventoryDashboard: React.FC = () => {
   const dispatch = useDispatch();
@@ -28,7 +29,8 @@ export const InventoryDashboard: React.FC = () => {
     price: 0,
     sku: '',
     stock: 0,
-    vertical: 'general',
+    vertical: 'other',
+    attributes: {} as Record<string, any>,
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -36,6 +38,17 @@ export const InventoryDashboard: React.FC = () => {
     setFormData((prev) => ({
       ...prev,
       [name]: name === 'price' || name === 'stock' ? Number(value) : value,
+    }));
+  };
+
+  const handleAttributeChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      attributes: {
+        ...prev.attributes,
+        [name]: value,
+      },
     }));
   };
 
@@ -79,7 +92,8 @@ export const InventoryDashboard: React.FC = () => {
       price: 0,
       sku: '',
       stock: 0,
-      vertical: 'general',
+      vertical: 'other',
+      attributes: {},
     });
   };
 
@@ -95,6 +109,7 @@ export const InventoryDashboard: React.FC = () => {
       sku: product.sku,
       stock: product.stock,
       vertical: product.vertical,
+      attributes: product.attributes || {},
     });
     dispatch(removeErrorProduct(product.tempId));
     setIsModalOpen(true);
@@ -147,55 +162,12 @@ export const InventoryDashboard: React.FC = () => {
           </div>
         ) : (
           allProducts.map((product: any, index: number) => (
-            <div
+            <ProductCard
               key={`${product.status}-${product.id || index}`}
-              className={`bg-white dark:bg-gray-800 rounded-lg shadow p-4 border transition-colors duration-200 ${product.status === 'error' ? 'border-red-300 bg-red-50 dark:bg-red-900/20 dark:border-red-800' : 'border-gray-100 dark:border-gray-700'}`}
-            >
-              <div className="flex justify-between items-start">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-semibold text-gray-900 dark:text-white">{product.name}</h3>
-                    {product.status === 'pending' && (
-                      <Clock className="w-4 h-4 text-gray-400 animate-pulse" />
-                    )}
-                    {product.status === 'error' && (
-                      <AlertTriangle className="w-4 h-4 text-red-500" />
-                    )}
-                  </div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2">
-                    {product.description}
-                  </p>
-                  {product.status === 'error' && (
-                    <p className="text-xs text-red-600 dark:text-red-400 mt-1 font-medium">
-                      {product.errorMessage}
-                    </p>
-                  )}
-                </div>
-                <span className="bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400 text-xs font-medium px-2.5 py-0.5 rounded">
-                  ${product.price}
-                </span>
-              </div>
-              <div className="mt-4 flex justify-between items-center text-sm">
-                <span
-                  className={`px-2 py-1 rounded ${product.stock > 0 ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400' : 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400'}`}
-                >
-                  Stock: {product.stock}
-                </span>
-
-                {product.status === 'error' ? (
-                  <button
-                    onClick={() => handleEditError(product)}
-                    className="text-indigo-600 dark:text-indigo-400 text-xs font-bold hover:underline"
-                  >
-                    Corregir
-                  </button>
-                ) : (
-                  <span className="text-gray-400 dark:text-gray-500 text-xs">
-                    SKU: {product.sku}
-                  </span>
-                )}
-              </div>
-            </div>
+              product={product}
+              variant="seller"
+              onEditError={handleEditError}
+            />
           ))
         )}
       </div>
@@ -287,6 +259,97 @@ export const InventoryDashboard: React.FC = () => {
                   />
                 </div>
               </div>
+              <div>
+                <label
+                  htmlFor="vertical"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                >
+                  Categoría / Vertical
+                </label>
+                <select
+                  id="vertical"
+                  name="vertical"
+                  value={formData.vertical}
+                  onChange={handleInputChange}
+                  required
+                  className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                >
+                  <option value="food">Alimentos</option>
+                  <option value="fashion">Moda / Ropa</option>
+                  <option value="crafts">Artesanías</option>
+                  <option value="electronics">Electrónica</option>
+                  <option value="other">Otros</option>
+                </select>
+              </div>
+
+              {/* Dynamic Attributes */}
+              {formData.vertical === 'fashion' && (
+                <div className="grid grid-cols-2 gap-4 bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300">
+                      Talla
+                    </label>
+                    <select
+                      name="size"
+                      value={formData.attributes.size || ''}
+                      onChange={handleAttributeChange}
+                      className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm sm:text-sm p-2 border bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    >
+                      <option value="">Seleccionar</option>
+                      <option value="S">S</option>
+                      <option value="M">M</option>
+                      <option value="L">L</option>
+                      <option value="XL">XL</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300">
+                      Color
+                    </label>
+                    <input
+                      name="color"
+                      type="text"
+                      placeholder="Ej: Rojo"
+                      value={formData.attributes.color || ''}
+                      onChange={handleAttributeChange}
+                      className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm sm:text-sm p-2 border bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {formData.vertical === 'food' && (
+                <div className="bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg">
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300">
+                    Fecha de Vencimiento
+                  </label>
+                  <input
+                    name="expirationDate"
+                    type="date"
+                    value={formData.attributes.expirationDate || ''}
+                    onChange={handleAttributeChange}
+                    className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm sm:text-sm p-2 border bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  />
+                </div>
+              )}
+
+              {formData.vertical === 'electronics' && (
+                <div className="bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg">
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300">
+                    Garantía (meses)
+                  </label>
+                  <input
+                    name="warrantyMonths"
+                    type="number"
+                    min="0"
+                    placeholder="Ej: 12"
+                    value={formData.attributes.warrantyMonths || ''}
+                    onChange={handleAttributeChange}
+                    className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm sm:text-sm p-2 border bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  />
+                </div>
+              )}
+
               <div>
                 <label
                   htmlFor="sku"

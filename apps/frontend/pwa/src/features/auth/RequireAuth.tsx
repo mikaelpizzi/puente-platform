@@ -1,10 +1,16 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAppSelector } from '../../app/hooks';
-import { selectIsAuthenticated } from './authSlice';
+import { selectIsAuthenticated, selectCurrentUser } from './authSlice';
 
-export const RequireAuth: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+interface RequireAuthProps {
+  children: React.ReactNode;
+  allowedRoles?: string[];
+}
+
+export const RequireAuth: React.FC<RequireAuthProps> = ({ children, allowedRoles }) => {
   const isAuthenticated = useAppSelector(selectIsAuthenticated);
+  const user = useAppSelector(selectCurrentUser);
   const location = useLocation();
 
   if (!isAuthenticated) {
@@ -12,6 +18,11 @@ export const RequireAuth: React.FC<{ children: React.ReactNode }> = ({ children 
     // trying to go to when they were redirected. This allows us to send them
     // along to that page after they login, which is a nicer user experience.
     return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  if (allowedRoles && user && !allowedRoles.includes(user.role)) {
+    // Redirect unauthorized access to a safe default
+    return <Navigate to="/" replace />;
   }
 
   return <>{children}</>;

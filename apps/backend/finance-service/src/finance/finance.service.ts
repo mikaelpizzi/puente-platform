@@ -136,4 +136,29 @@ export class FinanceService {
       return updatedOrder;
     });
   }
+
+  async getOrder(id: string) {
+    const order = await this.prisma.order.findUnique({
+      where: { id },
+      include: { items: true },
+    });
+
+    if (!order) {
+      throw new Error('Order not found');
+    }
+
+    return order;
+  }
+
+  async addFunds(userId: string, amount: number) {
+    return this.prisma.ledgerEntry.create({
+      data: {
+        userId,
+        amount,
+        type: LedgerType.CREDIT,
+        category: LedgerCategory.ADJUSTMENT,
+        description: 'Dev TopUp',
+      },
+    });
+  }
 }

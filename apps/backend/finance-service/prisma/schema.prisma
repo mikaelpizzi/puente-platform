@@ -21,7 +21,7 @@ enum OrderStatus {
 model Order {
   id          String      @id @default(uuid())
   sellerId    String
-  buyerId     String
+  buyerId     String?
   totalAmount Decimal
   status      OrderStatus @default(PENDING)
   createdAt   DateTime    @default(now())

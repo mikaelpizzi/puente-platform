@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
-import { Role } from '../generated/client/client';
+import { Role } from '@prisma/auth-client';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 const mockAuthService = {

@@ -22,9 +22,32 @@ export const LoginPage: React.FC = () => {
     console.log('Attempting login with:', { email: email.trim(), passwordLength: password.length });
 
     try {
-      const user = await login({ email: email.trim(), password }).unwrap();
-      console.log('Login successful:', user);
-      dispatch(setCredentials({ user: user.user, token: user.accessToken }));
+      const loginResponse = await login({ email: email.trim(), password }).unwrap();
+      console.log('Login successful:', loginResponse);
+
+      // Decode token to get user info since backend only returns tokens
+      const token = loginResponse.accessToken;
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(
+        window
+          .atob(base64)
+          .split('')
+          .map(function (c) {
+            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+          })
+          .join(''),
+      );
+      const decoded = JSON.parse(jsonPayload);
+
+      const user = {
+        id: decoded.sub,
+        email: decoded.email,
+        role: decoded.role,
+        name: decoded.email.split('@')[0], // Fallback name
+      };
+
+      dispatch(setCredentials({ user, token }));
       toast.success(`¡Bienvenido de vuelta!`, {
         id: loadingToast,
         style: {
@@ -36,7 +59,18 @@ export const LoginPage: React.FC = () => {
           secondary: '#10B981',
         },
       });
-      navigate('/');
+
+      // Role-based redirection
+      const role = user.role;
+      if (role === 'SELLER') {
+        navigate('/inventory');
+      } else if (role === 'COURIER') {
+        navigate('/logistics');
+      } else if (role === 'BUYER') {
+        navigate('/marketplace');
+      } else {
+        navigate('/');
+      }
     } catch (err: any) {
       console.error('Failed to login:', err);
       let errorMessage = 'Credenciales incorrectas';

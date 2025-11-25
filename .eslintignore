@@ -1,0 +1,13 @@
+# Ignore generated clients and wasm/runtime artifacts
+apps/**/src/generated/**
+**/generated/**
+**/src/**/client_fix/**
+**/client_fix/**
+**/*.wasm
+**/query_engine_*.js
+
+# Node and build folders
+node_modules/
+dist/
+build/
+.next/

@@ -13,7 +13,7 @@ export class LogisticsController {
     @Body('lat') lat: number,
     @Body('lng') lng: number,
   ) {
-    await this.logisticsService.updateDriverLocation(driverId, lat, lng);
+    await this.logisticsService.updateDriverLocation(driverId, lat, lng, 'rest');
     return { success: true };
   }
 

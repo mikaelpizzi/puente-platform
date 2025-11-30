@@ -1,23 +1,59 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { ConfigService } from '@nestjs/config';
 import { LogisticsService } from './logistics.service';
-import Redis from 'ioredis';
+import { MetricsService } from '../metrics/metrics.service';
 
-const mockRedis = {
-  geoadd: vi.fn(),
+const createRedisMock = () => ({
+  geoadd: vi.fn().mockResolvedValue(1),
   georadius: vi.fn(),
-  publish: vi.fn(),
+  publish: vi.fn().mockResolvedValue(1),
+  lpush: vi.fn().mockResolvedValue(1),
+  ltrim: vi.fn().mockResolvedValue(1),
+  expire: vi.fn().mockResolvedValue(1),
+  zremrangebyscore: vi.fn().mockResolvedValue(0),
+  zcard: vi.fn().mockResolvedValue(0),
+  zadd: vi.fn().mockResolvedValue(1),
+  pexpire: vi.fn().mockResolvedValue(1),
+});
+
+const configMock = {
+  get: vi.fn((key: string) => {
+    const map: Record<string, number> = {
+      LOGISTICS_HISTORY_SIZE: 3,
+      LOGISTICS_HISTORY_TTL_SECONDS: 60,
+      LOGISTICS_THROTTLE_WINDOW_MS: 1000,
+      LOGISTICS_THROTTLE_MAX_EVENTS: 2,
+    };
+    return map[key];
+  }),
+};
+
+const metricsMock = {
+  observeIngest: vi.fn(),
+  incrementThrottled: vi.fn(),
 };
 
 describe('LogisticsService', () => {
   let service: LogisticsService;
+  let mockRedis: ReturnType<typeof createRedisMock>;
 
   beforeEach(async () => {
+    mockRedis = createRedisMock();
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         LogisticsService,
         {
           provide: 'REDIS_CLIENT',
           useValue: mockRedis,
+        },
+        {
+          provide: ConfigService,
+          useValue: configMock,
+        },
+        {
+          provide: MetricsService,
+          useValue: metricsMock,
         },
       ],
     }).compile();
@@ -38,10 +74,14 @@ describe('LogisticsService', () => {
     await service.updateDriverLocation(driverId, lat, lng);
 
     expect(mockRedis.geoadd).toHaveBeenCalledWith('drivers:locations', lng, lat, driverId);
+    expect(mockRedis.lpush).toHaveBeenCalledTimes(1);
+    expect(mockRedis.ltrim).toHaveBeenCalledWith(expect.any(String), 0, 2);
+    expect(mockRedis.expire).toHaveBeenCalledWith(expect.any(String), 60);
     expect(mockRedis.publish).toHaveBeenCalledWith(
       'driver.location.updated',
       JSON.stringify({ driverId, lat, lng }),
     );
+    expect(metricsMock.observeIngest).toHaveBeenCalledWith('rest', expect.any(Number));
   });
 
   it('should find nearby drivers', async () => {
@@ -75,5 +115,17 @@ describe('LogisticsService', () => {
       distance: '1.2',
       coordinates: { lng: '-58.3820', lat: '-34.6040' },
     });
+  });
+
+  it('should throttle rapid updates from the same driver', async () => {
+    mockRedis.zcard.mockResolvedValueOnce(0).mockResolvedValueOnce(1).mockResolvedValueOnce(2);
+
+    await service.updateDriverLocation('driver-fast', 10, 10);
+    await service.updateDriverLocation('driver-fast', 10.1, 10.1);
+
+    await expect(service.updateDriverLocation('driver-fast', 10.2, 10.2)).rejects.toThrow(
+      /exceeded 2 updates/,
+    );
+    expect(metricsMock.incrementThrottled).toHaveBeenCalledWith('rest');
   });
 });

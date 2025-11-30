@@ -38,91 +38,185 @@ This checklist explains how to boot the entire backend locally (Docker infra + f
 
 ## 4. Happy-path request sequence
 
-1. **Register or login:**
-   - `POST {{auth_service_url}}/auth/register` (body: `email`, `password`, `role`).
-   - `POST {{auth_service_url}}/auth/login` to receive `accessToken` and `refreshToken`.
-   - Use a Postman test script to set `pm.environment.set('bearer_token', pm.response.json().accessToken)`.
-2. **Gateway sanity check:**
-   - `GET {{api_gateway_url}}/health` → expect `200` `{"status":"ok"...}`.
-   - `GET {{api_gateway_url}}/products/health` (proxied) with `Authorization: Bearer {{bearer_token}}`.
-3. **Products workflow:**
-   - `POST {{api_gateway_url}}/products` with product payload `{ name, price, attributes }`.
-   - `GET {{api_gateway_url}}/products` to confirm listing.
-4. **Finance workflow:**
-   - `POST {{api_gateway_url}}/finance/orders` with `{ sellerId, buyerId, items[] }`.
-   - `POST {{api_gateway_url}}/finance/orders/{{id}}/payment` to simulate payment link creation.
-   - `POST {{api_gateway_url}}/finance/orders/{{id}}/compensate` to test Saga rollback.
-5. **Logistics workflow:**
-   - `POST {{api_gateway_url}}/deliveries` with pickup/dropoff coordinates.
-   - `PATCH {{api_gateway_url}}/deliveries/{{id}}/status` to mark progress; validate events in terminal logs.
-6. **Refresh token flow (optional):**
-   - `POST {{auth_service_url}}/auth/refresh` with the refresh token to obtain a new access token.
+> **Seeded demo users:** running `pnpm provision:data` creates three actors. Use them unless you want to register fresh accounts.
+> | Role | Email | Password |
+> | --- | --- | --- |
+> | Seller | `maria_vendedora@puente.com` | `password123` |
+> | Courier | `luis_repartidor@puente.com` | `password123` |
+> | Buyer | `carlos_cliente@puente.com` | `password123` |
 
-### Example payloads (copy/paste ready)
+Follow the steps below in order. Each block includes the exact method, URL, headers, and JSON payload you can paste into Postman.
 
-```http
-# Login (POST {{auth_service_url}}/auth/login)
-{
-   "email": "vendedor@postman.com",
-   "password": "ChangeMe123!"
-}
+### 4.1 Register or login
 
-# Create product (POST {{api_gateway_url}}/products)
-{
-   "name": "Mochila Artesanal",
-   "description": "Hecha a mano con cuero local",
-   "price": 45.0,
-   "sku": "MOCH-001",
-   "vertical": "fashion",
-   "sellerId": "<uuid-del-vendedor>",
-   "stock": 10,
-   "attributes": {
-      "color": "marron",
-      "material": "cuero"
-   }
-}
+- **Endpoint:** `POST {{auth_service_url}}/auth/login`
+- **Headers:** `Content-Type: application/json`
+- **Body:**
+  ```json
+  {
+    "email": "maria_vendedora@puente.com",
+    "password": "password123"
+  }
+  ```
+- **Expected:** `200 OK` with `{ "accessToken", "refreshToken", "user" }`. Add a test script: `pm.environment.set('bearer_token', pm.response.json().accessToken); pm.environment.set('refresh_token', pm.response.json().refreshToken); pm.environment.set('seller_id', pm.response.json().user.id);`
 
-# Finance order (POST {{api_gateway_url}}/finance/orders)
-{
-   "sellerId": "<uuid-del-vendedor>",
-   "buyerId": "<uuid-del-comprador>",
-   "items": [
-      {
-         "productId": "<uuid-producto>",
-         "quantity": 1,
-         "price": 45
-      }
-   ]
-}
+> Repeat the same request with the courier and buyer emails so you have `courier_token`, `buyer_token`, etc. (use `pm.environment.set('courier_token', ...)`).
 
-# Logistics delivery (POST {{api_gateway_url}}/deliveries)
-{
-   "orderId": "<uuid-orden>",
-   "pickupLocation": { "lat": -12.0464, "lng": -77.0428 },
-   "dropoffLocation": { "lat": -12.0780, "lng": -77.0500 },
-   "driverId": "<uuid-repartidor>"
-}
-```
+### 4.2 Gateway sanity check
+
+- **Endpoint:** `GET {{api_gateway_url}}/health`
+- **Headers:** none
+- **Expected:** `200` with `{"status":"ok"}` confirming the gateway is reachable.
+
+To verify a proxied health route:
+
+- **Endpoint:** `GET {{api_gateway_url}}/products/health`
+- **Headers:** `Authorization: Bearer {{bearer_token}}`
+- **Expected:** `200` with the products service health payload.
+
+### 4.3 Products workflow (seller token)
+
+1. **Create product**
+   - **Endpoint:** `POST {{api_gateway_url}}/products`
+   - **Headers:** `Content-Type: application/json`, `Authorization: Bearer {{bearer_token}}`
+   - **Body:**
+     ```json
+     {
+       "name": "Mochila Artesanal",
+       "description": "Hecha a mano con cuero local",
+       "price": 45,
+       "sku": "MOCH-001",
+       "vertical": "fashion",
+       "stock": 10,
+       "attributes": {
+         "color": "marron",
+         "material": "cuero"
+       }
+     }
+     ```
+   - **Expected:** `201` with the stored product (capture `productId` → `pm.environment.set('product_id', pm.response.json().id)`).
+
+2. **List products**
+   - **Endpoint:** `GET {{api_gateway_url}}/products`
+   - **Headers:** `Authorization: Bearer {{bearer_token}}`
+   - **Expected:** Array containing the product created above.
+
+### 4.4 Finance workflow (seller + buyer IDs)
+
+1. **Create order**
+   - **Endpoint:** `POST {{api_gateway_url}}/finance/orders`
+   - **Headers:** `Content-Type: application/json`, `Authorization: Bearer {{bearer_token}}`
+   - **Body:**
+     ```json
+     {
+       "sellerId": "{{seller_id}}",
+       "buyerId": "{{buyer_id}}",
+       "items": [
+         {
+           "productId": "{{product_id}}",
+           "quantity": 1,
+           "price": 45
+         }
+       ]
+     }
+     ```
+   - **Expected:** `201` with `{ "id", "status": "PENDING" }`. Store `order_id` via Postman script.
+
+2. **Generate payment link**
+   - **Endpoint:** `POST {{api_gateway_url}}/finance/orders/{{order_id}}/payment`
+   - **Headers:** `Authorization: Bearer {{bearer_token}}`
+   - **Expected:** `201` with mocked Mercado Pago payload (contains `paymentUrl`).
+
+3. **Trigger compensation test (optional)**
+   - **Endpoint:** `POST {{api_gateway_url}}/finance/orders/{{order_id}}/compensate`
+   - **Headers:** `Authorization: Bearer {{bearer_token}}`
+   - **Expected:** `200` with `{ "status": "ROLLED_BACK" }` to validate Saga rollback.
+
+### 4.5 Logistics delivery workflow (seller token)
+
+1. **Create delivery**
+   - **Endpoint:** `POST {{api_gateway_url}}/deliveries`
+   - **Headers:** `Content-Type: application/json`, `Authorization: Bearer {{bearer_token}}`
+   - **Body:**
+     ```json
+     {
+       "orderId": "{{order_id}}",
+       "pickupLocation": { "lat": -12.0464, "lng": -77.0428 },
+       "dropoffLocation": { "lat": -12.078, "lng": -77.05 }
+     }
+     ```
+   - **Expected:** `201` with `{ "id": "{{delivery_id}}", "status": "PENDING" }`.
+
+2. **Assign courier**
+   - **Endpoint:** `PATCH {{api_gateway_url}}/deliveries/{{delivery_id}}/assign`
+   - **Headers:** `Authorization: Bearer {{bearer_token}}`
+   - **Body:** `{ "driverId": "{{courier_id}}" }`
+   - **Expected:** `200` with status `ASSIGNED` and `driverId` persisted.
+
+3. **Update status**
+   - **Endpoint:** `PATCH {{api_gateway_url}}/deliveries/{{delivery_id}}/status`
+   - **Headers:** `Authorization: Bearer {{bearer_token}}`
+   - **Body:** `{ "status": "PICKED_UP" }`
+   - **Expected:** `200` with updated status (later set to `DELIVERED`).
+
+4. **Get tracking link**
+   - **Endpoint:** `GET {{api_gateway_url}}/deliveries/{{delivery_id}}/tracking`
+   - **Headers:** `Authorization: Bearer {{buyer_token}}` (buyers fetch their tracking link)
+   - **Expected:** `200` with `{ "url": "https://puente.app/track/{{delivery_id}}?..." }`.
+
+### 4.6 Courier telemetry + throttling (courier token)
+
+- **Endpoint:** `POST {{api_gateway_url}}/logistics/location`
+- **Headers:** `Content-Type: application/json`, `Authorization: Bearer {{courier_token}}`
+- **Body:**
+  ```json
+  {
+    "driverId": "{{courier_id}}",
+    "lat": -12.05,
+    "lng": -77.04
+  }
+  ```
+- **Expected:** `200` `{ "success": true }`. Send ~5 distinct requests quickly (within 3 seconds) and a sixth one should respond `429 Too Many Requests` indicating the throttling window is active. The metrics endpoint (next section) will increment `logistics_telemetry_throttled_total`.
+
+### 4.7 Prometheus metrics snapshot
+
+- **Endpoint:** `GET {{logistics_service_url}}/metrics`
+- **Headers:** none (local service access only)
+- **Expected:** plaintext exposition format. Search for:
+  - `logistics_telemetry_ingest_total{source="rest"}` → increments per successful REST update.
+  - `logistics_telemetry_throttled_total{source="rest"}` → increments when you hit 429s.
+
+### 4.8 Refresh token flow
+
+- **Endpoint:** `POST {{auth_service_url}}/auth/refresh`
+- **Headers:** `Content-Type: application/json`, `Authorization: Bearer {{refresh_token}}` (place the refresh token in the body if your implementation requires it)
+- **Body:**
+  ```json
+  {
+    "refreshToken": "{{refresh_token}}"
+  }
+  ```
+- **Expected:** `200` with a brand-new `accessToken` and `refreshToken`. Update the environment variables so the frontend/mobile apps can continue without re-login.
 
 ## 5. Edge-case drills (recommended Postman tests)
 
 Run these after the happy-path sequence to ensure the backend enforces validation, authorization, and compensating logic. Document failures in your PRs.
 
-| Area                       | Scenario                                                                                  | Expected response                                                                 |
-| -------------------------- | ----------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
-| Auth                       | `POST /auth/register` with duplicate email                                                | `409` Conflict, message about email already in use.                               |
-| Auth                       | `POST /auth/login` with wrong password                                                    | `401` with `Invalid credentials`.                                                 |
-| Auth                       | `POST /auth/refresh` using revoked/unknown refresh token                                  | `401` and the body explains the token is invalid or expired.                      |
-| API Gateway                | Call `GET /products` without `Authorization` header                                       | `401` from `JwtAuthGuard`.                                                        |
-| API Gateway                | Call `GET /products` with forged JWT (tampered signature)                                 | `401`, confirm the guard rejects the token.                                       |
-| Products                   | `POST /products` missing mandatory fields                                                 | `400` validation error listing the offending fields.                              |
-| Finance                    | `POST /finance/orders` with empty `items` array                                           | `400`, Prisma validation fails before touching DB.                                |
-| Finance                    | `POST /finance/orders/:id/payment` twice                                                  | Second call returns `409` or a domain-specific error that payment already exists. |
-| Finance                    | `POST /finance/orders/:id/compensate` before payment                                      | `409`/`400` indicating invalid Saga transition.                                   |
-| Logistics                  | `POST /deliveries` with malformed coordinates                                             | `400` from validation pipes.                                                      |
-| Logistics                  | `PATCH /deliveries/:id/status` skipping states (e.g., jump from `PENDING` to `DELIVERED`) | `409` due to state machine guard.                                                 |
-| Gateway resiliency         | Stop one downstream service (e.g., products) and hit `/products` via the gateway          | `502`/`504`, verify gateway logs show proxy failure.                              |
-| Rate limiting (if enabled) | Burst-hit `POST /auth/login` with invalid creds 10x quickly                               | `429` once the limit is exceeded.                                                 |
+| Area                      | Scenario                                                                                  | Expected response                                                                 |
+| ------------------------- | ----------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| Auth                      | `POST /auth/register` with duplicate email                                                | `409` Conflict, message about email already in use.                               |
+| Auth                      | `POST /auth/login` with wrong password                                                    | `401` with `Invalid credentials`.                                                 |
+| Auth                      | `POST /auth/refresh` using revoked/unknown refresh token                                  | `401` and the body explains the token is invalid or expired.                      |
+| API Gateway               | Call `GET /products` without `Authorization` header                                       | `401` from `JwtAuthGuard`.                                                        |
+| API Gateway               | Call `GET /products` with forged JWT (tampered signature)                                 | `401`, confirm the guard rejects the token.                                       |
+| Products                  | `POST /products` missing mandatory fields                                                 | `400` validation error listing the offending fields.                              |
+| Finance                   | `POST /finance/orders` with empty `items` array                                           | `400`, Prisma validation fails before touching DB.                                |
+| Finance                   | `POST /finance/orders/:id/payment` twice                                                  | Second call returns `409` or a domain-specific error that payment already exists. |
+| Finance                   | `POST /finance/orders/:id/compensate` before payment                                      | `409`/`400` indicating invalid Saga transition.                                   |
+| Logistics                 | `POST /deliveries` with malformed coordinates                                             | `400` from validation pipes.                                                      |
+| Logistics                 | `PATCH /deliveries/:id/status` skipping states (e.g., jump from `PENDING` to `DELIVERED`) | `409` due to state machine guard.                                                 |
+| Gateway resiliency        | Stop one downstream service (e.g., products) and hit `/products` via the gateway          | `502`/`504`, verify gateway logs show proxy failure.                              |
+| Logistics telemetry limit | Burst-hit `POST /logistics/location` with the same courier token 6 times in <3s           | First five succeed, sixth returns `429 Too Many Requests`.                        |
 
 ## 6. Troubleshooting quick wins
 

@@ -5,6 +5,8 @@ import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { DeliveryStatus } from '../src/delivery/dto/update-status.dto';
 
+process.env.GATEWAY_SHARED_SECRET = 'test-secret';
+
 const mockRedis = {
   get: vi.fn(),
   set: vi.fn(),

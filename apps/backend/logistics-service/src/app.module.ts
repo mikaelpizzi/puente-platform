@@ -4,6 +4,7 @@ import { LogisticsModule } from './logistics/logistics.module';
 import { DeliveryModule } from './delivery/delivery.module';
 import { RedisModule } from './redis/redis.module';
 import { HealthController } from './health/health.controller';
+import { MetricsModule } from './metrics/metrics.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { HealthController } from './health/health.controller';
     RedisModule,
     LogisticsModule,
     DeliveryModule,
+    MetricsModule,
   ],
   controllers: [HealthController],
 })

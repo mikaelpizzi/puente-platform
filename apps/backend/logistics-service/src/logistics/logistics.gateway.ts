@@ -29,7 +29,7 @@ export class LogisticsGateway implements OnGatewayConnection, OnGatewayDisconnec
     @MessageBody() data: UpdateLocationDto,
     @ConnectedSocket() client: Socket,
   ) {
-    await this.logisticsService.updateDriverLocation(data.driverId, data.lat, data.lng);
+    await this.logisticsService.updateDriverLocation(data.driverId, data.lat, data.lng, 'ws');
     return { event: 'locationUpdated', data: { success: true } };
   }
 }

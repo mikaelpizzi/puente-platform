@@ -1,5 +1,13 @@
 version: '3.9'
 
+x-otel-env: &otel-env # Reuse this block in backend service containers to forward traces locally.
+  OTEL_TRACES_EXPORTER: ${OTEL_TRACES_EXPORTER:-otlp}
+  OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-https://otlp-gateway-prod-us-east-2.grafana.net/otlp}
+  OTEL_EXPORTER_OTLP_HEADERS: ${OTEL_EXPORTER_OTLP_HEADERS:-Authorization=Basic <grafana-basic-token>}
+  OTEL_SERVICE_NAMESPACE: ${OTEL_SERVICE_NAMESPACE:-my-application-group}
+  OTEL_DEPLOYMENT_ENVIRONMENT: ${OTEL_DEPLOYMENT_ENVIRONMENT:-development}
+  OTEL_NODE_RESOURCE_DETECTORS: ${OTEL_NODE_RESOURCE_DETECTORS:-env,host,os}
+
 services:
   postgres:
     image: postgres:16-alpine
@@ -8,6 +16,7 @@ services:
     ports:
       - '${POSTGRES_PORT:-5432}:5432'
     environment:
+      <<: *otel-env
       POSTGRES_USER: ${POSTGRES_USER:-puente}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-puente}
       POSTGRES_DB: ${POSTGRES_DB:-puente}
@@ -28,6 +37,7 @@ services:
     ports:
       - '${MONGO_PORT:-27017}:27017'
     environment:
+      <<: *otel-env
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER:-puente}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:-puente}
     volumes:
@@ -42,6 +52,8 @@ services:
     ports:
       - '${REDIS_PORT:-6379}:6379'
     command: redis-server --save "" --appendonly no
+    environment:
+      <<: *otel-env
     networks:
       - puente-dev
     volumes:

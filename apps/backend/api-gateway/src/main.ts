@@ -1,9 +1,13 @@
+import './instrumentation';
+
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ConfigService } from '@nestjs/config';
+import { Logger } from 'nestjs-pino';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, { bodyParser: false });
+  const app = await NestFactory.create(AppModule, { bodyParser: false, bufferLogs: true });
+  app.useLogger(app.get(Logger));
 
   const configService = app.get(ConfigService);
   const port = configService.get('API_GATEWAY_PORT') || 3000;
@@ -17,7 +21,10 @@ async function bootstrap() {
   });
 
   await app.listen(port, '0.0.0.0');
-
-  console.log(`🚀 API Gateway running on port ${port}`);
+  const logger = app.get(Logger);
+  logger.log(`🚀 API Gateway running on port ${port}`);
+  if (app.flushLogs) {
+    app.flushLogs();
+  }
 }
 bootstrap();

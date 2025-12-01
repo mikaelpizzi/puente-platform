@@ -142,6 +142,63 @@ Run e2e tests:
 pnpm test:e2e
 ```
 
+## 🔭 Observability & Structured Logs
+
+Each NestJS backend still imports `apps/backend/<service>/src/instrumentation.ts` **before** Nest starts, so the OpenTelemetry Node SDK boots with HTTP + Prisma/Mongoose/Redis auto-instrumentations. We also keep [`nestjs-pino`](https://github.com/iamolegga/nestjs-pino) as the global logger so every log carries the active `traceId`. The instrumentation now reads the exact environment variables Grafana Cloud recommends (service namespace, deployment environment, OTLP endpoint and Basic token header), and it gracefully steps aside if you prefer to run the official `NODE_OPTIONS=--require @opentelemetry/auto-instrumentations-node/register` flow.
+
+### Grafana Cloud quickstart (local PNPM loop)
+
+1. Copy `.env.example` and fill the new observability block:
+   ```bash
+   OTEL_TRACES_EXPORTER=otlp
+   OTEL_EXPORTER_OTLP_ENDPOINT="https://otlp-gateway-prod-us-east-2.grafana.net/otlp"
+   OTEL_EXPORTER_OTLP_HEADERS="Authorization=Basic <grafana-basic-token>"
+   OTEL_SERVICE_NAMESPACE=my-application-group
+   OTEL_DEPLOYMENT_ENVIRONMENT=development
+   OTEL_NODE_RESOURCE_DETECTORS=env,host,os
+   ```
+   > 💡 Place your **actual Grafana token** inside `OTEL_EXPORTER_OTLP_HEADERS`. For safety keep it only in `.env` locally (ignored by git) or in `fly secrets`/Render env vars in prod.
+2. (Optional) If you want to follow Grafana's "Direct on Linux" snippet verbatim, run any service with:
+   ```bash
+   OTEL_TRACES_EXPORTER="otlp" \
+   OTEL_EXPORTER_OTLP_ENDPOINT="https://otlp-gateway-prod-us-east-2.grafana.net/otlp" \
+   OTEL_EXPORTER_OTLP_HEADERS="Authorization=Basic <grafana-basic-token>" \
+   OTEL_RESOURCE_ATTRIBUTES="service.name=puente-platform,service.namespace=my-application-group,deployment.environment=production" \
+   OTEL_NODE_RESOURCE_DETECTORS="env,host,os" \
+   NODE_OPTIONS="--require @opentelemetry/auto-instrumentations-node/register" \
+   pnpm --filter @puente/api-gateway start:dev
+   ```
+   Our bootstrap files detect that `NODE_OPTIONS` already required the auto-register module and avoid double-starting the SDK.
+3. Start the stack (`pnpm dev:backend`) and open Grafana Tempo → `Explore` to inspect spans grouped per service (e.g. `puente-api-gateway`, `puente-finance-service`).
+
+### Docker / Compose
+
+`docker-compose.yml` exposes a reusable `*otel-env` block with the same Grafana variables. Apply it to any container (`environment: *otel-env`) so the OTLP endpoint + headers travel with your services if/when you reintroduce them into Compose.
+
+### Fly.io / production
+
+Every `fly.toml` now carries the namespace/environment defaults plus the Grafana endpoint. Store the actual Basic token via secrets—never commit the real string:
+
+```bash
+fly secrets set \
+  OTEL_EXPORTER_OTLP_HEADERS="Authorization=Basic <grafana-basic-token>" \
+  --app puente-auth-service
+```
+
+Repeat for the remaining services (or script it via `fly secrets import`). Structured logs and traces share the same IDs, so you can jump from a 500 in `puente-api-gateway` to the downstream Prisma query directly inside Grafana.
+
+## 👥 User Roles & Current Capabilities
+
+These are the three actors already wired across Auth, Products, Finance, Logistics and the PWA. Seed accounts are created automatically by `pnpm provision:data` (also listed in `docs/backend/postman-guide.md`).
+
+| Role               | Demo Account                                 | What you can do today                                                                                                                                                                                                                | How to test it                                                                                                                                                                                                                                                                      |
+| ------------------ | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Seller (Maria)** | `maria_vendedora@puente.com` / `password123` | Inventory dashboard (create/update products with optimistic UI), bulk stock adjustments, checkout to generate payment links/QRs, finance dashboard for orders, create deliveries and assign couriers, access logistics map/tracking. | 1) PWA: log in and navigate the Seller menu (`/inventory`, `/checkout`, `/finance`, `/logistics`). 2) Postman: follow sections 4.3–4.5 of `docs/backend/postman-guide.md` using the seller token to call `POST /products`, `POST /finance/orders`, `POST /deliveries`, etc.         |
+| **Courier (Luis)** | `luis_repartidor@puente.com` / `password123` | Real-time delivery queue, accept/decline assignments, share live location (REST/WebSocket), update proof-of-progress states, consume logistic notifications.                                                                         | 1) PWA mobile layout: log in and open the Courier tabs to receive assignments. 2) Postman: section 4.6 sends `POST /logistics/location` with the courier token to publish telemetry (includes throttling expectations) and `GET /deliveries/:id/tracking` to verify status updates. |
+| **Buyer (Carlos)** | `carlos_cliente@puente.com` / `password123`  | Marketplace browsing/cart, checkout as a consumer, receive payment links, view public tracking links for deliveries.                                                                                                                 | 1) PWA: log in as buyer to explore `/marketplace` and create orders. 2) Postman: section 4.4 explains how to create finance orders referencing `buyerId`; section 4.5 shows how buyers retrieve `/deliveries/:id/tracking` with their token.                                        |
+
+> Need deeper API-by-API steps? Head to `docs/backend/postman-guide.md` for the full happy-path workflow (health checks, auth, finance, logistics, courier telemetry, metrics scraping) plus ready-to-paste JSON payloads.
+
 ## 📦 Deployment
 
 The project is configured for **Continuous Deployment** via GitHub Actions:

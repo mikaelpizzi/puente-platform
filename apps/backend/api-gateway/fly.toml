@@ -4,6 +4,15 @@ primary_region = "mia"
 [build]
   dockerfile = "Dockerfile"
 
+[env]
+  OTEL_SERVICE_NAME = "puente-api-gateway"
+  OTEL_SERVICE_NAMESPACE = "my-application-group"
+  OTEL_DEPLOYMENT_ENVIRONMENT = "production"
+  OTEL_TRACES_EXPORTER = "otlp"
+  OTEL_EXPORTER_OTLP_ENDPOINT = "https://otlp-gateway-prod-us-east-2.grafana.net/otlp"
+  OTEL_EXPORTER_OTLP_HEADERS = "Authorization=Basic <set-via-fly-secret>"
+  OTEL_NODE_RESOURCE_DETECTORS = "env,host,os"
+
 [http_service]
   internal_port = 3000
   force_https = true

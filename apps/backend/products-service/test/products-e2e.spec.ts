@@ -5,9 +5,12 @@ import { ProductsController } from '../src/products/products.controller';
 import { ProductsService } from '../src/products/products.service';
 import { RolesGuard } from '../src/common/guards/roles.guard';
 import { Role } from '../src/common/enums/role.enum';
+import { ServiceAuthGuard } from '../src/common/guards/service-auth.guard';
+import { ConfigService } from '@nestjs/config';
 
 describe('ProductsController (e2e) - RBAC', () => {
   let app: INestApplication;
+  const gatewaySecret = 'dev-gateway-secret';
   const mockProductsService = {
     create: vi.fn().mockResolvedValue({ id: '1', name: 'Test' }),
     findAll: vi.fn().mockResolvedValue([]),
@@ -18,6 +21,9 @@ describe('ProductsController (e2e) - RBAC', () => {
     releaseStock: vi.fn().mockResolvedValue(true),
     confirmStock: vi.fn().mockResolvedValue(true),
   };
+  const mockConfigService = {
+    get: vi.fn((key: string) => (key === 'GATEWAY_SHARED_SECRET' ? gatewaySecret : undefined)),
+  };
 
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -27,7 +33,12 @@ describe('ProductsController (e2e) - RBAC', () => {
           provide: ProductsService,
           useValue: mockProductsService,
         },
-        RolesGuard, // Ensure Guard is provided if it relies on DI (Reflector)
+        RolesGuard,
+        ServiceAuthGuard,
+        {
+          provide: ConfigService,
+          useValue: mockConfigService,
+        },
       ],
     }).compile();
 
@@ -44,6 +55,7 @@ describe('ProductsController (e2e) - RBAC', () => {
     it('should allow SELLER', () => {
       return request(app.getHttpServer())
         .post('/products')
+        .set('X-Gateway-Secret', gatewaySecret)
         .set('X-User-Role', Role.SELLER)
         .send({
           name: 'P1',
@@ -59,6 +71,7 @@ describe('ProductsController (e2e) - RBAC', () => {
     it('should allow ADMIN', () => {
       return request(app.getHttpServer())
         .post('/products')
+        .set('X-Gateway-Secret', gatewaySecret)
         .set('X-User-Role', Role.ADMIN)
         .send({
           name: 'P1',
@@ -74,6 +87,7 @@ describe('ProductsController (e2e) - RBAC', () => {
     it('should deny BUYER', () => {
       return request(app.getHttpServer())
         .post('/products')
+        .set('X-Gateway-Secret', gatewaySecret)
         .set('X-User-Role', Role.BUYER)
         .send({
           name: 'P1',
@@ -89,6 +103,7 @@ describe('ProductsController (e2e) - RBAC', () => {
     it('should deny if no role header', () => {
       return request(app.getHttpServer())
         .post('/products')
+        .set('X-Gateway-Secret', gatewaySecret)
         .send({
           name: 'P1',
           description: 'D1',
@@ -103,7 +118,10 @@ describe('ProductsController (e2e) - RBAC', () => {
 
   describe('GET /products', () => {
     it('should be public (no role required)', () => {
-      return request(app.getHttpServer()).get('/products').expect(200);
+      return request(app.getHttpServer())
+        .get('/products')
+        .set('X-Gateway-Secret', gatewaySecret)
+        .expect(200);
     });
   });
 
@@ -111,6 +129,7 @@ describe('ProductsController (e2e) - RBAC', () => {
     it('should deny BUYER', () => {
       return request(app.getHttpServer())
         .delete('/products/1')
+        .set('X-Gateway-Secret', gatewaySecret)
         .set('X-User-Role', Role.BUYER)
         .expect(403);
     });
@@ -118,6 +137,7 @@ describe('ProductsController (e2e) - RBAC', () => {
     it('should allow ADMIN', () => {
       return request(app.getHttpServer())
         .delete('/products/1')
+        .set('X-Gateway-Secret', gatewaySecret)
         .set('X-User-Role', Role.ADMIN)
         .expect(200);
     });

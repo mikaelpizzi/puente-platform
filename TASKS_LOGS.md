@@ -1,5 +1,7 @@
 # TASKS_LOGS
 
+> Recordatorio: Este archivo, junto con `TASKS.md`, `FLOW.md`, `ARCHITECTURE.md` y `AGENT_LOGS.md`, nunca se sube al repositorio. Es sólo un cuaderno local para evidencias.
+
 ## Task 3: Inicializar monorepo (pnpm workspace + TypeScript base)
 - **Mission / New capability:** Establish a production-grade pnpm workspace so every backend microservicio (API Gateway, Auth, Products, Finance, Logistics) and the React PWA now share the same TypeScript config, build commands and Vitest harness. From this moment you can clone the repo, run `corepack pnpm lint` or `corepack pnpm test`, and get deterministic green builds without extra setup.
 - **Context (Why it matters):** Without a unified workspace the next tasks (Auth, Products, Finance, Logistics, PWA) would diverge in tooling, breaking the “WOW” architecture described in `ARCHITECTURE.md`. This task guarantees consistency before any feature code lands.
@@ -251,3 +253,42 @@
 - Postman receives `201 Created` response on `POST http://localhost:3000/auth/register`.
 
 - Prisma migrations successfully applied to Auth and Finance.
+
+## Task 17: Telemetría + throttling en `logistics-service`
+- **Mission / New capability:** Blindar el microservicio logístico contra floods de coordenadas y generar evidencia operativa (históricos y métricas) para Tracking. El servicio ahora acepta ubicación vía REST/WebSocket, limita la frecuencia por `driverId` y expone contadores Prometheus.
+- **Context:** La tarea 17 estaba pendiente porque, aunque existían `/logistics/location` y los GEO sets en Redis, no había mecanismos de rate limiting ni historicidad; un dispositivo podía tumbar Redis y no había manera de auditar la última ruta enviada.
+- **Implementation details:**
+  1. Reescribí `LogisticsService` para añadir `enforceThrottle` (Redis ZSET con ventana configurable) y `persistLocationHistory` (listas con TTL y máximo N entradas). Todos los parámetros se obtienen de las nuevas variables `LOGISTICS_HISTORY_SIZE|TTL_SECONDS|THROTTLE_WINDOW_MS|THROTTLE_MAX_EVENTS` documentadas en `.env.example`.
+  2. Instrumenté `prom-client` mediante `MetricsModule` + `MetricsService` + `MetricsController` (nueva carpeta `src/metrics`). Se emiten `logistics_telemetry_ingest_total`, `logistics_telemetry_ingest_duration_ms` y `logistics_telemetry_throttled_total`, diferenciando fuente `rest`/`ws`.
+  3. Ajusté `logistics.controller.ts` y `logistics.gateway.ts` para etiquetar la fuente al llamar `updateDriverLocation`, y registré el módulo en `app.module.ts` para habilitar `GET /metrics`.
+  4. Añadí documentación paso a paso en `docs/backend/postman-guide.md` (headers, JSON exacto, cómo forzar el 429 y cómo leer `/metrics`).
+- **Outcome:** Task 17 pasa a DONE en `TASKS.md`. Logística tiene control de ingesta, historial de ubicaciones y observabilidad.
+- **Testing / Evidence:**
+  - `pnpm --filter @puente/logistics-service test` cubre los unit tests nuevos (`logistics.service.spec.ts` valida throttling/histórico/métricas) y los e2e de entregas (`test/delivery.spec.ts`).
+  - Postman reproduce el escenario: `POST {{api_gateway_url}}/logistics/location` cinco veces con el token del courier para ver respuestas 200 y una sexta vez para recibir `429 Too Many Requests`; posteriormente `GET http://localhost:3004/metrics` muestra los contadores incrementados.
+
+## Task 32: Observability baseline (OpenTelemetry + nestjs-pino)
+- **Mission / New capability:** Encender trazas distribuidas y logging estructurado en los cinco microservicios backend (API Gateway, Auth, Products, Finance, Logistics) para que cada request propague `trace_id` / `span_id` hacia Grafana Tempo (OTLP/HTTP) y los logs correlacionen con la telemetría.
+- **Context (Why it matters):** ARCHITECTURE §4.11 pedía visibilidad “WOW” antes de liberar MVP. Sin OTEL ni logger consistente los incidentes se investigaban a ciegas, no había forma de seguir un request hop-by-hop, y Fly/Grafana no podían recibir spans ni logs con contexto.
+- **Implementation details (How it was built):**
+  1. **Dependencies y lockfile:** añadí `@opentelemetry/sdk-node`, `@opentelemetry/auto-instrumentations-node`, `@opentelemetry/exporter-trace-otlp-http`, `@opentelemetry/semantic-conventions`, `nestjs-pino`, `pino-http-print` y `pino-abstract-transport` en cada `apps/backend/*/package.json`, luego corrí `pnpm install` para regenerar `pnpm-lock.yaml`.
+  2. **Bootstrap OTEL por servicio:** creé `src/instrumentation.ts` en las cinco apps configurando `NodeSDK` con `Resource` (`service.name`, `service.version`, `deployment.environment`) y un `OTLPTraceExporter` (endpoint/headers via env). El entrypoint reusa un singleton y expone `teardown()` para `beforeExit`/`SIGTERM`.
+  3. **Logger + main.ts:** actualicé cada `main.ts` para importar la instrumentación antes de `NestFactory.create`, activar `bufferLogs`, `enableShutdownHooks()` y `app.useLogger(app.get(Logger))`. En `app.module.ts` registré `LoggerModule.forRoot` (nestjs-pino) con un hook que intenta leer `traceId`/`spanId` del contexto activo para enriquecer cada log line.
+  4. **Config + guard fixes:** extendí los módulos para leer nuevos env vars (`OTEL_EXPORTER_OTLP_ENDPOINT`, `OTEL_EXPORTER_OTLP_HEADERS`, `OTEL_RESOURCE_ATTRIBUTES`, `OTEL_SERVICE_NAME`). En `products-service/test/products.service.spec.ts` (E2E) añadí un mock de `ConfigService` y header `X-Gateway-Secret` para que el nuevo `ServiceAuthGuard` aceptara las solicitudes durante pruebas.
+  5. **Infra y docs:** documenté los toggles en `.env.example`, añadí el bloque `x-otel-env` en `docker-compose.yml` (reusado por todos los servicios) y actualicé cada `apps/backend/*/fly.toml` para propagar los OTEL env vars en Fly.io. `README.md` y `ARCHITECTURE.md` ahora incluyen la guía “Observability & Tracing” con pasos claros para apuntar a Grafana Tempo y entender el flujo de spans/logs.
+- **Outcome:** Task 32 queda DONE; cualquier servicio levanta con trazas OTLP y logs JSON listos para shipping. No se rompieron builds ni pruebas y los deploy manifests conocen los nuevos envs.
+- **Testing / Evidence:**
+  1. Instalar dependencias (solo primera vez)
+     ```powershell
+     pnpm install
+     ```
+  2. Ejecutar los suites para validar que la instrumentación no rompió la lógica:
+     ```powershell
+     pnpm --filter @puente/api-gateway test
+     pnpm --filter @puente/auth-service test
+     pnpm --filter @puente/products-service test
+     pnpm --filter @puente/finance-service test
+     pnpm --filter @puente/logistics-service test
+     ```
+     Todos terminaron en verde; el de Products incluye el fix del ConfigService dummy + header `X-Gateway-Secret` para el guard.
+  3. Opcional (manual): levantar `docker compose up api-gateway` con los env `OTEL_*` apuntando a un Tempo público y verificar que los spans aparecen; los archivos `.env.example`, `README.md` y `ARCHITECTURE.md` tienen el paso a paso actualizado.

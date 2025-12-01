@@ -4,6 +4,11 @@ primary_region = "mia"
 [build]
   dockerfile = "Dockerfile"
 
+[env]
+  OTEL_SERVICE_NAME = "puente-api-gateway"
+  OTEL_EXPORTER_OTLP_ENDPOINT = "https://otlp.example.com/v1/traces"
+  OTEL_AUTH_HEADER = "Bearer replace-with-grafana-token"
+
 [http_service]
   internal_port = 3000
   force_https = true

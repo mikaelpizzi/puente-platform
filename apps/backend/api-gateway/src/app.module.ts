@@ -1,13 +1,67 @@
 import { Module, MiddlewareConsumer, RequestMethod } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { LoggerModule } from 'nestjs-pino';
 import * as Joi from 'joi';
 import { createServiceProxy } from './middleware/proxy.middleware';
 import { AuthMiddleware } from './middleware/auth.middleware';
 import { SanityCheckMiddleware } from './middleware/sanity-check.middleware';
 import { HealthController } from './health/health.controller';
+import type { IncomingHttpHeaders } from 'http';
+
+type RequestWithMeta = {
+  id?: string;
+  url?: string;
+  headers?: IncomingHttpHeaders;
+};
+
+const extractTraceId = (headers?: IncomingHttpHeaders) => {
+  if (!headers) {
+    return undefined;
+  }
+
+  const traceparentHeader = headers['traceparent'];
+  if (typeof traceparentHeader === 'string') {
+    const [, traceId] = traceparentHeader.split('-');
+    if (traceId) {
+      return traceId;
+    }
+  }
+
+  const b3TraceId = headers['x-b3-traceid'];
+  if (typeof b3TraceId === 'string') {
+    return b3TraceId;
+  }
+
+  return undefined;
+};
+
+const extractRequestId = (req: RequestWithMeta) => req?.id;
 
 @Module({
   imports: [
+    LoggerModule.forRoot({
+      pinoHttp: {
+        level: process.env.LOG_LEVEL || 'info',
+        transport:
+          process.env.NODE_ENV !== 'production'
+            ? {
+                target: 'pino-pretty',
+                options: {
+                  colorize: true,
+                  singleLine: true,
+                  translateTime: 'SYS:standard',
+                },
+              }
+            : undefined,
+        autoLogging: {
+          ignore: (req: RequestWithMeta) => req.url?.includes('/health') ?? false,
+        },
+        customProps: (req: RequestWithMeta) => ({
+          requestId: extractRequestId(req),
+          traceId: extractTraceId(req.headers),
+        }),
+      },
+    }),
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: ['.env.local', '.env', '../../.env', '../../../.env'],

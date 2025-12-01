@@ -1,9 +1,12 @@
 version: '3.9'
 
 x-otel-env: &otel-env # Reuse this block in backend service containers to forward traces locally.
-  OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-https://otlp.example.com/v1/traces}
-  OTEL_AUTH_HEADER: ${OTEL_AUTH_HEADER:-Bearer grafana-tempo-token}
-  OTEL_SERVICE_NAME: ${OTEL_SERVICE_NAME:-puente-local}
+  OTEL_TRACES_EXPORTER: ${OTEL_TRACES_EXPORTER:-otlp}
+  OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-https://otlp-gateway-prod-us-east-2.grafana.net/otlp}
+  OTEL_EXPORTER_OTLP_HEADERS: ${OTEL_EXPORTER_OTLP_HEADERS:-Authorization=Basic <grafana-basic-token>}
+  OTEL_SERVICE_NAMESPACE: ${OTEL_SERVICE_NAMESPACE:-my-application-group}
+  OTEL_DEPLOYMENT_ENVIRONMENT: ${OTEL_DEPLOYMENT_ENVIRONMENT:-development}
+  OTEL_NODE_RESOURCE_DETECTORS: ${OTEL_NODE_RESOURCE_DETECTORS:-env,host,os}
 
 services:
   postgres:

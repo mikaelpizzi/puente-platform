@@ -4,13 +4,10 @@ import { LoggerModule } from 'nestjs-pino';
 import { PrismaModule } from './prisma/prisma.module';
 import { FinanceModule } from './finance/finance.module';
 import { HealthController } from './health/health.controller';
-import type { IncomingHttpHeaders } from 'http';
+import type { IncomingHttpHeaders, IncomingMessage } from 'http';
+import type { ReqId } from 'pino-http';
 
-type RequestWithMeta = {
-  id?: string;
-  url?: string;
-  headers?: IncomingHttpHeaders;
-};
+type TraceableRequest = IncomingMessage & { id?: ReqId };
 
 const extractTraceId = (headers?: IncomingHttpHeaders) => {
   if (!headers) {
@@ -33,7 +30,29 @@ const extractTraceId = (headers?: IncomingHttpHeaders) => {
   return undefined;
 };
 
-const extractRequestId = (req: RequestWithMeta) => req?.id;
+const extractRequestId = (req: TraceableRequest) => {
+  const requestId = req.id;
+  if (typeof requestId === 'string') {
+    return requestId;
+  }
+
+  if (typeof requestId === 'number') {
+    return requestId.toString(10);
+  }
+
+  const headerValue = req.headers?.['x-request-id'];
+  if (typeof headerValue === 'string') {
+    return headerValue;
+  }
+
+  if (Array.isArray(headerValue)) {
+    return headerValue[0];
+  }
+
+  return undefined;
+};
+
+const shouldSkipAutoLogging = (req: IncomingMessage) => req.url?.includes('/health') ?? false;
 
 @Module({
   imports: [
@@ -52,10 +71,10 @@ const extractRequestId = (req: RequestWithMeta) => req?.id;
               }
             : undefined,
         autoLogging: {
-          ignore: (req: RequestWithMeta) => req.url?.includes('/health') ?? false,
+          ignore: shouldSkipAutoLogging,
         },
-        customProps: (req: RequestWithMeta) => ({
-          requestId: extractRequestId(req),
+        customProps: (req) => ({
+          requestId: extractRequestId(req as TraceableRequest),
           traceId: extractTraceId(req.headers),
         }),
       },

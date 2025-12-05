@@ -139,7 +139,6 @@ export const InventoryDashboard: React.FC = () => {
 
   return (
     <div className="pb-20">
-      {' '}
       {/* Padding for bottom nav */}
       <div className="bg-white dark:bg-gray-800 shadow p-4 sticky top-0 z-10 flex justify-between items-center transition-colors duration-200">
         <h2 className="text-xl font-bold text-gray-800 dark:text-white">Mi Inventario</h2>

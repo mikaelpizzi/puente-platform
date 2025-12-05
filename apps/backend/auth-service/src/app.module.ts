@@ -1,10 +1,11 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { LoggerModule } from 'nestjs-pino';
 import { PrismaModule } from './prisma/prisma.module';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { HealthController } from './health/health.controller';
+import { SanityCheckMiddleware } from './common/middleware/sanity-check.middleware';
 import type { IncomingHttpHeaders, IncomingMessage } from 'http';
 import type { ReqId } from 'pino-http';
 
@@ -90,4 +91,8 @@ const shouldSkipAutoLogging = (req: IncomingMessage) => req.url?.includes('/heal
   ],
   controllers: [HealthController],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(SanityCheckMiddleware).forRoutes('*');
+  }
+}

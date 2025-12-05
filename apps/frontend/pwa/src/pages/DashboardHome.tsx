@@ -20,14 +20,14 @@ export const DashboardHome: React.FC = () => {
       title: 'Cobrar',
       icon: ShoppingCart,
       path: '/checkout',
-      color: 'bg-indigo-600',
+      color: 'bg-emerald-500',
       description: 'Punto de venta y cobros QR',
     },
     {
       title: 'Envíos',
       icon: Truck,
       path: '/logistics',
-      color: 'bg-purple-500',
+      color: 'bg-emerald-600',
       description: 'Seguimiento de pedidos',
     },
   ];

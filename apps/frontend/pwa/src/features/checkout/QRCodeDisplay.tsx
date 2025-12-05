@@ -15,7 +15,7 @@ export const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({ value, title, amou
         <QRCode value={value} size={200} />
       </div>
       {amount && (
-        <div className="mt-4 text-2xl font-bold text-indigo-600">${amount.toFixed(2)}</div>
+        <div className="mt-4 text-2xl font-bold text-emerald-600">${amount.toFixed(2)}</div>
       )}
       <p className="mt-2 text-sm text-gray-500 text-center">Escanea para pagar</p>
     </div>

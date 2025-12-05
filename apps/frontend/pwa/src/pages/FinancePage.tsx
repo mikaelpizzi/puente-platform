@@ -5,12 +5,12 @@ export const FinancePage: React.FC = () => {
   return (
     <div className="p-4 pb-24">
       <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-6 flex items-center gap-2">
-        <DollarSign className="text-indigo-600 dark:text-indigo-400" />
+        <DollarSign className="text-emerald-500 dark:text-emerald-400" />
         Finanzas
       </h2>
 
-      <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl p-6 text-white shadow-lg mb-6">
-        <p className="text-indigo-100 text-sm font-medium mb-1">Balance Total</p>
+      <div className="bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-2xl p-6 text-white shadow-lg mb-6">
+        <p className="text-emerald-100 text-sm font-medium mb-1">Balance Total</p>
         <h3 className="text-4xl font-bold">$12,450.00</h3>
         <div className="mt-4 flex gap-2">
           <span className="bg-white/20 px-2 py-1 rounded text-xs flex items-center gap-1">

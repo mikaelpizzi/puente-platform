@@ -180,7 +180,7 @@ export const CourierDashboard: React.FC = () => {
 
         <button
           onClick={() => setHandsFreeMode(!handsFreeMode)}
-          className={`p-2 rounded-full shadow-lg pointer-events-auto transition-colors ${handsFreeMode ? 'bg-indigo-600 text-white' : 'bg-white text-gray-600'}`}
+          className={`p-2 rounded-full shadow-lg pointer-events-auto transition-colors ${handsFreeMode ? 'bg-emerald-500 text-white' : 'bg-white text-gray-600'}`}
         >
           {handsFreeMode ? <Bell size={20} /> : <BellOff size={20} />}
         </button>
@@ -201,7 +201,7 @@ export const CourierDashboard: React.FC = () => {
           <div className="w-12 h-1.5 bg-gray-300 rounded-full mx-auto mb-4" />
           <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
             Pedidos Disponibles
-            <span className="bg-indigo-100 text-indigo-800 text-xs px-2 py-0.5 rounded-full">
+            <span className="bg-emerald-100 text-emerald-800 text-xs px-2 py-0.5 rounded-full">
               {jobs?.length || 0}
             </span>
           </h2>
@@ -221,7 +221,7 @@ export const CourierDashboard: React.FC = () => {
               <div
                 key={job.id}
                 onClick={() => setSelectedJob(job)}
-                className={`border rounded-xl p-4 transition-all ${selectedJob?.id === job.id ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-200' : 'border-gray-200 bg-white'}`}
+                className={`border rounded-xl p-4 transition-all ${selectedJob?.id === job.id ? 'border-emerald-500 bg-emerald-50 ring-2 ring-emerald-200' : 'border-gray-200 bg-white'}`}
               >
                 <div className="flex justify-between items-start mb-3">
                   <div>

@@ -5,7 +5,7 @@ export const LogisticsPage: React.FC = () => {
   return (
     <div className="p-4 pb-24">
       <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-6 flex items-center gap-2">
-        <Truck className="text-indigo-600 dark:text-indigo-400" />
+        <Truck className="text-emerald-500 dark:text-emerald-400" />
         Mis Envíos
       </h2>
 
@@ -27,7 +27,7 @@ export const LogisticsPage: React.FC = () => {
             </div>
           </div>
           <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-700/50 p-2 rounded-lg">
-            <MapPin size={16} className="text-indigo-500 dark:text-indigo-400" />
+            <MapPin size={16} className="text-emerald-500 dark:text-emerald-400" />
             <span>Av. Reforma 222, CDMX</span>
           </div>
         </div>

@@ -27,7 +27,7 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   const colors = {
     danger: 'bg-red-600 hover:bg-red-700 text-white',
     warning: 'bg-yellow-500 hover:bg-yellow-600 text-white',
-    info: 'bg-indigo-600 hover:bg-indigo-700 text-white',
+    info: 'bg-emerald-500 hover:bg-emerald-600 text-white',
   };
 
   return (
@@ -35,7 +35,7 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200 transition-colors duration-200">
         <div className="p-6 text-center">
           <div
-            className={`mx-auto w-12 h-12 rounded-full flex items-center justify-center mb-4 ${variant === 'danger' ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400' : 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400'}`}
+            className={`mx-auto w-12 h-12 rounded-full flex items-center justify-center mb-4 ${variant === 'danger' ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400' : 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400'}`}
           >
             <AlertTriangle size={24} />
           </div>

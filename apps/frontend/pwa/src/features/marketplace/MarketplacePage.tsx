@@ -40,7 +40,7 @@ export const MarketplacePage: React.FC = () => {
     return (
       <div className="p-8 text-center">
         <p className="text-red-500 mb-2">Error al cargar productos</p>
-        <button onClick={() => window.location.reload()} className="text-indigo-600 underline">
+        <button onClick={() => window.location.reload()} className="text-emerald-600 underline">
           Reintentar
         </button>
       </div>
@@ -77,7 +77,7 @@ export const MarketplacePage: React.FC = () => {
       {cartItems.length > 0 && (
         <button
           onClick={() => navigate('/checkout')}
-          className="fixed bottom-20 right-4 bg-indigo-600 text-white p-4 rounded-full shadow-lg hover:bg-indigo-700 active:scale-95 transition-transform z-30 flex items-center gap-2"
+          className="fixed bottom-20 right-4 bg-emerald-500 text-white p-4 rounded-full shadow-lg hover:bg-emerald-600 active:scale-95 transition-transform z-30 flex items-center gap-2"
         >
           <ShoppingCart className="w-6 h-6" />
           <span className="font-bold">${cartTotal.toFixed(2)}</span>

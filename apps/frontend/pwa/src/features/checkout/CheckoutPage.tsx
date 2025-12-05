@@ -121,10 +121,10 @@ export const CheckoutPage: React.FC = () => {
                 <button
                   key={`${product.id}-${index}`}
                   onClick={() => handleAddToCart(product)}
-                  className="flex flex-col items-start p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm hover:border-indigo-500 active:bg-indigo-50 dark:active:bg-indigo-900 transition-colors text-left"
+                  className="flex flex-col items-start p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm hover:border-emerald-500 active:bg-emerald-50 dark:active:bg-emerald-900 transition-colors text-left"
                 >
                   <span className="font-medium text-gray-900 dark:text-white">{product.name}</span>
-                  <span className="text-indigo-600 dark:text-indigo-400 font-bold">
+                  <span className="text-emerald-600 dark:text-emerald-400 font-bold">
                     ${product.price}
                   </span>
                   <span className="text-xs text-gray-400">Stock: {product.stock}</span>
@@ -194,7 +194,7 @@ export const CheckoutPage: React.FC = () => {
 
               <button
                 onClick={handlePayment}
-                className="w-full mt-4 bg-indigo-600 text-white py-3 rounded-xl font-bold shadow-lg hover:bg-indigo-700 active:scale-95 transition-transform"
+                className="w-full mt-4 bg-emerald-500 text-white py-3 rounded-xl font-bold shadow-lg hover:bg-emerald-600 active:scale-95 transition-transform"
               >
                 Cobrar
               </button>

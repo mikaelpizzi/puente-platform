@@ -1,12 +1,17 @@
+import './otel-init';
 import './instrumentation';
 
 import { NestFactory } from '@nestjs/core';
+import { NestExpressApplication, ExpressAdapter } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
 import { ConfigService } from '@nestjs/config';
 import { Logger } from 'nestjs-pino';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, { bodyParser: false, bufferLogs: true });
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, new ExpressAdapter(), {
+    bodyParser: false,
+    bufferLogs: true,
+  });
   app.useLogger(app.get(Logger));
 
   const configService = app.get(ConfigService);

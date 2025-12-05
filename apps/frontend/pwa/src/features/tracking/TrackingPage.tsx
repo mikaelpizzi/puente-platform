@@ -22,7 +22,7 @@ const DeliveryStatusSteps = ({ status, eta }: { status: string; eta: string }) =
         <h3 className="font-bold text-gray-800 text-lg">
           {status === 'delivered' ? '¡Pedido Entregado!' : `Llega en ~${eta}`}
         </h3>
-        <span className="text-xs font-medium px-2 py-1 bg-indigo-50 text-indigo-700 rounded-full uppercase">
+        <span className="text-xs font-medium px-2 py-1 bg-emerald-50 text-emerald-700 rounded-full uppercase">
           {status.replace('_', ' ')}
         </span>
       </div>
@@ -64,7 +64,7 @@ const DeliveryStatusSteps = ({ status, eta }: { status: string; eta: string }) =
 
 const DriverInfoCard = ({ driver }: { driver: { name: string } }) => (
   <div className="bg-white p-4 rounded-xl shadow-sm flex items-center gap-4 animate-fade-in-up">
-    <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center text-xl border-2 border-white shadow-sm">
+    <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center text-xl border-2 border-white shadow-sm">
       🛵
     </div>
     <div className="flex-1">
@@ -95,7 +95,7 @@ export const TrackingPage: React.FC = () => {
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh]">
-        <Loader2 className="w-10 h-10 text-indigo-600 animate-spin mb-4" />
+        <Loader2 className="w-10 h-10 text-emerald-500 animate-spin mb-4" />
         <p className="text-gray-500 font-medium">Localizando tu pedido...</p>
       </div>
     );

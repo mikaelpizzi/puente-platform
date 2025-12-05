@@ -70,7 +70,7 @@ export const PosKeypad: React.FC<PosKeypadProps> = ({
             onSubmit();
           }}
           disabled={!amount || parseFloat(amount) === 0 || isLoading}
-          className="w-full bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 disabled:bg-gray-300 dark:disabled:bg-gray-600 text-white text-xl font-bold py-4 rounded-xl shadow-lg active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+          className="w-full bg-emerald-500 hover:bg-emerald-600 dark:bg-emerald-500 dark:hover:bg-emerald-600 disabled:bg-gray-300 dark:disabled:bg-gray-600 text-white text-xl font-bold py-4 rounded-xl shadow-lg active:scale-[0.98] transition-all flex items-center justify-center gap-2"
         >
           {isLoading ? (
             <span className="animate-pulse">Generando Orden...</span>

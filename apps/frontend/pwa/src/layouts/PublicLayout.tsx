@@ -7,7 +7,7 @@ export const PublicLayout: React.FC = () => {
       {/* Simple Header for Brand Trust */}
       <header className="bg-white shadow-sm py-4 px-6 flex justify-center">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
+          <div className="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center">
             <span className="text-white font-bold text-xl">P</span>
           </div>
           <span className="text-xl font-bold text-gray-900 tracking-tight">Puente</span>

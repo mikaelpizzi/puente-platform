@@ -74,7 +74,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             {product.status === 'error' ? (
               <button
                 onClick={() => onEditError && onEditError(product)}
-                className="text-indigo-600 dark:text-indigo-400 text-xs font-bold hover:underline"
+                className="text-emerald-600 dark:text-emerald-400 text-xs font-bold hover:underline"
               >
                 Corregir
               </button>
@@ -87,7 +87,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         {variant === 'buyer' && product.stock > 0 && (
           <button
             onClick={() => onAddToCart && onAddToCart(product)}
-            className="bg-indigo-600 text-white px-3 py-1 rounded-md text-xs font-medium hover:bg-indigo-700 transition-colors"
+            className="bg-emerald-500 text-white px-3 py-1 rounded-md text-xs font-medium hover:bg-emerald-600 transition-colors"
           >
             Agregar
           </button>

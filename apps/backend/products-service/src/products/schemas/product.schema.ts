@@ -23,6 +23,9 @@ export class Product {
   @Prop({ type: [String], default: [] })
   tags!: string[];
 
+  @Prop()
+  imageUrl?: string;
+
   // Flexible attributes for multi-vertical support
   @Prop({ type: MongooseSchema.Types.Mixed })
   attributes!: Record<string, any>;

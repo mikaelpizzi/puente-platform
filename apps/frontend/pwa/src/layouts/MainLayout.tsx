@@ -12,7 +12,7 @@ import {
   Sun,
   User,
   ChevronDown,
-  Settings,
+  ClipboardList,
 } from 'lucide-react';
 import { OfflineSyncManager } from '../features/inventory/OfflineSyncManager';
 import { logout, selectCurrentUser } from '../features/auth/authSlice';
@@ -32,6 +32,7 @@ export const MainLayout: React.FC = () => {
     { to: '/', icon: Home, label: 'Inicio', roles: ['SELLER', 'BUYER'] },
     { to: '/marketplace', icon: ShoppingCart, label: 'Comprar', roles: ['BUYER'] },
     { to: '/inventory', icon: Package, label: 'Inventario', roles: ['SELLER'] },
+    { to: '/orders', icon: ClipboardList, label: 'Pedidos', roles: ['SELLER'] },
     { to: '/checkout', icon: ShoppingCart, label: 'Cobrar', roles: ['SELLER'] },
     { to: '/finance', icon: DollarSign, label: 'Finanzas', roles: ['SELLER'] },
     { to: '/logistics', icon: Truck, label: 'Envíos', roles: ['SELLER', 'COURIER'] },

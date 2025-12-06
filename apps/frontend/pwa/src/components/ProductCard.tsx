@@ -11,6 +11,7 @@ interface Product {
   sku?: string;
   vertical?: string;
   tags?: string[];
+  imageUrl?: string;
   status?: 'synced' | 'pending' | 'error';
   errorMessage?: string;
   attributes?: Record<string, any>;
@@ -37,7 +38,18 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           : 'border-gray-100 dark:border-gray-700'
       }`}
     >
-      <div className="flex justify-between items-start">
+      <div className="flex gap-4 items-start">
+        {/* Image Thumbnail */}
+        <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-md flex-shrink-0 overflow-hidden border border-gray-200 dark:border-gray-600">
+          {product.imageUrl ? (
+            <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs text-center p-1">
+              No img
+            </div>
+          )}
+        </div>
+
         <div className="flex-1 min-w-0 pr-2">
           <div className="flex items-center gap-2 mb-1">
             <h3 className="font-semibold text-gray-900 dark:text-white truncate">{product.name}</h3>
@@ -77,7 +89,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             </p>
           )}
         </div>
-        <span className="bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400 text-xs font-medium px-2.5 py-0.5 rounded">
+        <span className="bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400 text-xs font-medium px-2.5 py-0.5 rounded flex-shrink-0">
           ${product.price}
         </span>
       </div>

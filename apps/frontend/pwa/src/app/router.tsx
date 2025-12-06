@@ -1,4 +1,4 @@
-import { createBrowserRouter, Navigate } from 'react-router-dom';
+import { createBrowserRouter } from 'react-router-dom';
 import { MainLayout } from '../layouts/MainLayout';
 import { PublicLayout } from '../layouts/PublicLayout';
 import { LoginPage } from '../features/auth/LoginPage';
@@ -14,6 +14,7 @@ import { TrackingPage } from '../features/tracking/TrackingPage';
 import { DashboardHome } from '../pages/DashboardHome';
 import { ProfilePage } from '../features/profile/ProfilePage';
 import { MarketplacePage } from '../features/marketplace/MarketplacePage';
+import { OrdersPage } from '../features/orders/OrdersPage';
 
 export const router = createBrowserRouter([
   {
@@ -63,6 +64,14 @@ export const router = createBrowserRouter([
         element: (
           <RequireAuth allowedRoles={['SELLER']}>
             <InventoryDashboard />
+          </RequireAuth>
+        ),
+      },
+      {
+        path: 'orders',
+        element: (
+          <RequireAuth allowedRoles={['SELLER', 'BUYER']}>
+            <OrdersPage />
           </RequireAuth>
         ),
       },

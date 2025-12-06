@@ -9,6 +9,7 @@ import {
   UseGuards,
   Headers,
   UnauthorizedException,
+  Query,
 } from '@nestjs/common';
 import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
@@ -56,8 +57,23 @@ export class ProductsController {
    * @returns List of products.
    */
   @Get()
-  async findAll() {
-    return this.productsService.findAll();
+  async findAll(
+    @Query('search') search?: string,
+    @Query('minPrice') minPrice?: number,
+    @Query('maxPrice') maxPrice?: number,
+    @Query('tags') tags?: string | string[],
+    @Query('vertical') vertical?: string,
+  ) {
+    // Handle tags being a single string or array
+    const tagList = tags ? (Array.isArray(tags) ? tags : [tags]) : undefined;
+
+    return this.productsService.findAll({
+      search,
+      minPrice: minPrice ? Number(minPrice) : undefined,
+      maxPrice: maxPrice ? Number(maxPrice) : undefined,
+      tags: tagList,
+      vertical,
+    });
   }
 
   /**
@@ -130,5 +146,24 @@ export class ProductsController {
   async confirmStock(@Body() stockOperationDto: StockOperationDto) {
     await this.productsService.confirmStock(stockOperationDto.items);
     return { success: true, message: 'Stock confirmed' };
+  }
+
+  /**
+   * Generates a signature for client-side upload (Cloudinary/Firebase).
+   * Mocked for now if no env vars are present.
+   */
+  @Post('upload-signature')
+  @Roles(Role.ADMIN, Role.SELLER)
+  getUploadSignature() {
+    // In a real implementation, we would use CLOUDINARY_API_SECRET to sign params.
+    // For now, we return a mock signature or a direct upload URL if using a different provider.
+    // If using Cloudinary unsigned uploads for dev, we might not even need this,
+    // but it's good practice to have the endpoint ready.
+    return {
+      signature: 'mock_signature_' + Date.now(),
+      timestamp: Math.floor(Date.now() / 1000),
+      cloudName: process.env.CLOUDINARY_CLOUD_NAME || 'demo',
+      apiKey: process.env.CLOUDINARY_API_KEY || '123456789',
+    };
   }
 }

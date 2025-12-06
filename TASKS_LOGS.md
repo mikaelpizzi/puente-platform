@@ -293,22 +293,60 @@
      Todos terminaron en verde; el de Products incluye el fix del ConfigService dummy + header `X-Gateway-Secret` para el guard.
   3. Opcional (manual): levantar `docker compose up api-gateway` con los env `OTEL_*` apuntando a un Tempo pÃºblico y verificar que los spans aparecen; los archivos `.env.example`, `README.md` y `ARCHITECTURE.md` tienen el paso a paso actualizado.
 ## Task 37: Body Validation for GET/DELETE (Defensa en Profundidad)
-- **What:** Validación de bodies en métodos GET/DELETE para rechazar payloads inesperados.
-- **Why:** Prevenir inyección de datos no deseados y asegurar requests malformadas no lleguen a procesarse.
-- **How:** Ya implementado vía Task 36 con SanityCheckMiddleware en los 4 microservicios internos.
+- **What:** Validaciï¿½n de bodies en mï¿½todos GET/DELETE para rechazar payloads inesperados.
+- **Why:** Prevenir inyecciï¿½n de datos no deseados y asegurar requests malformadas no lleguen a procesarse.
+- **How:** Ya implementado vï¿½a Task 36 con SanityCheckMiddleware en los 4 microservicios internos.
 - **Outcome:** DONE (completado como parte de Task 36).
 - **Testing:** Unit tests en auth/products/finance/logistics-service pasando.
 
 ## Task 38: Marketplace View for BUYER
-- **What:** Vista dedicada para compradores con grid de productos, botón  Agregar al carrito, y checkout.
+- **What:** Vista dedicada para compradores con grid de productos, botï¿½n  Agregar al carrito, y checkout.
 - **Why:** BUYER necesita interfaz para descubrir y comprar productos.
-- **How:** MarketplacePage.tsx ya existía con grid responsivo, ProductCard con variant buyer, integración RTK con cartSlice.
+- **How:** MarketplacePage.tsx ya existï¿½a con grid responsivo, ProductCard con variant buyer, integraciï¿½n RTK con cartSlice.
 - **Outcome:** DONE. Funcionalidad BUYER completa.
 - **Testing:** Frontend dev server funcionando con flujo completo compra -> carrito -> checkout.
 
 ## Color Scheme Update: Financiera Fresca
-- **What:** Migración de paleta de colores de indigo/purple a Emerald (#10B981) + Slate (#334155).
-- **Why:** El usuario solicitó un vibe más fintech positivo con verde esmeralda que transmite crecimiento y ganancias.
-- **How:** Actualicé tailwind.config.js con brand colors y migré indigo-600 ? emerald-500 en 11 componentes clave.
-- **Outcome:** Completado. Botón verde Cobrar da satisfacción de saldo positivo.
-- **Testing:** Verificación visual en http://localhost:5173.
+- **What:** Migraciï¿½n de paleta de colores de indigo/purple a Emerald (#10B981) + Slate (#334155).
+- **Why:** El usuario solicitï¿½ un vibe mï¿½s fintech positivo con verde esmeralda que transmite crecimiento y ganancias.
+- **How:** Actualicï¿½ tailwind.config.js con brand colors y migrï¿½ indigo-600 ? emerald-500 en 11 componentes clave.
+- **Outcome:** Completado. Botï¿½n verde Cobrar da satisfacciï¿½n de saldo positivo.
+- **Testing:** Verificaciï¿½n visual en http://localhost:5173.
+
+## Custom Tags Management
+- **What:** Sistema de etiquetas personalizadas para productos (backend + frontend).
+- **Why:** Permitir a los vendedores organizar su inventario mï¿½s allï¿½ de las verticales rï¿½gidas.
+- **How:**
+  - **Backend:** TagsModule con TagSchema (name, sellerId, color). TagsService gestiona CRUD y lï¿½mite de 30 tags.
+  - **Frontend:** TagManager modal para crear/eliminar tags. Integraciï¿½n en InventoryDashboard.
+- **Outcome:** DONE. Vendedores pueden crear sus propias categorï¿½as.
+- **Testing:** pnpm --filter @puente/products-service build (backend), pnpm --filter @puente/pwa build (frontend).
+
+## UI Refinements & Bulk Actions
+- **What:** Mejoras de UI en Inventario y asignaciï¿½n masiva de etiquetas.
+- **Why:** Facilitar la gestiï¿½n de catï¿½logos grandes.
+- **How:**
+  - Implementaciï¿½n de selecciï¿½n estilo iOS (chips, checkmarks).
+  - Modal de asignaciï¿½n masiva que permite *agregar* etiquetas a mï¿½ltiples productos respetando lï¿½mites.
+- **Outcome:** DONE. UX mejorada significativamente.
+- **Testing:** Verificaciï¿½n manual de flujo de selecciï¿½n y asignaciï¿½n.
+
+## Multi-tag Support & Limits
+- **What:** Soporte para mï¿½ltiples etiquetas por producto y en filtros.
+- **Why:** Un producto puede pertenecer a varias categorï¿½as (ej. 'Oferta' + 'Verano').
+- **How:**
+  - **Backend:** Product schema actualizado con 	ags: string[].
+  - **Frontend:** ProductCard muestra chips. CheckoutPage filtra por tags. Validaciï¿½n de max 5 tags/producto.
+- **Outcome:** DONE. Flexibilidad total en categorizaciï¿½n.
+- **Testing:** Builds exitosos. Lï¿½gica de filtrado en Checkout validada por cï¿½digo.
+
+## Task 39, 40, 41 - Images, Orders, Search
+- **Date:** 2025-12-06
+- **Status:** DONE
+- **Changes:**
+  - **Task 39 (Images):** Added imageUrl to Product schema/interfaces. Implemented getUploadSignature (mocked). Added Image Upload UI to InventoryDashboard and display in ProductCard.
+  - **Task 41 (Search):** Added search, minPrice, maxPrice, tags, vertical filters to ProductsService and ProductsController. Implemented Search Bar and Filters in MarketplacePage.
+  - **Task 40 (Orders):** Created OrdersPage with mock data for Buyer/Seller views. Added /orders route and navigation link.
+- **Notes:**
+  - Backend for Task 40 is PENDING (using mock data).
+  - Cloudinary credentials are mocked.

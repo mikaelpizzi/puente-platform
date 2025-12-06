@@ -4,6 +4,7 @@ import {
   useGetProductsQuery,
   useCreateProductMutation,
   useUpdateProductMutation,
+  useGetUploadSignatureMutation,
 } from './productsApi';
 import { useGetTagsQuery } from './tagsApi';
 import { selectCurrentUser } from '../auth/authSlice';
@@ -17,7 +18,7 @@ import {
 import { TagManager } from './TagManager';
 import { OfflineSyncManager } from './OfflineSyncManager';
 import { ProductCard } from '../../components/ProductCard';
-import { Check, X, Tag as TagIcon, Plus } from 'lucide-react';
+import { Check, X, Tag as TagIcon, Plus, Upload, Image as ImageIcon } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export const InventoryDashboard: React.FC = () => {
@@ -30,6 +31,7 @@ export const InventoryDashboard: React.FC = () => {
 
   const [createProduct] = useCreateProductMutation();
   const [updateProduct] = useUpdateProductMutation();
+  const [getUploadSignature] = useGetUploadSignatureMutation();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isTagManagerOpen, setIsTagManagerOpen] = useState(false);
 
@@ -48,8 +50,10 @@ export const InventoryDashboard: React.FC = () => {
     stock: 0,
     vertical: '',
     tags: [] as string[],
+    imageUrl: '',
     attributes: {} as Record<string, any>,
   });
+  const [isUploading, setIsUploading] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -82,6 +86,52 @@ export const InventoryDashboard: React.FC = () => {
       }
       return { ...prev, tags: [...currentTags, tagName] };
     });
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    const toastId = toast.loading('Subiendo imagen...');
+
+    try {
+      // 1. Get signature (mocked or real)
+      const { signature, timestamp, cloudName, apiKey } = await getUploadSignature().unwrap();
+
+      // 2. Upload to Cloudinary (or mock if no env vars)
+      // For this demo, if we detect the mock signature, we'll simulate a delay and return a placeholder
+      if (signature.startsWith('mock_signature')) {
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+        const mockUrl = URL.createObjectURL(file); // Use local blob for immediate preview
+        setFormData((prev) => ({ ...prev, imageUrl: mockUrl }));
+        toast.success('Imagen subida (Simulación)', { id: toastId });
+      } else {
+        // Real Cloudinary Upload
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('api_key', apiKey);
+        formData.append('timestamp', timestamp.toString());
+        formData.append('signature', signature);
+
+        const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+          method: 'POST',
+          body: formData,
+        });
+        const data = await response.json();
+        if (data.secure_url) {
+          setFormData((prev) => ({ ...prev, imageUrl: data.secure_url }));
+          toast.success('Imagen subida correctamente', { id: toastId });
+        } else {
+          throw new Error('Upload failed');
+        }
+      }
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast.error('Error al subir imagen', { id: toastId });
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -125,6 +175,7 @@ export const InventoryDashboard: React.FC = () => {
       stock: 0,
       vertical: '',
       tags: [],
+      imageUrl: '',
       attributes: {},
     });
   };
@@ -138,6 +189,7 @@ export const InventoryDashboard: React.FC = () => {
       stock: product.stock,
       vertical: product.vertical,
       tags: product.tags || [],
+      imageUrl: product.imageUrl || '',
       attributes: product.attributes || {},
     });
     dispatch(removeErrorProduct(product.tempId));
@@ -380,6 +432,52 @@ export const InventoryDashboard: React.FC = () => {
                   className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
                 />
               </div>
+
+              {/* Image Upload */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Imagen del Producto
+                </label>
+                <div className="flex items-center gap-4">
+                  <div className="relative w-24 h-24 bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-600 flex items-center justify-center group">
+                    {formData.imageUrl ? (
+                      <>
+                        <img
+                          src={formData.imageUrl}
+                          alt="Preview"
+                          className="w-full h-full object-cover"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setFormData((prev) => ({ ...prev, imageUrl: '' }))}
+                          className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white"
+                        >
+                          <X className="w-6 h-6" />
+                        </button>
+                      </>
+                    ) : (
+                      <ImageIcon className="w-8 h-8 text-gray-400" />
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">
+                      <Upload className="w-4 h-4" />
+                      {isUploading ? 'Subiendo...' : 'Subir Imagen'}
+                      <input
+                        type="file"
+                        className="hidden"
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        disabled={isUploading}
+                      />
+                    </label>
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                      JPG, PNG, WEBP hasta 5MB
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label

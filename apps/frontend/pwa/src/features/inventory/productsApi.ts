@@ -10,6 +10,7 @@ export interface Product {
   vertical: string;
   sellerId: string;
   tags?: string[];
+  imageUrl?: string;
   attributes?: Record<string, any>;
 }
 
@@ -21,14 +22,33 @@ export interface CreateProductRequest {
   stock: number;
   vertical: string; // Deprecated but kept for backward compatibility
   tags?: string[];
+  imageUrl?: string;
   sellerId?: string;
   attributes?: Record<string, any>;
 }
 
 export const productsApi = api.injectEndpoints({
   endpoints: (builder) => ({
-    getProducts: builder.query<Product[], void>({
-      query: () => '/products',
+    getProducts: builder.query<
+      Product[],
+      {
+        search?: string;
+        minPrice?: number;
+        maxPrice?: number;
+        tags?: string[];
+        vertical?: string;
+      } | void
+    >({
+      query: (params) => {
+        if (!params) return '/products';
+        const queryParams = new URLSearchParams();
+        if (params.search) queryParams.set('search', params.search);
+        if (params.minPrice) queryParams.set('minPrice', params.minPrice.toString());
+        if (params.maxPrice) queryParams.set('maxPrice', params.maxPrice.toString());
+        if (params.tags) params.tags.forEach((t) => queryParams.append('tags', t));
+        if (params.vertical) queryParams.set('vertical', params.vertical);
+        return `/products?${queryParams.toString()}`;
+      },
       providesTags: ['Products'],
     }),
     createProduct: builder.mutation<Product, CreateProductRequest>({
@@ -66,8 +86,21 @@ export const productsApi = api.injectEndpoints({
       }),
       invalidatesTags: ['Products'],
     }),
+    getUploadSignature: builder.mutation<
+      { signature: string; timestamp: number; cloudName: string; apiKey: string },
+      void
+    >({
+      query: () => ({
+        url: '/products/upload-signature',
+        method: 'POST',
+      }),
+    }),
   }),
 });
 
-export const { useGetProductsQuery, useCreateProductMutation, useUpdateProductMutation } =
-  productsApi;
+export const {
+  useGetProductsQuery,
+  useCreateProductMutation,
+  useUpdateProductMutation,
+  useGetUploadSignatureMutation,
+} = productsApi;

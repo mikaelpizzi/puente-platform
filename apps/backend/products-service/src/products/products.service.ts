@@ -20,11 +20,41 @@ export class ProductsService {
   }
 
   /**
-   * Retrieves all products.
+   * Retrieves all products with optional filtering.
+   * @param filters - Query parameters for filtering.
    * @returns An array of Product documents.
    */
-  async findAll(): Promise<Product[]> {
-    return this.productModel.find().exec();
+  async findAll(filters?: {
+    search?: string;
+    minPrice?: number;
+    maxPrice?: number;
+    tags?: string[];
+    vertical?: string;
+  }): Promise<Product[]> {
+    const query: any = {};
+
+    if (filters?.search) {
+      query.$or = [
+        { name: { $regex: filters.search, $options: 'i' } },
+        { description: { $regex: filters.search, $options: 'i' } },
+      ];
+    }
+
+    if (filters?.minPrice !== undefined || filters?.maxPrice !== undefined) {
+      query.price = {};
+      if (filters.minPrice !== undefined) query.price.$gte = filters.minPrice;
+      if (filters.maxPrice !== undefined) query.price.$lte = filters.maxPrice;
+    }
+
+    if (filters?.tags && filters.tags.length > 0) {
+      query.tags = { $in: filters.tags };
+    }
+
+    if (filters?.vertical) {
+      query.vertical = filters.vertical;
+    }
+
+    return this.productModel.find(query).sort({ createdAt: -1 }).exec();
   }
 
   /**

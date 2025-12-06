@@ -292,3 +292,23 @@
      ```
      Todos terminaron en verde; el de Products incluye el fix del ConfigService dummy + header `X-Gateway-Secret` para el guard.
   3. Opcional (manual): levantar `docker compose up api-gateway` con los env `OTEL_*` apuntando a un Tempo pÃºblico y verificar que los spans aparecen; los archivos `.env.example`, `README.md` y `ARCHITECTURE.md` tienen el paso a paso actualizado.
+## Task 37: Body Validation for GET/DELETE (Defensa en Profundidad)
+- **What:** Validación de bodies en métodos GET/DELETE para rechazar payloads inesperados.
+- **Why:** Prevenir inyección de datos no deseados y asegurar requests malformadas no lleguen a procesarse.
+- **How:** Ya implementado vía Task 36 con SanityCheckMiddleware en los 4 microservicios internos.
+- **Outcome:** DONE (completado como parte de Task 36).
+- **Testing:** Unit tests en auth/products/finance/logistics-service pasando.
+
+## Task 38: Marketplace View for BUYER
+- **What:** Vista dedicada para compradores con grid de productos, botón  Agregar al carrito, y checkout.
+- **Why:** BUYER necesita interfaz para descubrir y comprar productos.
+- **How:** MarketplacePage.tsx ya existía con grid responsivo, ProductCard con variant buyer, integración RTK con cartSlice.
+- **Outcome:** DONE. Funcionalidad BUYER completa.
+- **Testing:** Frontend dev server funcionando con flujo completo compra -> carrito -> checkout.
+
+## Color Scheme Update: Financiera Fresca
+- **What:** Migración de paleta de colores de indigo/purple a Emerald (#10B981) + Slate (#334155).
+- **Why:** El usuario solicitó un vibe más fintech positivo con verde esmeralda que transmite crecimiento y ganancias.
+- **How:** Actualicé tailwind.config.js con brand colors y migré indigo-600 ? emerald-500 en 11 componentes clave.
+- **Outcome:** Completado. Botón verde Cobrar da satisfacción de saldo positivo.
+- **Testing:** Verificación visual en http://localhost:5173.

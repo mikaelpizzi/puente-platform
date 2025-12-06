@@ -33,4 +33,8 @@ export class CreateProductDto {
   @IsNumber()
   @IsOptional()
   stock?: number;
+
+  @IsString({ each: true })
+  @IsOptional()
+  tags?: string[];
 }

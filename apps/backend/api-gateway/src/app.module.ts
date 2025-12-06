@@ -138,6 +138,9 @@ export class AppModule {
         { path: 'products', method: RequestMethod.ALL },
         { path: 'products/', method: RequestMethod.ALL },
         { path: 'products/*path', method: RequestMethod.ALL },
+        { path: 'tags', method: RequestMethod.ALL },
+        { path: 'tags/', method: RequestMethod.ALL },
+        { path: 'tags/*path', method: RequestMethod.ALL },
       );
 
     consumer

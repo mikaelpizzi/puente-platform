@@ -10,6 +10,7 @@ interface Product {
   stock: number;
   sku?: string;
   vertical?: string;
+  tags?: string[];
   status?: 'synced' | 'pending' | 'error';
   errorMessage?: string;
   attributes?: Record<string, any>;
@@ -37,14 +38,36 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       }`}
     >
       <div className="flex justify-between items-start">
-        <div>
-          <div className="flex items-center gap-2">
-            <h3 className="font-semibold text-gray-900 dark:text-white">{product.name}</h3>
+        <div className="flex-1 min-w-0 pr-2">
+          <div className="flex items-center gap-2 mb-1">
+            <h3 className="font-semibold text-gray-900 dark:text-white truncate">{product.name}</h3>
             {product.status === 'pending' && (
-              <Clock className="w-4 h-4 text-gray-400 animate-pulse" />
+              <Clock className="w-4 h-4 text-gray-400 animate-pulse flex-shrink-0" />
             )}
-            {product.status === 'error' && <AlertTriangle className="w-4 h-4 text-red-500" />}
+            {product.status === 'error' && (
+              <AlertTriangle className="w-4 h-4 text-red-500 flex-shrink-0" />
+            )}
           </div>
+
+          {/* Tags Display */}
+          {product.tags && product.tags.length > 0 && (
+            <div className="flex flex-wrap gap-1 mb-2">
+              {product.tags.slice(0, 3).map((tag, idx) => (
+                <span
+                  key={idx}
+                  className="text-[10px] px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-full font-medium"
+                >
+                  {tag}
+                </span>
+              ))}
+              {product.tags.length > 3 && (
+                <span className="text-[10px] px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 rounded-full font-medium">
+                  +{product.tags.length - 3}
+                </span>
+              )}
+            </div>
+          )}
+
           <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2">
             {product.description}
           </p>

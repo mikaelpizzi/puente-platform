@@ -43,6 +43,8 @@ export class ProductsController {
     // For now, prefer header.
     const finalSellerId = userId || createProductDto.sellerId;
 
+    console.log('Creating product with data:', JSON.stringify(createProductDto, null, 2));
+
     return this.productsService.create({
       ...createProductDto,
       sellerId: finalSellerId!,

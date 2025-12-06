@@ -18,7 +18,10 @@ export class Product {
   sku!: string;
 
   @Prop({ required: true })
-  vertical!: string; // e.g., 'food', 'electronics', 'pharmacy'
+  vertical!: string; // Deprecated: Use tags instead
+
+  @Prop({ type: [String], default: [] })
+  tags!: string[];
 
   // Flexible attributes for multi-vertical support
   @Prop({ type: MongooseSchema.Types.Mixed })

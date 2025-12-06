@@ -9,6 +9,7 @@ export interface Product {
   stock: number;
   vertical: string;
   sellerId: string;
+  tags?: string[];
   attributes?: Record<string, any>;
 }
 
@@ -18,7 +19,8 @@ export interface CreateProductRequest {
   price: number;
   sku: string;
   stock: number;
-  vertical: string;
+  vertical: string; // Deprecated but kept for backward compatibility
+  tags?: string[];
   sellerId?: string;
   attributes?: Record<string, any>;
 }
@@ -56,7 +58,16 @@ export const productsApi = api.injectEndpoints({
         }
       },
     }),
+    updateProduct: builder.mutation<Product, { id: string; data: Partial<CreateProductRequest> }>({
+      query: ({ id, data }) => ({
+        url: `/products/${id}`,
+        method: 'PATCH',
+        body: data,
+      }),
+      invalidatesTags: ['Products'],
+    }),
   }),
 });
 
-export const { useGetProductsQuery, useCreateProductMutation } = productsApi;
+export const { useGetProductsQuery, useCreateProductMutation, useUpdateProductMutation } =
+  productsApi;

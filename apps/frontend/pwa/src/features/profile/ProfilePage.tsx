@@ -7,7 +7,7 @@ import toast from 'react-hot-toast';
 export const ProfilePage: React.FC = () => {
   const user = useSelector(selectCurrentUser);
   const [name, setName] = useState(user?.name || '');
-  const [email, setEmail] = useState(user?.email || '');
+  const [email] = useState(user?.email || '');
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
 

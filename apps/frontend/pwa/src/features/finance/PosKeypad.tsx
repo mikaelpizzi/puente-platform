@@ -18,12 +18,6 @@ export const PosKeypad: React.FC<PosKeypadProps> = ({
 }) => {
   const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0'];
 
-  const formatAmount = (val: string) => {
-    if (!val) return '$0.00';
-    const num = parseFloat(val);
-    return isNaN(num) ? '$0.00' : `$${num.toFixed(2)}`;
-  };
-
   return (
     <div className="flex flex-col h-full bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
       {/* Display */}

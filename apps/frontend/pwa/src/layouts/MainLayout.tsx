@@ -12,7 +12,6 @@ import {
   Sun,
   User,
   ChevronDown,
-  Settings,
 } from 'lucide-react';
 import { OfflineSyncManager } from '../features/inventory/OfflineSyncManager';
 import { logout, selectCurrentUser } from '../features/auth/authSlice';

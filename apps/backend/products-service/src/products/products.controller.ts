@@ -10,7 +10,10 @@ import {
   Headers,
   UnauthorizedException,
   Query,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
@@ -19,11 +22,15 @@ import { RolesGuard } from '../common/guards/roles.guard';
 import { ServiceAuthGuard } from '../common/guards/service-auth.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { Role } from '../common/enums/role.enum';
+import { CloudinaryService, MulterFile } from '../cloudinary/cloudinary.service';
 
 @Controller('products')
 @UseGuards(ServiceAuthGuard, RolesGuard)
 export class ProductsController {
-  constructor(private readonly productsService: ProductsService) {}
+  constructor(
+    private readonly productsService: ProductsService,
+    private readonly cloudinaryService: CloudinaryService,
+  ) {}
 
   /**
    * Creates a new product.
@@ -35,16 +42,10 @@ export class ProductsController {
   @Roles(Role.ADMIN, Role.SELLER)
   async create(@Body() createProductDto: CreateProductDto, @Headers('x-user-id') userId: string) {
     if (!userId && !createProductDto.sellerId) {
-      // Fallback for local testing if header is missing and not in body
-      // In production, Gateway ensures header is present for auth'd routes
       throw new UnauthorizedException('Missing user context (x-user-id)');
     }
 
-    // Enforce sellerId from token if present, otherwise trust body (only for internal/admin?)
-    // For now, prefer header.
     const finalSellerId = userId || createProductDto.sellerId;
-
-    console.log('Creating product with data:', JSON.stringify(createProductDto, null, 2));
 
     return this.productsService.create({
       ...createProductDto,
@@ -64,7 +65,6 @@ export class ProductsController {
     @Query('tags') tags?: string | string[],
     @Query('vertical') vertical?: string,
   ) {
-    // Handle tags being a single string or array
     const tagList = tags ? (Array.isArray(tags) ? tags : [tags]) : undefined;
 
     return this.productsService.findAll({
@@ -115,10 +115,7 @@ export class ProductsController {
    * @returns Success message.
    */
   @Post('stock/reserve')
-  @Roles(Role.ADMIN, Role.SELLER, Role.BUYER) // Buyers might trigger reservation via order service?
-  // Actually, usually the Order Service calls this, and Order Service has a role or system key.
-  // For now, let's assume the Gateway forwards the user's role.
-  // If a Buyer places an order, the request might come from them.
+  @Roles(Role.ADMIN, Role.SELLER, Role.BUYER)
   async reserveStock(@Body() stockOperationDto: StockOperationDto) {
     await this.productsService.reserveStock(stockOperationDto.items);
     return { success: true, message: 'Stock reserved' };
@@ -130,7 +127,7 @@ export class ProductsController {
    * @returns Success message.
    */
   @Post('stock/release')
-  @Roles(Role.ADMIN, Role.SELLER) // Usually system or admin/seller manual override
+  @Roles(Role.ADMIN, Role.SELLER)
   async releaseStock(@Body() stockOperationDto: StockOperationDto) {
     await this.productsService.releaseStock(stockOperationDto.items);
     return { success: true, message: 'Stock released' };
@@ -149,21 +146,15 @@ export class ProductsController {
   }
 
   /**
-   * Generates a signature for client-side upload (Cloudinary/Firebase).
-   * Mocked for now if no env vars are present.
+   * Uploads an image to Cloudinary.
    */
-  @Post('upload-signature')
+  @Post('upload')
   @Roles(Role.ADMIN, Role.SELLER)
-  getUploadSignature() {
-    // In a real implementation, we would use CLOUDINARY_API_SECRET to sign params.
-    // For now, we return a mock signature or a direct upload URL if using a different provider.
-    // If using Cloudinary unsigned uploads for dev, we might not even need this,
-    // but it's good practice to have the endpoint ready.
-    return {
-      signature: 'mock_signature_' + Date.now(),
-      timestamp: Math.floor(Date.now() / 1000),
-      cloudName: process.env.CLOUDINARY_CLOUD_NAME || 'demo',
-      apiKey: process.env.CLOUDINARY_API_KEY || '123456789',
-    };
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadImage(@UploadedFile() file: MulterFile) {
+    if (!file) {
+      throw new Error('No file provided');
+    }
+    return this.cloudinaryService.uploadImage(file);
   }
 }

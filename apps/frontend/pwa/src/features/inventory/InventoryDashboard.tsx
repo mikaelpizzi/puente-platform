@@ -4,7 +4,7 @@ import {
   useGetProductsQuery,
   useCreateProductMutation,
   useUpdateProductMutation,
-  useGetUploadSignatureMutation,
+  useUploadImageMutation,
 } from './productsApi';
 import { useGetTagsQuery } from './tagsApi';
 import { selectCurrentUser } from '../auth/authSlice';
@@ -24,14 +24,22 @@ import toast from 'react-hot-toast';
 export const InventoryDashboard: React.FC = () => {
   const dispatch = useDispatch();
   const user = useSelector(selectCurrentUser);
-  const { data: serverProducts, isLoading, error } = useGetProductsQuery();
+  const {
+    data: serverProducts,
+    isLoading,
+    error,
+  } = useGetProductsQuery({
+    // We can pass filters here if needed, but for the dashboard we might want all?
+    // Or maybe just the user's products?
+    // The backend filters by seller if not admin, so this is fine.
+  });
   const { data: tags } = useGetTagsQuery();
   const pendingProducts = useSelector(selectPendingProducts);
   const errorProducts = useSelector(selectErrorProducts);
 
   const [createProduct] = useCreateProductMutation();
   const [updateProduct] = useUpdateProductMutation();
-  const [getUploadSignature] = useGetUploadSignatureMutation();
+  const [uploadImage] = useUploadImageMutation();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isTagManagerOpen, setIsTagManagerOpen] = useState(false);
 
@@ -96,38 +104,11 @@ export const InventoryDashboard: React.FC = () => {
     const toastId = toast.loading('Subiendo imagen...');
 
     try {
-      // 1. Get signature (mocked or real)
-      const { signature, timestamp, cloudName, apiKey } = await getUploadSignature().unwrap();
-
-      // 2. Upload to Cloudinary (or mock if no env vars)
-      // For this demo, if we detect the mock signature, we'll simulate a delay and return a placeholder
-      if (signature.startsWith('mock_signature')) {
-        await new Promise((resolve) => setTimeout(resolve, 1500));
-        const mockUrl = URL.createObjectURL(file); // Use local blob for immediate preview
-        setFormData((prev) => ({ ...prev, imageUrl: mockUrl }));
-        toast.success('Imagen subida (Simulación)', { id: toastId });
-      } else {
-        // Real Cloudinary Upload
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('api_key', apiKey);
-        formData.append('timestamp', timestamp.toString());
-        formData.append('signature', signature);
-
-        const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
-          method: 'POST',
-          body: formData,
-        });
-        const data = await response.json();
-        if (data.secure_url) {
-          setFormData((prev) => ({ ...prev, imageUrl: data.secure_url }));
-          toast.success('Imagen subida correctamente', { id: toastId });
-        } else {
-          throw new Error('Upload failed');
-        }
-      }
+      const result = await uploadImage(file).unwrap();
+      setFormData((prev) => ({ ...prev, imageUrl: result.secure_url }));
+      toast.success('Imagen subida correctamente', { id: toastId });
     } catch (error) {
-      console.error('Upload error:', error);
+      console.error('Error uploading image:', error);
       toast.error('Error al subir imagen', { id: toastId });
     } finally {
       setIsUploading(false);

@@ -86,14 +86,16 @@ export const productsApi = api.injectEndpoints({
       }),
       invalidatesTags: ['Products'],
     }),
-    getUploadSignature: builder.mutation<
-      { signature: string; timestamp: number; cloudName: string; apiKey: string },
-      void
-    >({
-      query: () => ({
-        url: '/products/upload-signature',
-        method: 'POST',
-      }),
+    uploadImage: builder.mutation<{ public_id: string; secure_url: string; url: string }, File>({
+      query: (file) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        return {
+          url: '/products/upload',
+          method: 'POST',
+          body: formData,
+        };
+      },
     }),
   }),
 });

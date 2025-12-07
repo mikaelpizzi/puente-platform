@@ -349,7 +349,7 @@
   - **Task 40 (Orders):** Created OrdersPage with mock data for Buyer/Seller views. Added /orders route and navigation link.
 - **Notes:**
   - Backend for Task 40 is PENDING (using mock data).
-  - Cloudinary credentials are mocked.
+  - Cloudinary credentials are not mocked already.
 
 ## Advanced Inventory Features
 - **Mission:** Implement multi-image support, drag-and-drop reordering, soft delete (trash), and restore functionality.
@@ -364,3 +364,208 @@
   - **Unit/Build:** 'pnpm build' passed.
   - **Manual:** Verified DnD sorting, Trash/Restore flow, and Carousel navigation on desktop/mobile view.
 
+
+## Task 40: Orders Backend Implementation
+- **Date:** 2025-12-07
+- **Status:** DONE
+- **Branch:** feat/task-40-orders-backend
+
+### What's New
+Sistema de **�rdenes** completo que permite a compradores y vendedores rastrear sus transacciones. Reemplaza los mock data del frontend con persistencia real en MongoDB.
+
+#### Backend (products-service)
+- **Schema:** Order con estados (pending/processing/shipped/delivered/cancelled)
+- **Endpoints:**
+  - POST /orders - Crear orden (BUYER)
+  - GET /orders/buyer - Mis compras
+  - GET /orders/seller - Mis ventas
+  - GET /orders/:id - Detalle de orden
+  - PATCH /orders/:id/status - Actualizar estado (SELLER)
+  - PATCH /orders/:id/cancel - Cancelar orden
+
+#### Frontend (PWA)
+- **ordersApi.ts:** RTK Query hooks para todas las operaciones
+- **OrdersPage.tsx:** Conectado a API real (antes usaba datos mock)
+
+### Why This Implementation
+1. **Mongoose en products-service:** Las �rdenes est�n �ntimamente relacionadas con productos (items embedded). Colocarlo aqu� evita llamadas cross-service innecesarias.
+2. **OrderItem subdocument:** Denormalizamos nombre/precio al momento de compra para preservar el historial incluso si el producto cambia.
+3. **Class-based MockOrderModel:** Para tests, seguimos el patr�n existente del proyecto con tipado estricto (sin \ny\).
+4. **RTK Query separado:** \ordersApi\ tiene su propio cache para evitar invalidaciones innecesarias del cache de productos.
+
+### How to Test
+
+#### 1. Verificar Build
+\\\powershell
+pnpm --filter @puente/products-service build
+pnpm --filter @puente/pwa build
+\\\
+
+#### 2. Ejecutar Unit Tests
+\\\powershell
+pnpm --filter @puente/products-service test -- src/orders
+\\\
+Resultado esperado: 10 tests passed
+
+#### 3. Probar API Manualmente (requiere MongoDB)
+\\\powershell
+# Iniciar products-service
+pnpm --filter @puente/products-service dev
+
+# Crear orden (simulando Gateway)
+curl -X POST http://localhost:3002/orders `
+  -H 'Content-Type: application/json' `
+  -H 'X-Gateway-Secret: your-secret' `
+  -H 'x-user-id: buyer-123' `
+  -H 'x-user-role: BUYER' `
+  -d '{\"sellerId\":\"seller-456\",\"items\":[{\"productId\":\"p1\",\"name\":\"Test\",\"quantity\":1,\"price\":100}],\"total\":100}'
+
+# Listar compras del buyer
+curl http://localhost:3002/orders/buyer `
+  -H 'X-Gateway-Secret: your-secret' `
+  -H 'x-user-id: buyer-123' `
+  -H 'x-user-role: BUYER'
+
+# Actualizar estado (como seller)
+curl -X PATCH http://localhost:3002/orders/{orderId}/status `
+  -H 'Content-Type: application/json' `
+  -H 'X-Gateway-Secret: your-secret' `
+  -H 'x-user-id: seller-456' `
+  -H 'x-user-role: SELLER' `
+  -d '{\"status\":\"processing\"}'
+\\\
+
+#### 4. Frontend (requiere backend corriendo)
+- Navegar a /orders en la PWA
+- Pesta�a "Mis Compras" muestra �rdenes como buyer
+- Pesta�a "Mis Ventas" muestra �rdenes como seller
+- Filtros por estado funcionan
+
+### Files Created/Modified
+- apps/backend/products-service/src/orders/ (7 files)
+- apps/backend/products-service/src/app.module.ts
+- apps/frontend/pwa/src/features/orders/ordersApi.ts
+- apps/frontend/pwa/src/features/orders/OrdersPage.tsx
+- apps/frontend/pwa/src/app/store.ts
+
+---
+
+## 2025-12-07: Tasks 42-45 - Backend Integrations
+
+### Task 42: Order Messages (Centro de Mensajes)
+
+**¿Qué se implementó?**
+Sistema de mensajería por orden que permite comunicación entre Buyer, Seller y Courier. Cada orden tiene un thread de mensajes asociado.
+
+**¿Por qué se implementó así?**
+- **Modelo subdocumento vs colección separada:** Se eligió colección separada (OrderMessage) para evitar que el documento Order crezca indefinidamente con muchos mensajes.
+- **Validación de participantes:** El MessagesService valida que solo buyerId, sellerId o courierId puedan enviar/leer mensajes. ADMIN tiene acceso total.
+- **Read status tracking:** Cada mensaje tiene isRead y readAt para mostrar badges de no leídos en la UI.
+
+**¿Se alcanzaron las funcionalidades?**
+✅ CRUD de mensajes por orden
+✅ Validación de permisos (solo participantes)
+✅ Tracking de mensajes leídos/no leídos
+⏳ WebSocket para real-time (pendiente, requiere frontend)
+
+**Testing desde UI:**
+1. Crear una orden (como BUYER)
+2. Ir a /orders/{orderId}
+3. Enviar mensaje desde el chat
+4. Cambiar de usuario (SELLER) y verificar que llega el mensaje
+5. El badge de no leídos debe aparecer
+
+**Endpoints:**
+- POST /orders/:orderId/messages
+- GET /orders/:orderId/messages
+- PATCH /orders/:orderId/messages/read
+- GET /orders/:orderId/messages/unread-count
+
+---
+
+### Task 43: Real P2P Exchange Rates (Binance + CoinGecko)
+
+**¿Qué se implementó?**
+Adaptadores reales para obtener tasas de cambio USDT desde Binance P2P y CoinGecko, con cache en Redis.
+
+**¿Por qué se implementó así?**
+- **Adapter Pattern:** AbstractP2PAdapter permite agregar más proveedores fácilmente.
+- **Fallback automático:** Si Binance falla, se usa CoinGecko automáticamente.
+- **Cache Redis 60s:** Evita rate limits y mejora latencia. El TTL es configurable.
+- **RateResult con metadata:** Incluye source, cached, fetchedAt para transparencia en UI.
+
+**¿Se alcanzaron las funcionalidades?**
+✅ Tasas reales desde Binance P2P
+✅ Fallback a CoinGecko
+✅ Cache con TTL configurable
+✅ 8 tests unitarios pasando
+
+**Testing desde UI:**
+1. Ir a la sección de pagos/conversión USDT
+2. Verificar que muestra tasa real (no fija 1000)
+3. La UI debe mostrar origen de la tasa (BinanceP2P o CoinGecko)
+
+**Test Backend:**
+\\\ash
+pnpm --filter @puente/finance-service test -- src/p2p
+\\\
+
+---
+
+### Task 44: Email Integration (Gmail/Nodemailer)
+
+**¿Qué se implementó?**
+Servicio de emails reales usando Nodemailer con Gmail SMTP, reemplazando los console.log.
+
+**¿Por qué se implementó así?**
+- **Nodemailer + Gmail:** Gratis, 500 emails/día, sin necesidad de dominio propio.
+- **Templates HTML inline:** Styled con colores de la marca, responsive.
+- **Tokens hasheados:** Los reset tokens se hashean antes de guardar (seguridad).
+- **Emails non-blocking:** El welcome email no bloquea el registro (fire and forget).
+
+**¿Se alcanzaron las funcionalidades?**
+✅ Email de bienvenida al registrarse
+✅ Email de verificación con enlace firmado
+✅ Email de recuperación de contraseña
+✅ Templates con diseño profesional
+
+**Testing desde UI:**
+1. Registrar nuevo usuario -> Debe llegar email de bienvenida
+2. Ir a "Olvidé mi contraseña" -> Debe llegar email con link
+3. Verificar que el link de reset funciona y expira en 1 hora
+
+**Requisitos:**
+- Configurar App Password en cuenta Google
+- Variables de entorno: SMTP_USER, SMTP_PASS
+
+---
+
+### Task 45: OSRM Routing (Docker Venezuela)
+
+**¿Qué se implementó?**
+Servicio de rutas reales usando OSRM (Open Source Routing Machine) con el mapa de Venezuela.
+
+**¿Por qué se implementó así?**
+- **Docker local:** Funciona offline, ideal para demos sin internet.
+- **Mapa Venezuela (20-50MB):** Mucho más ligero que el mapa mundial (50GB).
+- **Fallback Haversine:** Si OSRM no está disponible, calcula distancia en línea recta.
+- **Multi-waypoint:** Soporta rutas con paradas intermedias.
+
+**¿Se alcanzaron las funcionalidades?**
+✅ Rutas reales con polylines
+✅ ETAs basados en red vial real
+✅ Fallback para modo offline
+✅ 8 tests unitarios pasando
+
+**Testing desde UI:**
+1. Crear un pedido con tracking
+2. Asignar courier y verificar que la ruta mostrada es real (no línea recta)
+3. El ETA debe ser basado en distancia por carretera
+
+**Iniciar OSRM:**
+\\\ash
+cd docs
+docker run -t -p 5000:5000 -v "\C:\Users\Mikael\Documents\Projects\puente-platform-fintech:/data" osrm/osrm-backend osrm-routed --algorithm mld /data/venezuela-251206.osrm
+\\\
+
+---

@@ -13,6 +13,7 @@ import {
 import { OrdersService } from './orders.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
+import { CompleteDeliveryDto } from './dto/complete-delivery.dto';
 import { OrderStatus } from './schemas/order.schema';
 import { ServiceAuthGuard } from '../common/guards/service-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -62,10 +63,22 @@ export class OrdersController {
   }
 
   /**
+   * Gets all orders assigned to the current courier.
+   */
+  @Get('courier')
+  @Roles(Role.COURIER, Role.ADMIN)
+  async findByCourier(@Headers('x-user-id') userId: string, @Query('status') status?: OrderStatus) {
+    if (!userId) {
+      throw new UnauthorizedException('Missing user context (x-user-id)');
+    }
+    return this.ordersService.findByCourier(userId, status);
+  }
+
+  /**
    * Gets a single order by ID.
    */
   @Get(':id')
-  @Roles(Role.BUYER, Role.SELLER, Role.ADMIN)
+  @Roles(Role.BUYER, Role.SELLER, Role.COURIER, Role.ADMIN)
   async findOne(@Param('id') id: string) {
     return this.ordersService.findOne(id);
   }
@@ -78,6 +91,33 @@ export class OrdersController {
   @Roles(Role.SELLER, Role.ADMIN)
   async updateStatus(@Param('id') id: string, @Body() updateOrderStatusDto: UpdateOrderStatusDto) {
     return this.ordersService.updateStatus(id, updateOrderStatusDto.status);
+  }
+
+  /**
+   * Assigns a courier to an order.
+   * Admin or seller can assign a courier.
+   */
+  @Patch(':id/assign-courier')
+  @Roles(Role.SELLER, Role.ADMIN)
+  async assignCourier(@Param('id') id: string, @Body('courierId') courierId: string) {
+    return this.ordersService.assignCourier(id, courierId);
+  }
+
+  /**
+   * Completes a delivery with Proof of Delivery (POD).
+   * Courier must provide photo and/or signature as evidence.
+   */
+  @Post(':id/complete-delivery')
+  @Roles(Role.COURIER, Role.ADMIN)
+  async completeDelivery(
+    @Param('id') id: string,
+    @Headers('x-user-id') userId: string,
+    @Body() completeDeliveryDto: CompleteDeliveryDto,
+  ) {
+    if (!userId) {
+      throw new UnauthorizedException('Missing user context (x-user-id)');
+    }
+    return this.ordersService.completeDelivery(id, userId, completeDeliveryDto);
   }
 
   /**

@@ -60,6 +60,23 @@ export class Order {
 
   @Prop()
   notes?: string;
+
+  @Prop()
+  courierId?: string; // Reference to courier user in auth-service
+
+  @Prop({ type: Object })
+  proofOfDelivery?: {
+    photoUrl?: string; // Cloudinary URL of delivery photo
+    signatureUrl?: string; // Cloudinary URL of signature image
+    capturedAt?: Date; // When POD was captured
+    capturedBy?: string; // Courier ID who captured POD
+    notes?: string; // Optional delivery notes
+    latitude?: number; // GPS lat at delivery
+    longitude?: number; // GPS lon at delivery
+  };
+
+  @Prop()
+  deliveredAt?: Date;
 }
 
 export const OrderSchema = SchemaFactory.createForClass(Order);

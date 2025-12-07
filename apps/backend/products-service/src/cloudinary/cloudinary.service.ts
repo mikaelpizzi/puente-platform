@@ -36,7 +36,55 @@ export class CloudinaryService {
           },
           (error, result) => {
             if (error) return reject(error);
-            resolve(result as any);
+            resolve(result as { public_id: string; secure_url: string; url: string });
+          },
+        )
+        .end(file.buffer);
+    });
+  }
+
+  /**
+   * Upload a Base64 image (signature or photo) to the POD folder.
+   * @param base64Data - The Base64 encoded image (data:image/png;base64,...)
+   * @param resourceType - Optional resource type (default: 'image')
+   * @returns Cloudinary upload result with public_id and secure_url
+   */
+  async uploadBase64(
+    base64Data: string,
+    folder: string = 'puente-pod',
+  ): Promise<{ public_id: string; secure_url: string; url: string }> {
+    return new Promise((resolve, reject) => {
+      cloudinary.uploader.upload(
+        base64Data,
+        {
+          folder,
+          resource_type: 'image',
+        },
+        (error, result) => {
+          if (error) return reject(error);
+          resolve(result as { public_id: string; secure_url: string; url: string });
+        },
+      );
+    });
+  }
+
+  /**
+   * Upload a file buffer (photo from camera) to the POD folder.
+   * @param file - The uploaded file
+   * @returns Cloudinary upload result
+   */
+  async uploadPODImage(
+    file: MulterFile,
+  ): Promise<{ public_id: string; secure_url: string; url: string }> {
+    return new Promise((resolve, reject) => {
+      cloudinary.uploader
+        .upload_stream(
+          {
+            folder: 'puente-pod',
+          },
+          (error, result) => {
+            if (error) return reject(error);
+            resolve(result as { public_id: string; secure_url: string; url: string });
           },
         )
         .end(file.buffer);

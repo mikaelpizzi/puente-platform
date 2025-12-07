@@ -8,3 +8,10 @@ AGENT_LOGS.md
 TASKS.md
 TASKS_LOGS.md
 FLOW.md
+
+# OSRM Maps and Data (large files)
+*.osm.pbf
+*.osrm
+*.osrm.*
+/docker/osrm/data/*
+/docs/*.osm.pbf

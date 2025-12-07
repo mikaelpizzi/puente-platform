@@ -83,3 +83,69 @@
 - **Outcome:** DONE. Verified build and extensive manual testing of image flows and inputs.
 - **Artifacts:** check 'pr_draft.md' and 'walkthrough.md'.
 
+
+## 2025-12-07: Task 40 - Orders Backend
+- Creé rama eat/task-40-orders-backend desde main
+- Implementé módulo Orders en products-service:
+  - Schema Order con Mongoose (status enum, items subdocument)
+  - DTOs con class-validator (CreateOrderDto, UpdateOrderStatusDto)
+  - OrdersService con CRUD + updateStatus + cancel
+  - OrdersController con guards (ServiceAuthGuard, RolesGuard)
+  - OrdersModule registrado en AppModule
+- Escribí tests con Vitest usando patrón class-based MockOrderModel (tipado estricto, sin any)
+- Creé ordersApi.ts con RTK Query (6 endpoints)
+- Actualicé OrdersPage.tsx para consumir API real en lugar de mock data
+- Registré ordersApi en Redux store
+- Builds de backend y frontend exitosos
+- 10 tests unitarios pasando
+
+## 2025-12-07: Tasks 42-45 Backend Integrations
+
+### Resumen de cambios
+- **Task 42:** CreÃ© mÃ³dulo Messages en products-service para chat por orden
+- **Task 43:** ReemplacÃ© mock de P2P con adaptadores reales Binance/CoinGecko
+- **Task 44:** IntegrÃ© Nodemailer con Gmail para emails reales
+- **Task 45:** ImplementÃ© OsrmService para rutas reales con Docker OSRM
+
+### Archivos creados/modificados
+
+**Task 42 (products-service):**
+- src/messages/schemas/order-message.schema.ts
+- src/messages/dto/create-message.dto.ts
+- src/messages/messages.service.ts
+- src/messages/messages.controller.ts
+- src/messages/messages.module.ts
+- src/app.module.ts (registrÃ© MessagesModule)
+
+**Task 43 (finance-service):**
+- src/p2p/adapters/binance.adapter.ts
+- src/p2p/adapters/coingecko.adapter.ts
+- src/p2p/rates-cache.service.ts
+- src/p2p/p2p.module.ts (actualizado)
+- src/p2p/p2p.service.ts (actualizado con fallback y cache)
+- src/p2p/p2p.service.spec.ts (8 tests)
+
+**Task 44 (auth-service):**
+- src/email/email.service.ts
+- src/email/email.module.ts
+- src/auth/auth.module.ts (importÃ© EmailModule)
+- src/auth/auth.service.ts (integrÃ© EmailService)
+- src/auth/auth.controller.ts (nuevo endpoint send-verification)
+
+**Task 45 (logistics-service):**
+- src/routing/osrm.service.ts
+- src/routing/routing.module.ts
+- src/routing/osrm.service.spec.ts (8 tests)
+- src/app.module.ts (registrÃ© RoutingModule)
+- docs/OSRM_SETUP.md (documentaciÃ³n)
+
+### Ramas creadas
+- feat/task-42-order-messages
+- feat/task-43-real-p2p-rates
+- feat/task-44-email-integration
+- feat/task-45-osrm-routing
+
+### Tests ejecutados
+- finance-service: 8 tests (p2p) âœ…
+- logistics-service: 8 tests (routing) âœ…
+- Builds: Todos los servicios compilan sin errores âœ…

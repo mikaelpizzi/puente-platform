@@ -108,12 +108,23 @@ export class AuthController {
 
   /**
    * Verifies the email address.
-   * @param email - The email to verify.
+   * @param body - Object containing email and token.
    * @returns Status message.
    */
   @Post('verify-email')
   @HttpCode(HttpStatus.OK)
-  async verifyEmail(@Body('email') email: string) {
-    return this.authService.verifyEmail(email);
+  async verifyEmail(@Body() body: { email: string; token: string }) {
+    return this.authService.verifyEmail(body.email, body.token);
+  }
+
+  /**
+   * Sends a verification email.
+   * @param email - The email to send verification to.
+   * @returns Status message.
+   */
+  @Post('send-verification')
+  @HttpCode(HttpStatus.OK)
+  async sendVerificationEmail(@Body('email') email: string) {
+    return this.authService.sendVerificationEmail(email);
   }
 }

@@ -4,28 +4,32 @@ import {
   ConflictException,
   ForbiddenException,
   BadRequestException,
+  Logger,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as argon2 from 'argon2';
+import * as crypto from 'crypto';
 import { UsersService } from '../users/users.service';
+import { EmailService } from '../email/email.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { User } from '@prisma/auth-client';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
     private configService: ConfigService,
+    private emailService: EmailService,
   ) {}
 
   /**
    * Registers a new user and generates initial authentication tokens.
-   * @param registerDto - The registration data including email, password, and role.
-   * @returns An object containing the access and refresh tokens.
-   * @throws ConflictException - If a user with the provided email already exists.
+   * Sends a welcome email to the user.
    */
   async register(registerDto: RegisterDto): Promise<{ accessToken: string; refreshToken: string }> {
     const { email, password, role } = registerDto;
@@ -45,14 +49,17 @@ export class AuthService {
 
     const tokens = await this.generateTokens(user);
     await this.updateRefreshToken(user.id, tokens.refreshToken);
+
+    // Send welcome email (async, don't block registration)
+    this.emailService.sendWelcome(email, email.split('@')[0]).catch((err) => {
+      this.logger.warn(`Failed to send welcome email to ${email}: ${err.message}`);
+    });
+
     return tokens;
   }
 
   /**
    * Authenticates a user and generates tokens.
-   * @param loginDto - The login credentials (email and password).
-   * @returns An object containing the access and refresh tokens.
-   * @throws UnauthorizedException - If the credentials are invalid.
    */
   async login(loginDto: LoginDto): Promise<{ accessToken: string; refreshToken: string }> {
     const { email, password } = loginDto;
@@ -75,10 +82,8 @@ export class AuthService {
 
   /**
    * Logs out a user by invalidating their refresh token.
-   * @param userId - The ID of the user to logout.
-   * @returns void
    */
-  async logout(userId: string) {
+  async logout(userId: string): Promise<void> {
     await this.usersService.updateUser({
       where: { id: userId },
       data: { hashedRefreshToken: null },
@@ -87,10 +92,6 @@ export class AuthService {
 
   /**
    * Refreshes the access token using a valid refresh token.
-   * @param userId - The ID of the user requesting the refresh.
-   * @param refreshToken - The refresh token provided by the client.
-   * @returns An object containing the new access and refresh tokens.
-   * @throws ForbiddenException - If the user is not found or the refresh token is invalid.
    */
   async refreshTokens(
     userId: string,
@@ -109,11 +110,8 @@ export class AuthService {
 
   /**
    * Updates the user's hashed refresh token in the database.
-   * @param userId - The ID of the user.
-   * @param refreshToken - The new refresh token to hash and store.
-   * @returns void
    */
-  async updateRefreshToken(userId: string, refreshToken: string) {
+  async updateRefreshToken(userId: string, refreshToken: string): Promise<void> {
     const hashedRefreshToken = await argon2.hash(refreshToken);
     await this.usersService.updateUser({
       where: { id: userId },
@@ -123,8 +121,6 @@ export class AuthService {
 
   /**
    * Generates access and refresh tokens for a user.
-   * @param user - The user entity.
-   * @returns An object containing the signed access and refresh tokens.
    */
   async generateTokens(user: User): Promise<{ accessToken: string; refreshToken: string }> {
     const payload = { sub: user.id, email: user.email, role: user.role };
@@ -139,49 +135,62 @@ export class AuthService {
       }),
     ]);
 
-    return {
-      accessToken,
-      refreshToken,
-    };
+    return { accessToken, refreshToken };
   }
 
-  // Stub methods for recovery/verification
   /**
-   * Initiates the password recovery process (Stub).
-   * @param email - The email address of the user.
-   * @returns A message indicating the process status.
+   * Initiates the password recovery process.
+   * Generates a secure token and sends a password reset email.
    */
-  async forgotPassword(email: string) {
+  async forgotPassword(email: string): Promise<{ message: string }> {
     const user = await this.usersService.user({ email });
-    if (!user) return { message: 'If user exists, email sent' };
 
-    const resetToken = Math.random().toString(36).substring(2, 15);
+    // Always return the same message to prevent email enumeration
+    if (!user) {
+      this.logger.log(`Password reset requested for non-existent email: ${email}`);
+      return { message: 'If user exists, email sent' };
+    }
+
+    // Generate secure token
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex');
 
     await this.usersService.updateUser({
       where: { id: user.id },
       data: {
-        passwordResetToken: resetToken,
+        passwordResetToken: hashedToken,
         passwordResetExpires: new Date(Date.now() + 3600000), // 1 hour
       },
     });
 
-    console.log(`[STUB] Password reset token for ${email}: ${resetToken}`);
+    // Send password reset email
+    const emailResult = await this.emailService.sendPasswordReset(email, resetToken);
+
+    if (emailResult.success) {
+      this.logger.log(`Password reset email sent to ${email}`);
+    } else {
+      this.logger.error(`Failed to send password reset email to ${email}: ${emailResult.error}`);
+    }
+
     return { message: 'If user exists, email sent' };
   }
 
   /**
-   * Resets the user's password using a valid token (Stub).
-   * @param email - The email address of the user.
-   * @param token - The password reset token.
-   * @param newPassword - The new password to set.
-   * @returns A message indicating success.
-   * @throws BadRequestException - If the token is invalid or expired.
+   * Resets the user's password using a valid token.
    */
-  async resetPassword(email: string, token: string, newPassword: string) {
+  async resetPassword(
+    email: string,
+    token: string,
+    newPassword: string,
+  ): Promise<{ message: string }> {
     const user = await this.usersService.user({ email });
+
+    // Hash the provided token to compare with stored hash
+    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
     if (
       !user ||
-      user.passwordResetToken !== token ||
+      user.passwordResetToken !== hashedToken ||
       !user.passwordResetExpires ||
       user.passwordResetExpires < new Date()
     ) {
@@ -198,22 +207,65 @@ export class AuthService {
       },
     });
 
+    this.logger.log(`Password reset successful for ${email}`);
     return { message: 'Password reset successful' };
   }
 
   /**
-   * Verifies the user's email address (Stub).
-   * @param email - The email address to verify.
-   * @returns A message indicating success.
+   * Sends an email verification link to the user.
    */
-  async verifyEmail(email: string) {
+  async sendVerificationEmail(email: string): Promise<{ message: string }> {
     const user = await this.usersService.user({ email });
-    if (user) {
-      await this.usersService.updateUser({
-        where: { id: user.id },
-        data: { isEmailVerified: true },
-      });
+
+    if (!user) {
+      return { message: 'If user exists, verification email sent' };
     }
-    return { message: 'Email verified (stub)' };
+
+    if (user.isEmailVerified) {
+      return { message: 'Email already verified' };
+    }
+
+    // Generate verification token
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+    const hashedToken = crypto.createHash('sha256').update(verificationToken).digest('hex');
+
+    await this.usersService.updateUser({
+      where: { id: user.id },
+      data: {
+        emailVerificationToken: hashedToken,
+      },
+    });
+
+    const emailResult = await this.emailService.sendVerification(email, verificationToken);
+
+    if (emailResult.success) {
+      this.logger.log(`Verification email sent to ${email}`);
+    }
+
+    return { message: 'If user exists, verification email sent' };
+  }
+
+  /**
+   * Verifies the user's email address using a valid token.
+   */
+  async verifyEmail(email: string, token: string): Promise<{ message: string }> {
+    const user = await this.usersService.user({ email });
+
+    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
+    if (!user || user.emailVerificationToken !== hashedToken) {
+      throw new BadRequestException('Invalid verification token');
+    }
+
+    await this.usersService.updateUser({
+      where: { id: user.id },
+      data: {
+        isEmailVerified: true,
+        emailVerificationToken: null,
+      },
+    });
+
+    this.logger.log(`Email verified for ${email}`);
+    return { message: 'Email verified successfully' };
   }
 }

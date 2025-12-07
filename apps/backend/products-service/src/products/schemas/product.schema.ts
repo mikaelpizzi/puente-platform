@@ -41,6 +41,12 @@ export class Product {
 
   @Prop({ default: 0, min: 0 })
   reservedStock!: number;
+
+  @Prop({ type: [String], default: [] })
+  images!: string[];
+
+  @Prop({ default: 'ACTIVE' }) // 'ACTIVE' | 'TRASH'
+  inventoryStatus!: string;
 }
 
 export const ProductSchema = SchemaFactory.createForClass(Product);

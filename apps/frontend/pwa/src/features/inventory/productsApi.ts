@@ -11,6 +11,8 @@ export interface Product {
   sellerId: string;
   tags?: string[];
   imageUrl?: string;
+  images?: string[];
+  inventoryStatus?: 'ACTIVE' | 'TRASH';
   attributes?: Record<string, any>;
 }
 
@@ -23,6 +25,8 @@ export interface CreateProductRequest {
   vertical: string; // Deprecated but kept for backward compatibility
   tags?: string[];
   imageUrl?: string;
+  images?: string[];
+  inventoryStatus?: 'ACTIVE' | 'TRASH';
   sellerId?: string;
   attributes?: Record<string, any>;
 }
@@ -104,5 +108,5 @@ export const {
   useGetProductsQuery,
   useCreateProductMutation,
   useUpdateProductMutation,
-  useGetUploadSignatureMutation,
+  useUploadImageMutation,
 } = productsApi;

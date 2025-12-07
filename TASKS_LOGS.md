@@ -344,9 +344,23 @@
 - **Date:** 2025-12-06
 - **Status:** DONE
 - **Changes:**
-  - **Task 39 (Images):** Added imageUrl to Product schema/interfaces. Implemented getUploadSignature (mocked). Added Image Upload UI to InventoryDashboard and display in ProductCard.
+  - **Task 39 (Images):** Added imageUrl to Product schema/interfaces. Implemented getUploadSignature (Cloudinary free). Added Image Upload UI to InventoryDashboard and display in ProductCard.
   - **Task 41 (Search):** Added search, minPrice, maxPrice, tags, vertical filters to ProductsService and ProductsController. Implemented Search Bar and Filters in MarketplacePage.
   - **Task 40 (Orders):** Created OrdersPage with mock data for Buyer/Seller views. Added /orders route and navigation link.
 - **Notes:**
   - Backend for Task 40 is PENDING (using mock data).
   - Cloudinary credentials are mocked.
+
+## Advanced Inventory Features
+- **Mission:** Implement multi-image support, drag-and-drop reordering, soft delete (trash), and restore functionality.
+- **Implementation:**
+  - Updated Product schema with 'inventoryStatus' and 'images'.
+  - Created 'MultiImageDropzone' component using HTML5 DnD.
+  - Refactored 'InventoryDashboard' to support 'ACTIVE' and 'TRASH' tabs.
+  - Implemented 'ConfirmationModal' for safer delete actions.
+  - Refined 'ProductCard' UI with image carousel and footer trash button.
+- **Outcome:** DONE. Users can now manage inventory with modern tools and safety nets.
+- **Testing:**
+  - **Unit/Build:** 'pnpm build' passed.
+  - **Manual:** Verified DnD sorting, Trash/Restore flow, and Carousel navigation on desktop/mobile view.
+

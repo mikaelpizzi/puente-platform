@@ -4,7 +4,6 @@ import {
   useGetProductsQuery,
   useCreateProductMutation,
   useUpdateProductMutation,
-  useUploadImageMutation,
 } from './productsApi';
 import { useGetTagsQuery } from './tagsApi';
 import { selectCurrentUser } from '../auth/authSlice';
@@ -18,7 +17,11 @@ import {
 import { TagManager } from './TagManager';
 import { OfflineSyncManager } from './OfflineSyncManager';
 import { ProductCard } from '../../components/ProductCard';
-import { Check, X, Tag as TagIcon, Plus, Upload, Image as ImageIcon } from 'lucide-react';
+import { ProductDetailModal } from './ProductDetailModal';
+import { MultiImageDropzone } from './MultiImageDropzone';
+import { ModalWrapper } from '../../components/ModalWrapper';
+import { ConfirmationModal } from '../../components/ui/ConfirmationModal';
+import { Check, X, Tag as TagIcon, Plus, Trash2, RefreshCw, AlertTriangle } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export const InventoryDashboard: React.FC = () => {
@@ -29,9 +32,7 @@ export const InventoryDashboard: React.FC = () => {
     isLoading,
     error,
   } = useGetProductsQuery({
-    // We can pass filters here if needed, but for the dashboard we might want all?
-    // Or maybe just the user's products?
-    // The backend filters by seller if not admin, so this is fine.
+    // Fetch all for user
   });
   const { data: tags } = useGetTagsQuery();
   const pendingProducts = useSelector(selectPendingProducts);
@@ -39,17 +40,32 @@ export const InventoryDashboard: React.FC = () => {
 
   const [createProduct] = useCreateProductMutation();
   const [updateProduct] = useUpdateProductMutation();
-  const [uploadImage] = useUploadImageMutation();
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isTagManagerOpen, setIsTagManagerOpen] = useState(false);
-
-  // Bulk Actions State
-  const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [isBulkTagModalOpen, setIsBulkTagModalOpen] = useState(false);
   const [bulkSelectedTags, setBulkSelectedTags] = useState<string[]>([]);
 
-  // Form State
+  // Confirmation Modal State
+  const [confirmationModal, setConfirmationModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    variant?: 'danger' | 'warning' | 'info';
+    confirmText?: string;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+  });
+
+  // Tab for Trash
+  const [currentTab, setCurrentTab] = useState<'ACTIVE' | 'TRASH'>('ACTIVE');
+
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -58,12 +74,17 @@ export const InventoryDashboard: React.FC = () => {
     stock: 0,
     vertical: '',
     tags: [] as string[],
-    imageUrl: '',
+    imageUrl: '', // kept for compatibility logic
+    images: [] as string[],
     attributes: {} as Record<string, any>,
   });
-  const [isUploading, setIsUploading] = useState(false);
+  const [editingProductId, setEditingProductId] = useState<string | null>(null);
+  const [viewingProduct, setViewingProduct] = useState<any | null>(null);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  // Helper handling input
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>,
+  ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
@@ -96,23 +117,12 @@ export const InventoryDashboard: React.FC = () => {
     });
   };
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setIsUploading(true);
-    const toastId = toast.loading('Subiendo imagen...');
-
-    try {
-      const result = await uploadImage(file).unwrap();
-      setFormData((prev) => ({ ...prev, imageUrl: result.secure_url }));
-      toast.success('Imagen subida correctamente', { id: toastId });
-    } catch (error) {
-      console.error('Error uploading image:', error);
-      toast.error('Error al subir imagen', { id: toastId });
-    } finally {
-      setIsUploading(false);
-    }
+  const handleImagesChange = (newImages: string[]) => {
+    setFormData((prev) => ({
+      ...prev,
+      images: newImages,
+      imageUrl: newImages.length > 0 ? newImages[0] : '',
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -125,11 +135,13 @@ export const InventoryDashboard: React.FC = () => {
     const productData = {
       ...formData,
       sellerId: user?.id,
-      vertical: formData.tags?.[0] || 'other', // Backward compatibility
+      vertical: formData.tags?.[0] || 'other',
       tags: formData.tags || [],
+      images: formData.images || [],
+      imageUrl: formData.images?.[0] || formData.imageUrl,
+      inventoryStatus: 'ACTIVE' as const,
     };
 
-    // Offline-First Strategy
     if (!navigator.onLine) {
       dispatch(addPendingProduct(productData));
       setIsModalOpen(false);
@@ -138,12 +150,18 @@ export const InventoryDashboard: React.FC = () => {
     }
 
     try {
-      await createProduct(productData).unwrap();
+      if (editingProductId) {
+        await updateProduct({ id: editingProductId, data: productData }).unwrap();
+        toast.success('Producto actualizado');
+      } else {
+        await createProduct(productData).unwrap();
+        toast.success('Producto creado');
+      }
       setIsModalOpen(false);
       resetForm();
     } catch (err) {
-      console.error('Failed to create product:', err);
-      alert('Error al crear producto. Intente más tarde o verifique su conexión.');
+      console.error('Failed to save product:', err);
+      alert('Error al guardar producto.');
     }
   };
 
@@ -157,11 +175,30 @@ export const InventoryDashboard: React.FC = () => {
       vertical: '',
       tags: [],
       imageUrl: '',
+      images: [],
       attributes: {},
     });
+    setEditingProductId(null);
   };
 
   const handleEditError = (product: any) => {
+    populateForm(product);
+    dispatch(removeErrorProduct(product.tempId));
+    setIsModalOpen(true);
+  };
+
+  const handleEdit = (product: any) => {
+    populateForm(product);
+    setEditingProductId(product.id || product._id);
+    setIsModalOpen(true);
+  };
+
+  const populateForm = (product: any) => {
+    let initialImages = product.images || [];
+    if (initialImages.length === 0 && product.imageUrl) {
+      initialImages = [product.imageUrl];
+    }
+
     setFormData({
       name: product.name,
       description: product.description,
@@ -171,54 +208,25 @@ export const InventoryDashboard: React.FC = () => {
       vertical: product.vertical,
       tags: product.tags || [],
       imageUrl: product.imageUrl || '',
+      images: initialImages,
       attributes: product.attributes || {},
     });
-    dispatch(removeErrorProduct(product.tempId));
-    setIsModalOpen(true);
   };
 
   const handleBulkTagAssign = async () => {
     if (selectedProducts.length === 0 || bulkSelectedTags.length === 0) return;
-
-    const toastId = toast.loading(
-      `Asignando ${bulkSelectedTags.length} etiquetas a ${selectedProducts.length} productos...`,
-    );
-
+    const toastId = toast.loading('Asignando etiquetas...');
     try {
       await Promise.all(
         selectedProducts.map((id) => {
           const product = serverProducts?.find((p: any) => (p.id || p._id) === id);
-          const currentTags = product?.tags || [];
-
-          // Filter out tags that are already present
+          if (!product) return Promise.resolve();
+          const currentTags = product.tags || [];
           const tagsToAdd = bulkSelectedTags.filter((t) => !currentTags.includes(t));
-
           if (tagsToAdd.length === 0) return Promise.resolve();
 
-          // Enforce limit
-          if (currentTags.length + tagsToAdd.length > 5) {
-            // Try to add as many as possible up to 5
-            const slotsAvailable = 5 - currentTags.length;
-            if (slotsAvailable <= 0) {
-              toast.error(`Producto "${product?.name}" ya tiene 5 etiquetas`, { id: toastId });
-              return Promise.resolve();
-            }
-            // Add only what fits
-            tagsToAdd.splice(slotsAvailable);
-            toast(`Solo se agregaron algunas etiquetas a "${product?.name}" por límite`, {
-              icon: '⚠️',
-            });
-          }
-
           const newTags = [...currentTags, ...tagsToAdd];
-
-          return updateProduct({
-            id,
-            data: {
-              tags: newTags,
-              vertical: newTags[0] || 'other', // Keep vertical synced with first tag
-            },
-          }).unwrap();
+          return updateProduct({ id, data: { tags: newTags } }).unwrap();
         }),
       );
       toast.success('Etiquetas actualizadas', { id: toastId });
@@ -229,6 +237,54 @@ export const InventoryDashboard: React.FC = () => {
     } catch (error) {
       toast.error('Error al actualizar etiquetas', { id: toastId });
     }
+  };
+
+  // Trash Logic
+  const handleTrashRequest = (product: any) => {
+    setConfirmationModal({
+      isOpen: true,
+      title: 'Mover a Papelera',
+      message: `¿Estás seguro de que deseas mover "${product.name}" a la papelera?`,
+      confirmText: 'Mover',
+      variant: 'warning',
+      onConfirm: async () => {
+        try {
+          await updateProduct({
+            id: product.id || product._id,
+            data: { inventoryStatus: 'TRASH' },
+          }).unwrap();
+          toast.success('Producto movido a papelera');
+        } catch (e) {
+          toast.error('Error al mover a papelera');
+        }
+      },
+    });
+  };
+
+  const handleRestore = async (product: any) => {
+    try {
+      await updateProduct({
+        id: product.id || product._id,
+        data: { inventoryStatus: 'ACTIVE' },
+      }).unwrap();
+      toast.success('Producto restaurado');
+    } catch (e) {
+      toast.error('Error al restaurar');
+    }
+  };
+
+  const handleDeletePermanentlyRequest = (product: any) => {
+    setConfirmationModal({
+      isOpen: true,
+      title: 'Eliminar Definitivamente',
+      message: `¿Estás seguro de que deseas eliminar "${product.name}" permanentemente? Esta acción no se puede deshacer.`,
+      confirmText: 'Eliminar',
+      variant: 'danger',
+      onConfirm: async () => {
+        // Placeholder for now
+        toast.error('Función de eliminación permanente pendiente de backend');
+      },
+    });
   };
 
   const toggleBulkTagSelection = (tagName: string) => {
@@ -257,84 +313,127 @@ export const InventoryDashboard: React.FC = () => {
     return <div className="p-4 text-red-500">Error al cargar inventario</div>;
   }
 
-  // Combine lists: Error > Pending > Server
-  const allProducts = [
+  const allProductsRaw = [
     ...errorProducts.map((p) => ({ ...p, id: p.tempId, status: 'error', errorMessage: p.error })),
     ...pendingProducts.map((p) => ({ ...p, id: p.tempId, status: 'pending' })),
-    ...(serverProducts || []).map((p: any) => ({ ...p, id: p.id || p._id, status: 'synced' })),
+    ...(serverProducts || []).map((p: any) => ({
+      ...p,
+      id: p.id || p._id,
+      status: 'synced',
+      inventoryStatus: p.inventoryStatus || 'ACTIVE',
+    })),
   ];
+
+  const filteredProducts = allProductsRaw.filter((p) => {
+    const status = p.inventoryStatus || 'ACTIVE';
+    if (p.status !== 'synced') return currentTab === 'ACTIVE';
+    return currentTab === 'ACTIVE' ? status === 'ACTIVE' : status === 'TRASH';
+  });
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-24 transition-colors duration-200">
       <OfflineSyncManager />
       {/* Header */}
-      <div className="bg-white dark:bg-gray-800 shadow-sm p-4 sticky top-0 z-10 flex justify-between items-center transition-colors duration-200 border-b border-gray-100 dark:border-gray-700">
-        <div className="flex items-center gap-3">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white">Mi Inventario</h2>
-          {isSelectionMode && (
-            <span className="bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 text-xs px-2 py-1 rounded-full font-medium">
-              {selectedProducts.length} seleccionados
-            </span>
-          )}
-        </div>
-        <div className="flex gap-2">
-          {isSelectionMode ? (
-            <>
-              <button
-                onClick={() => {
-                  setIsSelectionMode(false);
-                  setSelectedProducts([]);
-                }}
-                className="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full"
-              >
-                <X className="w-5 h-5" />
-              </button>
-              {selectedProducts.length > 0 && (
-                <button
-                  onClick={() => setIsBulkTagModalOpen(true)}
-                  className="bg-emerald-500 text-white px-4 py-2 rounded-full text-sm font-medium shadow-sm hover:bg-emerald-600 transition-colors flex items-center gap-2"
-                >
-                  <TagIcon className="w-4 h-4" />
-                  Asignar
-                </button>
+      <div className="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-10 transition-colors duration-200 border-b border-gray-100 dark:border-gray-700">
+        <div className="p-4 flex flex-col gap-4">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-3">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">Mi Inventario</h2>
+              {isSelectionMode && (
+                <span className="bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 text-xs px-2 py-1 rounded-full font-medium">
+                  {selectedProducts.length} seleccionados
+                </span>
               )}
-            </>
-          ) : (
-            <>
-              <button
-                onClick={() => setIsSelectionMode(true)}
-                className="text-emerald-600 dark:text-emerald-400 px-3 py-2 text-sm font-medium hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg transition-colors"
-              >
-                Seleccionar
-              </button>
-              <button
-                onClick={() => setIsTagManagerOpen(true)}
-                className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-full text-sm font-medium shadow-sm hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-              >
-                Etiquetas
-              </button>
-              <button
-                onClick={() => {
-                  resetForm();
-                  setIsModalOpen(true);
-                }}
-                className="bg-emerald-500 text-white px-4 py-2 rounded-full text-sm font-medium shadow-lg active:scale-95 transition-transform hover:bg-emerald-600"
-              >
-                + Nuevo
-              </button>
-            </>
-          )}
+            </div>
+
+            <div className="flex gap-2">
+              {isSelectionMode ? (
+                <>
+                  <button
+                    onClick={() => {
+                      setIsSelectionMode(false);
+                      setSelectedProducts([]);
+                    }}
+                    className="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                  {selectedProducts.length > 0 && currentTab === 'ACTIVE' && (
+                    <button
+                      onClick={() => setIsBulkTagModalOpen(true)}
+                      className="bg-emerald-500 text-white px-4 py-2 rounded-full text-sm font-medium shadow-sm hover:bg-emerald-600 transition-colors flex items-center gap-2"
+                    >
+                      <TagIcon className="w-4 h-4" />
+                      Asignar
+                    </button>
+                  )}
+                </>
+              ) : (
+                <>
+                  <button
+                    onClick={() => setIsSelectionMode(true)}
+                    className="text-emerald-600 dark:text-emerald-400 px-3 py-2 text-sm font-medium hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg transition-colors"
+                  >
+                    Seleccionar
+                  </button>
+                  {currentTab === 'ACTIVE' && (
+                    <>
+                      <button
+                        onClick={() => setIsTagManagerOpen(true)}
+                        className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-full text-sm font-medium shadow-sm hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                      >
+                        Etiquetas
+                      </button>
+                      <button
+                        onClick={() => {
+                          resetForm();
+                          setIsModalOpen(true);
+                        }}
+                        className="bg-emerald-500 text-white px-4 py-2 rounded-full text-sm font-medium shadow-lg active:scale-95 transition-transform hover:bg-emerald-600"
+                      >
+                        + Nuevo
+                      </button>
+                    </>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Tabs */}
+          <div className="flex gap-4 border-b border-gray-100 dark:border-gray-700">
+            <button
+              onClick={() => setCurrentTab('ACTIVE')}
+              className={`pb-2 text-sm font-medium transition-colors border-b-2 ${currentTab === 'ACTIVE' ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400' : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400'}`}
+            >
+              Activos
+            </button>
+            <button
+              onClick={() => setCurrentTab('TRASH')}
+              className={`pb-2 text-sm font-medium transition-colors border-b-2 flex items-center gap-1 ${currentTab === 'TRASH' ? 'border-red-500 text-red-600 dark:text-red-400' : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400'}`}
+            >
+              <Trash2 className="w-4 h-4" />
+              Papelera
+            </button>
+          </div>
         </div>
       </div>
+
       {/* Product List */}
       <div className="p-4 grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-        {allProducts.length === 0 ? (
+        {filteredProducts.length === 0 ? (
           <div className="text-center py-10 text-gray-500 dark:text-gray-400 col-span-full">
-            <p>No tienes productos aún.</p>
-            <p className="text-sm">¡Agrega el primero!</p>
+            {currentTab === 'ACTIVE' ? (
+              <>
+                <p>No tienes productos activos.</p>
+                <p className="text-sm">¡Agrega el primero!</p>
+              </>
+            ) : (
+              <p>La papelera está vacía.</p>
+            )}
           </div>
         ) : (
-          allProducts.map((product: any, index: number) => (
+          filteredProducts.map((product: any, index: number) => (
             <div
               key={`${product.status}-${product.id || index}`}
               className={`relative group transition-all duration-200 rounded-xl ${
@@ -356,14 +455,51 @@ export const InventoryDashboard: React.FC = () => {
                 </div>
               )}
               <div className={isSelectionMode ? 'pointer-events-none' : ''}>
-                <ProductCard product={product} variant="seller" onEditError={handleEditError} />
+                {/* Wrap Card for Actions */}
+                <div className="relative">
+                  <ProductCard
+                    product={product}
+                    variant="seller"
+                    onEditError={handleEditError}
+                    onEdit={currentTab === 'TRASH' ? undefined : handleEdit}
+                    onTrash={currentTab === 'ACTIVE' ? handleTrashRequest : undefined}
+                    onView={setViewingProduct}
+                  />
+
+                  {/* Trash Actions Overlay for Card (Restoring/Hard Delete) */}
+                  {currentTab === 'TRASH' && (
+                    <div className="absolute inset-0 bg-white/80 dark:bg-gray-900/80 backdrop-blur-[1px] flex items-center justify-center gap-2 rounded-xl z-10 transition-opacity opacity-0 group-hover:opacity-100">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRestore(product);
+                        }}
+                        className="bg-emerald-100 text-emerald-700 p-2 rounded-full hover:bg-emerald-200 transition-colors shadow-sm"
+                        title="Restaurar"
+                      >
+                        <RefreshCw className="w-5 h-5" />
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeletePermanentlyRequest(product);
+                        }}
+                        className="bg-red-100 text-red-700 p-2 rounded-full hover:bg-red-200 transition-colors shadow-sm"
+                        title="Eliminar Definitivamente"
+                      >
+                        <AlertTriangle className="w-5 h-5" />
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           ))
         )}
       </div>
-      {/* Floating Action Button */}
-      {!isSelectionMode && (
+
+      {/* Floating Action Button - Only on Active */}
+      {!isSelectionMode && currentTab === 'ACTIVE' && (
         <button
           onClick={() => {
             resetForm();
@@ -375,296 +511,273 @@ export const InventoryDashboard: React.FC = () => {
           <Plus className="w-6 h-6" />
         </button>
       )}
-      {/* Create Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-end sm:items-center justify-center p-4 backdrop-blur-sm">
-          <div className="bg-white dark:bg-gray-800 rounded-t-xl sm:rounded-xl w-full max-w-md p-6 animate-slide-up shadow-xl transition-colors duration-200">
-            <h3 className="text-lg font-bold mb-4 text-gray-900 dark:text-white">Nuevo Producto</h3>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label
-                  htmlFor="name"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                >
-                  Nombre
-                </label>
-                <input
-                  id="name"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleInputChange}
-                  required
-                  className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="description"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                >
-                  Descripción
-                </label>
-                <input
-                  id="description"
-                  name="description"
-                  value={formData.description}
-                  onChange={handleInputChange}
-                  required
-                  className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
-                />
-              </div>
 
-              {/* Image Upload */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Imagen del Producto
-                </label>
-                <div className="flex items-center gap-4">
-                  <div className="relative w-24 h-24 bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-600 flex items-center justify-center group">
-                    {formData.imageUrl ? (
-                      <>
-                        <img
-                          src={formData.imageUrl}
-                          alt="Preview"
-                          className="w-full h-full object-cover"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setFormData((prev) => ({ ...prev, imageUrl: '' }))}
-                          className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white"
-                        >
-                          <X className="w-6 h-6" />
-                        </button>
-                      </>
-                    ) : (
-                      <ImageIcon className="w-8 h-8 text-gray-400" />
-                    )}
-                  </div>
-                  <div className="flex-1">
-                    <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">
-                      <Upload className="w-4 h-4" />
-                      {isUploading ? 'Subiendo...' : 'Subir Imagen'}
-                      <input
-                        type="file"
-                        className="hidden"
-                        accept="image/*"
-                        onChange={handleImageUpload}
-                        disabled={isUploading}
-                      />
-                    </label>
-                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                      JPG, PNG, WEBP hasta 5MB
-                    </p>
-                  </div>
-                </div>
-              </div>
+      {/* Product Detail Modal */}
+      <ProductDetailModal
+        isOpen={!!viewingProduct}
+        onClose={() => setViewingProduct(null)}
+        product={viewingProduct}
+        onEdit={(p) => {
+          handleEdit(p);
+          setViewingProduct(null);
+        }}
+      />
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label
-                    htmlFor="price"
-                    className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                  >
-                    Precio
-                  </label>
-                  <input
-                    id="price"
-                    name="price"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={formData.price}
-                    onChange={handleInputChange}
-                    required
-                    className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="stock"
-                    className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                  >
-                    Stock
-                  </label>
-                  <input
-                    id="stock"
-                    name="stock"
-                    type="number"
-                    min="0"
-                    value={formData.stock}
-                    onChange={handleInputChange}
-                    required
-                    className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
-                  />
-                </div>
-              </div>
-              <div>
-                <div className="flex justify-between items-center mb-2">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Etiquetas (Máx. 5)
-                  </label>
+      {/* Create/Edit Modal with ModalWrapper */}
+      <ModalWrapper
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title={editingProductId ? 'Editar Producto' : 'Nuevo Producto'}
+      >
+        {/* Reuse form logic here or split into component for cleaner file if needed */}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Nombre
+            </label>
+            <input
+              type="text"
+              name="name"
+              value={formData.name}
+              onChange={handleInputChange}
+              required
+              className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-emerald-500 outline-none transition-all"
+              placeholder="Ej. Taza de cerámica"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Descripción
+            </label>
+            <textarea
+              name="description"
+              value={formData.description}
+              onChange={handleInputChange as any}
+              required
+              rows={3}
+              className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-emerald-500 outline-none transition-all resize-none"
+              placeholder="Detalles del producto..."
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Imágenes del Producto (Máx 5)
+            </label>
+            <MultiImageDropzone images={formData.images} onChange={handleImagesChange} />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Precio ($)
+              </label>
+              <input
+                type="number"
+                name="price"
+                value={formData.price || ''}
+                onChange={handleInputChange}
+                onWheel={(e) => e.currentTarget.blur()}
+                required
+                min="0"
+                step="0.01"
+                className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-emerald-500 outline-none transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Stock
+              </label>
+              <input
+                type="number"
+                name="stock"
+                value={formData.stock || ''}
+                onChange={handleInputChange}
+                onWheel={(e) => e.currentTarget.blur()}
+                required
+                min="0"
+                className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-emerald-500 outline-none transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+              />
+            </div>
+          </div>
+
+          <div className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-100 dark:border-gray-700">
+            <div className="flex justify-between items-center mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Etiquetas (Máx. 5)
+              </label>
+              <span
+                className="text-xs text-emerald-600 cursor-pointer hover:underline"
+                onClick={() => setIsTagManagerOpen(true)}
+              >
+                + Gestionar
+              </span>
+            </div>
+
+            <div className="flex flex-wrap gap-2 mb-2">
+              {formData.tags.map((tag) => (
+                <span
+                  key={tag}
+                  className="bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1"
+                >
+                  {tag}
                   <button
                     type="button"
-                    onClick={() => setIsTagManagerOpen(true)}
-                    className="text-xs text-emerald-600 dark:text-emerald-400 hover:underline"
+                    onClick={() => handleTagToggle(tag)}
+                    className="hover:text-emerald-900 dark:hover:text-emerald-100"
                   >
-                    + Gestionar
+                    <X className="w-3 h-3" />
                   </button>
-                </div>
-                <div className="flex flex-wrap gap-2 p-3 bg-gray-50 dark:bg-gray-700/30 rounded-lg border border-gray-200 dark:border-gray-600">
-                  {tags?.map((tag) => {
-                    const isSelected = formData.tags?.includes(tag.name);
-                    return (
-                      <button
-                        key={tag._id}
-                        type="button"
-                        onClick={() => handleTagToggle(tag.name)}
-                        className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
-                          isSelected
-                            ? 'bg-emerald-500 text-white shadow-sm scale-105'
-                            : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700'
-                        }`}
-                      >
-                        {tag.name}
-                      </button>
-                    );
-                  })}
-                  {tags?.length === 0 && (
-                    <span className="text-sm text-gray-400 italic">
-                      No hay etiquetas disponibles
-                    </span>
-                  )}
-                </div>
-              </div>
+                </span>
+              ))}
+            </div>
 
-              {/* Dynamic Attributes */}
-              {formData.vertical === 'fashion' && (
-                <div className="grid grid-cols-2 gap-4 bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg">
-                  <div>
-                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300">
-                      Talla
-                    </label>
-                    <select
-                      name="size"
-                      value={formData.attributes.size || ''}
-                      onChange={handleAttributeChange}
-                      className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm sm:text-sm p-2 border bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                    >
-                      <option value="">Seleccionar</option>
-                      <option value="S">S</option>
-                      <option value="M">M</option>
-                      <option value="L">L</option>
-                      <option value="XL">XL</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300">
-                      Color
-                    </label>
-                    <input
-                      name="color"
-                      value={formData.attributes.color || ''}
-                      onChange={handleAttributeChange}
-                      className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm sm:text-sm p-2 border bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                    />
-                  </div>
-                </div>
-              )}
+            <div className="relative">
+              <select
+                onChange={(e) => {
+                  if (e.target.value) {
+                    handleTagToggle(e.target.value);
+                    e.target.value = '';
+                  }
+                }}
+                className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-emerald-500 outline-none appearance-none"
+                disabled={formData.tags.length >= 5}
+              >
+                <option value="">Agregar etiqueta...</option>
+                {tags?.map((tag) => (
+                  <option
+                    key={tag._id}
+                    value={tag.name}
+                    disabled={formData.tags.includes(tag.name)}
+                  >
+                    {tag.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
 
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              SKU (Opcional)
+            </label>
+            <input
+              type="text"
+              name="sku"
+              value={formData.sku || ''}
+              onChange={handleInputChange}
+              className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-emerald-500 outline-none transition-all"
+              placeholder="Código único"
+            />
+          </div>
+
+          {/* Dynamic Attributes (Simplified for now) */}
+          {formData.tags?.[0] === 'clothing' && (
+            <div className="grid grid-cols-2 gap-4">
               <div>
-                <label
-                  htmlFor="sku"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                >
-                  SKU
-                </label>
+                <label className="text-xs">Talla</label>
                 <input
-                  id="sku"
-                  name="sku"
-                  value={formData.sku}
-                  onChange={handleInputChange}
-                  required
-                  className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
+                  name="size"
+                  onChange={handleAttributeChange}
+                  className="w-full border rounded p-1"
+                  placeholder="S, M, L..."
                 />
               </div>
-
-              <div className="flex gap-4 pt-4">
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="flex-1 py-2 px-4 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-600 transition-colors"
-                >
-                  Guardar
-                </button>
+              <div>
+                <label className="text-xs">Color</label>
+                <input
+                  name="color"
+                  onChange={handleAttributeChange}
+                  className="w-full border rounded p-1"
+                  placeholder="Rojo, Azul..."
+                />
               </div>
-            </form>
+            </div>
+          )}
+
+          <div className="flex gap-3 pt-4 border-t border-gray-100 dark:border-gray-700">
+            <button
+              type="button"
+              onClick={() => setIsModalOpen(false)}
+              className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              className="flex-1 px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors font-medium shadow-md active:scale-95"
+            >
+              {editingProductId ? 'Guardar Cambios' : 'Crear Producto'}
+            </button>
           </div>
-        </div>
-      )}
+        </form>
+      </ModalWrapper>
+
+      {/* Tag Manager Modal */}
       <TagManager isOpen={isTagManagerOpen} onClose={() => setIsTagManagerOpen(false)} />
 
-      {/* Bulk Tag Assignment Modal */}
+      {/* Bulk Tag Modal */}
       {isBulkTagModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-            <div className="p-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
-              <h3 className="font-bold text-gray-900 dark:text-white">Asignar Etiqueta</h3>
-              <button onClick={() => setIsBulkTagModalOpen(false)} className="text-gray-500">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <div className="p-4 space-y-2 max-h-80 overflow-y-auto">
-              {tags?.map((tag) => {
-                const isSelected = bulkSelectedTags.includes(tag.name);
-                return (
-                  <button
-                    key={tag._id}
-                    onClick={() => toggleBulkTagSelection(tag.name)}
-                    className={`w-full text-left px-4 py-3 rounded-xl transition-colors flex items-center gap-3 ${
-                      isSelected
-                        ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800'
-                        : 'hover:bg-gray-50 dark:hover:bg-gray-700/50'
-                    }`}
-                  >
-                    <div
-                      className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${
-                        isSelected
-                          ? 'bg-emerald-500 border-emerald-500'
-                          : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700'
-                      }`}
-                    >
-                      {isSelected && <Check className="w-3.5 h-3.5 text-white" />}
-                    </div>
-                    <span
-                      className={`font-medium ${isSelected ? 'text-emerald-700 dark:text-emerald-300' : 'text-gray-700 dark:text-gray-200'}`}
-                    >
-                      {tag.name}
-                    </span>
-                  </button>
-                );
-              })}
+        <ModalWrapper
+          isOpen={isBulkTagModalOpen}
+          onClose={() => setIsBulkTagModalOpen(false)}
+          title="Asignación Masiva de Etiquetas"
+        >
+          <div className="space-y-4">
+            <p className="text-sm text-gray-600 dark:text-gray-300">
+              Selecciona las etiquetas para asignar a <strong>{selectedProducts.length}</strong>{' '}
+              productos.
+            </p>
+
+            <div className="flex flex-wrap gap-2 max-h-60 overflow-y-auto">
+              {tags?.map((tag) => (
+                <button
+                  key={tag._id}
+                  onClick={() => toggleBulkTagSelection(tag.name)}
+                  className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-all ${
+                    bulkSelectedTags.includes(tag.name)
+                      ? 'bg-emerald-100 border-emerald-500 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
+                      : 'bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:border-emerald-300'
+                  }`}
+                >
+                  {tag.name}
+                </button>
+              ))}
               {tags?.length === 0 && (
-                <p className="text-center text-gray-400 text-sm py-4">No hay etiquetas creadas</p>
+                <span className="text-gray-400 text-sm">No hay etiquetas.</span>
               )}
             </div>
-            <div className="p-4 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+
+            <div className="flex justify-end gap-2 pt-4">
+              <button
+                onClick={() => setIsBulkTagModalOpen(false)}
+                className="px-4 py-2 text-sm text-gray-500"
+              >
+                Cancelar
+              </button>
               <button
                 onClick={handleBulkTagAssign}
                 disabled={bulkSelectedTags.length === 0}
-                className="w-full py-3 bg-emerald-500 hover:bg-emerald-600 disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:cursor-not-allowed text-white rounded-xl font-bold shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/40 transition-all"
+                className="px-4 py-2 bg-emerald-500 text-white rounded-lg text-sm font-medium shadow hover:bg-emerald-600 disabled:opacity-50"
               >
-                Aplicar ({bulkSelectedTags.length})
+                Asignar ({bulkSelectedTags.length})
               </button>
             </div>
           </div>
-        </div>
+        </ModalWrapper>
       )}
+
+      {/* Confirmation Modal - Shared for Trash/Delete */}
+      <ConfirmationModal
+        isOpen={confirmationModal.isOpen}
+        onClose={() => setConfirmationModal((prev) => ({ ...prev, isOpen: false }))}
+        onConfirm={confirmationModal.onConfirm}
+        title={confirmationModal.title}
+        message={confirmationModal.message}
+        variant={confirmationModal.variant as any}
+        confirmText={confirmationModal.confirmText}
+      />
     </div>
   );
 };

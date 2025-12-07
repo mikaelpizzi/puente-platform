@@ -4,6 +4,7 @@ import { LoggerModule } from 'nestjs-pino';
 import { LogisticsModule } from './logistics/logistics.module';
 import { DeliveryModule } from './delivery/delivery.module';
 import { RedisModule } from './redis/redis.module';
+import { RoutingModule } from './routing/routing.module';
 import { HealthController } from './health/health.controller';
 import { MetricsModule } from './metrics/metrics.module';
 import { SanityCheckMiddleware } from './common/middleware/sanity-check.middleware';
@@ -87,6 +88,7 @@ const shouldSkipAutoLogging = (req: IncomingMessage) => req.url?.includes('/heal
       envFilePath: ['.env.local', '.env', '../../.env', '../../../.env'],
     }),
     RedisModule,
+    RoutingModule,
     LogisticsModule,
     DeliveryModule,
     MetricsModule,

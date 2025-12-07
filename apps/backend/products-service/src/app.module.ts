@@ -5,6 +5,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { ProductsModule } from './products/products.module';
 import { TagsModule } from './tags/tags.module';
 import { OrdersModule } from './orders/orders.module';
+import { MessagesModule } from './messages/messages.module';
 import { HealthController } from './health/health.controller';
 import { SanityCheckMiddleware } from './common/middleware/sanity-check.middleware';
 import type { IncomingHttpHeaders, IncomingMessage } from 'http';
@@ -99,6 +100,7 @@ const shouldSkipAutoLogging = (req: IncomingMessage) => req.url?.includes('/heal
     ProductsModule,
     TagsModule,
     OrdersModule,
+    MessagesModule,
   ],
   controllers: [HealthController],
 })

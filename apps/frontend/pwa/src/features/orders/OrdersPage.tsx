@@ -1,44 +1,33 @@
 import React, { useState } from 'react';
-import { Package, Clock, CheckCircle, AlertCircle, ChevronRight } from 'lucide-react';
-
-// Mock Data Types
-interface Order {
-  id: string;
-  date: string;
-  total: number;
-  status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
-  items: { name: string; quantity: number; price: number }[];
-  customer?: string; // For seller view
-  seller?: string; // For buyer view
-}
-
-// Mock Data Generator
-const generateMockOrders = (role: 'buyer' | 'seller'): Order[] => {
-  return Array.from({ length: 10 }).map((_, i) => ({
-    id: `ORD-${2024000 + i}`,
-    date: new Date(Date.now() - i * 86400000).toISOString(),
-    total: Math.floor(Math.random() * 500) + 50,
-    status: ['pending', 'processing', 'shipped', 'delivered', 'cancelled'][
-      Math.floor(Math.random() * 5)
-    ] as any,
-    items: [
-      { name: 'Producto Ejemplo ' + (i + 1), quantity: 1, price: 100 },
-      { name: 'Otro Item', quantity: 2, price: 50 },
-    ],
-    customer: role === 'seller' ? `Cliente ${i + 1}` : undefined,
-    seller: role === 'buyer' ? `Vendedor ${i + 1}` : undefined,
-  }));
-};
+import { Package, Clock, CheckCircle, AlertCircle, ChevronRight, Loader2 } from 'lucide-react';
+import {
+  useGetOrdersAsBuyerQuery,
+  useGetOrdersAsSellerQuery,
+  Order,
+  OrderStatus,
+} from './ordersApi';
 
 export const OrdersPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'buyer' | 'seller'>('buyer');
-  const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [filterStatus, setFilterStatus] = useState<OrderStatus | 'all'>('all');
 
-  // In a real app, we would fetch this data based on the activeTab and user ID
-  const orders = generateMockOrders(activeTab);
+  // Fetch orders based on active tab
+  const statusFilter = filterStatus === 'all' ? undefined : filterStatus;
+  const {
+    data: buyerOrders = [],
+    isLoading: buyerLoading,
+    error: buyerError,
+  } = useGetOrdersAsBuyerQuery(statusFilter, { skip: activeTab !== 'buyer' });
 
-  const filteredOrders =
-    filterStatus === 'all' ? orders : orders.filter((o) => o.status === filterStatus);
+  const {
+    data: sellerOrders = [],
+    isLoading: sellerLoading,
+    error: sellerError,
+  } = useGetOrdersAsSellerQuery(statusFilter, { skip: activeTab !== 'seller' });
+
+  const orders = activeTab === 'buyer' ? buyerOrders : sellerOrders;
+  const isLoading = activeTab === 'buyer' ? buyerLoading : sellerLoading;
+  const error = activeTab === 'buyer' ? buyerError : sellerError;
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -116,39 +105,69 @@ export const OrdersPage: React.FC = () => {
 
         {/* Status Filter */}
         <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-          {['all', 'pending', 'processing', 'shipped', 'delivered', 'cancelled'].map((status) => (
-            <button
-              key={status}
-              onClick={() => setFilterStatus(status)}
-              className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
-                filterStatus === status
-                  ? 'bg-emerald-500 text-white'
-                  : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200'
-              }`}
-            >
-              {status === 'all' ? 'Todos' : getStatusLabel(status)}
-            </button>
-          ))}
+          {(['all', 'pending', 'processing', 'shipped', 'delivered', 'cancelled'] as const).map(
+            (status) => (
+              <button
+                key={status}
+                onClick={() => setFilterStatus(status)}
+                className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
+                  filterStatus === status
+                    ? 'bg-emerald-500 text-white'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200'
+                }`}
+              >
+                {status === 'all' ? 'Todos' : getStatusLabel(status)}
+              </button>
+            ),
+          )}
         </div>
       </div>
 
       <div className="p-4 space-y-4">
-        {filteredOrders.map((order) => (
+        {/* Loading State */}
+        {isLoading && (
+          <div className="flex justify-center items-center py-12">
+            <Loader2 className="w-8 h-8 text-emerald-500 animate-spin" />
+          </div>
+        )}
+
+        {/* Error State */}
+        {error && (
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4 text-center">
+            <AlertCircle className="w-8 h-8 text-red-500 mx-auto mb-2" />
+            <p className="text-red-600 dark:text-red-400">Error al cargar pedidos</p>
+          </div>
+        )}
+
+        {/* Empty State */}
+        {!isLoading && !error && orders.length === 0 && (
+          <div className="text-center py-12">
+            <Package className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+            <p className="text-gray-500 dark:text-gray-400">No hay pedidos</p>
+          </div>
+        )}
+
+        {/* Orders List */}
+        {orders.map((order: Order) => (
           <div
-            key={order.id}
+            key={order._id}
             className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
           >
             <div className="p-4">
               <div className="flex justify-between items-start mb-3">
                 <div>
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="font-bold text-gray-900 dark:text-white">{order.id}</span>
+                    <span className="font-bold text-gray-900 dark:text-white">
+                      #{order._id.slice(-8).toUpperCase()}
+                    </span>
                     <span className="text-xs text-gray-500 dark:text-gray-400">
-                      • {new Date(order.date).toLocaleDateString()}
+                      • {new Date(order.createdAt).toLocaleDateString()}
                     </span>
                   </div>
                   <p className="text-sm text-gray-600 dark:text-gray-300">
-                    {activeTab === 'buyer' ? order.seller : order.customer}
+                    {activeTab === 'buyer'
+                      ? `Vendedor: ${order.sellerId.slice(-6)}`
+                      : `Cliente: ${order.buyerId.slice(-6)}`}
                   </p>
                 </div>
                 <div

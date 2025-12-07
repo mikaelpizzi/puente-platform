@@ -1,17 +1,29 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { P2PService } from './p2p.service';
+import { BinanceAdapter } from './adapters/binance.adapter';
+import { CoinGeckoAdapter } from './adapters/coingecko.adapter';
 import { MockBinanceAdapter } from './adapters/mock-binance.adapter';
+import { RatesCacheService } from './rates-cache.service';
 import { AbstractP2PAdapter } from './interfaces/p2p-provider.interface';
 
 @Module({
+  imports: [ConfigModule],
   providers: [
     P2PService,
+    BinanceAdapter,
+    CoinGeckoAdapter,
     MockBinanceAdapter,
+    RatesCacheService,
     {
       provide: AbstractP2PAdapter,
-      useClass: MockBinanceAdapter, // Default adapter
+      useClass: BinanceAdapter, // Primary adapter (real API)
+    },
+    {
+      provide: 'FALLBACK_ADAPTER',
+      useClass: CoinGeckoAdapter, // Fallback when Binance fails
     },
   ],
-  exports: [P2PService],
+  exports: [P2PService, RatesCacheService],
 })
 export class P2PModule {}

@@ -24,6 +24,7 @@
     "test:e2e:report": "playwright show-report e2e/report"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.11.0",
     "@commitlint/cli": "^20.1.0",
     "@commitlint/config-conventional": "^20.0.0",
     "@playwright/test": "^1.57.0",

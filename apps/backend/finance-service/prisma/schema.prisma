@@ -99,3 +99,70 @@ model IdempotencyKey {
   @@index([expiresAt])
 }
 
+// Escrow System for buyer protection
+enum EscrowStatus {
+  HELD          // Funds frozen after payment
+  RELEASED_SELLER // Funds released to seller (order completed)
+  RELEASED_BUYER  // Funds refunded to buyer (dispute won)
+  DISPUTED       // Dispute opened, awaiting resolution
+}
+
+model Escrow {
+  id          String       @id @default(uuid())
+  orderId     String       @unique
+  amount      Decimal
+  sellerId    String
+  buyerId     String
+  status      EscrowStatus @default(HELD)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  releasedAt  DateTime?
+  releasedBy  String?      // Admin who released funds
+  releaseNote String?
+
+  dispute     Dispute?
+
+  @@index([sellerId])
+  @@index([buyerId])
+  @@index([status])
+}
+
+// Dispute System
+enum DisputeStatus {
+  OPEN           // Buyer opened dispute
+  INVESTIGATING  // Admin reviewing
+  RESOLVED_BUYER // Resolved in buyer's favor (refund)
+  RESOLVED_SELLER // Resolved in seller's favor (release)
+  CLOSED         // Closed without action
+}
+
+enum DisputeReason {
+  ITEM_NOT_RECEIVED
+  ITEM_NOT_AS_DESCRIBED
+  ITEM_DAMAGED
+  WRONG_ITEM
+  QUALITY_ISSUE
+  OTHER
+}
+
+model Dispute {
+  id          String        @id @default(uuid())
+  escrowId    String        @unique
+  escrow      Escrow        @relation(fields: [escrowId], references: [id])
+  orderId     String
+  openedBy    String        // Buyer ID
+  reason      DisputeReason
+  description String        @db.Text
+  evidence    String[]      // Array of file URLs
+  status      DisputeStatus @default(OPEN)
+  
+  resolution  String?       @db.Text
+  resolvedBy  String?       // Admin ID
+  resolvedAt  DateTime?
+  
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([orderId])
+  @@index([status])
+}

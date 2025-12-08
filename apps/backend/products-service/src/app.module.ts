@@ -7,6 +7,7 @@ import { TagsModule } from './tags/tags.module';
 import { OrdersModule } from './orders/orders.module';
 import { MessagesModule } from './messages/messages.module';
 import { ReviewsModule } from './reviews/reviews.module';
+import { AddressesModule } from './addresses/addresses.module';
 import { HealthController } from './health/health.controller';
 import { SanityCheckMiddleware } from './common/middleware/sanity-check.middleware';
 import type { IncomingHttpHeaders, IncomingMessage } from 'http';
@@ -103,6 +104,7 @@ const shouldSkipAutoLogging = (req: IncomingMessage) => req.url?.includes('/heal
     OrdersModule,
     MessagesModule,
     ReviewsModule,
+    AddressesModule,
   ],
   controllers: [HealthController],
 })

@@ -6,7 +6,12 @@ import { Toaster } from 'react-hot-toast';
 import { store } from './app/store';
 import { router } from './app/router';
 import { ThemeProvider } from './app/ThemeContext';
+import { initSentry, initPostHog } from './lib';
 import './index.css';
+
+// Initialize observability before React mounts
+initSentry();
+initPostHog();
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

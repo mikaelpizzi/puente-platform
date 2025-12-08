@@ -77,3 +77,25 @@ model LedgerEntry {
   createdAt   DateTime       @default(now())
   referenceId String?
 }
+
+// Idempotency Keys for preventing duplicate payments
+enum IdempotencyStatus {
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+model IdempotencyKey {
+  id          String            @id @default(uuid())
+  key         String            @unique
+  path        String
+  method      String
+  status      IdempotencyStatus @default(PROCESSING)
+  response    String?           @db.Text
+  createdAt   DateTime          @default(now())
+  completedAt DateTime?
+  expiresAt   DateTime
+
+  @@index([expiresAt])
+}
+

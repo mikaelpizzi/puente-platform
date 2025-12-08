@@ -63,6 +63,9 @@ enum LedgerCategory {
   PAYOUT
   REFUND
   ADJUSTMENT
+  PLATFORM_FEE  // Platform commission income
+  ESCROW_HOLD   // Escrow frozen funds
+  ESCROW_RELEASE // Escrow released funds
 }
 
 model LedgerEntry {
@@ -76,6 +79,38 @@ model LedgerEntry {
   order       Order?         @relation(fields: [orderId], references: [id])
   createdAt   DateTime       @default(now())
   referenceId String?
+}
+
+// Configurable Commission Rules
+model CommissionRule {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  
+  // Targeting
+  category    String?  // Product category (vertical)
+  campaignId  String?  // Campaign/promo identifier
+  sellerId    String?  // Specific seller override
+  
+  // Rate configuration
+  rate        Decimal  // Percentage (e.g., 0.15 = 15%)
+  minAmount   Decimal  @default(0) // Minimum commission amount
+  maxAmount   Decimal? // Optional max commission cap
+  
+  // Status
+  isActive    Boolean  @default(true)
+  priority    Int      @default(0) // Higher = more specific, used first
+  
+  // Validity period
+  validFrom   DateTime @default(now())
+  validUntil  DateTime?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([category])
+  @@index([isActive])
+  @@index([priority])
 }
 
 // Idempotency Keys for preventing duplicate payments

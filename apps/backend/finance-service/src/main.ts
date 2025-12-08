@@ -5,6 +5,7 @@ import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { Logger } from 'nestjs-pino';
+import { setupSwagger } from './swagger';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
@@ -17,10 +18,15 @@ async function bootstrap() {
     }),
   );
   app.useGlobalFilters(new HttpExceptionFilter());
+
+  // Setup Swagger documentation
+  setupSwagger(app);
+
   const port = process.env.FINANCE_SERVICE_PORT || 3003;
   await app.listen(port);
   const logger = app.get(Logger);
   logger.log(`🚀 Finance service running on port ${port}`);
+  logger.log(`📚 Swagger docs at http://localhost:${port}/docs`);
   if (app.flushLogs) {
     app.flushLogs();
   }

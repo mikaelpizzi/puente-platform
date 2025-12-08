@@ -59,10 +59,52 @@ services:
     volumes:
       - redis_data:/data
 
+  # OSRM Routing Service - Task 45
+  osrm:
+    image: osrm/osrm-backend
+    container_name: puente-dev-osrm
+    restart: unless-stopped
+    ports:
+      - '${OSRM_PORT:-5000}:5000'
+    volumes:
+      - ./docker/osrm/data:/data
+    command: 'osrm-routed --algorithm mld /data/venezuela-latest.osrm'
+    networks:
+      - puente-dev
+    profiles:
+      - routing # Optional: only start when needed with --profile routing
+
+  # MailHog Email Testing - Task 44
+  mailhog:
+    image: mailhog/mailhog
+    container_name: puente-dev-mailhog
+    restart: unless-stopped
+    ports:
+      - '${MAILHOG_SMTP_PORT:-1025}:1025' # SMTP for backend
+      - '${MAILHOG_WEB_PORT:-8025}:8025' # Web UI for testing
+    networks:
+      - puente-dev
+
+  # Meilisearch - Task 63 (Optional search engine)
+  meilisearch:
+    image: getmeili/meilisearch:v1.6
+    container_name: puente-dev-meilisearch
+    restart: unless-stopped
+    ports:
+      - '${MEILISEARCH_PORT:-7700}:7700'
+    environment:
+      MEILI_MASTER_KEY: ${MEILISEARCH_API_KEY:-masterKey}
+      MEILI_NO_ANALYTICS: 'true'
+    volumes:
+      - meilisearch_data:/meili_data
+    networks:
+      - puente-dev
+
 volumes:
   postgres_data:
   mongo_data:
   redis_data:
+  meilisearch_data:
 
 networks:
   puente-dev:

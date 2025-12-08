@@ -16,6 +16,7 @@ datasource db {
 
 enum Role {
   ADMIN
+  SUPER_ADMIN
   SELLER
   BUYER
   COURIER
@@ -38,5 +39,85 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  auditLogs   AuditLog[]
+  kycDocuments KycDocument[]
+
   @@map("users")
+}
+
+// Audit Logs for tracking all sensitive changes
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  LOGIN
+  LOGOUT
+  PASSWORD_CHANGE
+  KYC_SUBMIT
+  KYC_APPROVE
+  KYC_REJECT
+  ROLE_CHANGE
+  BAN
+  UNBAN
+}
+
+model AuditLog {
+  id          String      @id @default(uuid())
+  actorId     String
+  actor       User        @relation(fields: [actorId], references: [id])
+  action      AuditAction
+  resource    String      // e.g., "user", "product", "order"
+  resourceId  String
+  
+  beforeData  String?     @db.Text // JSON snapshot before
+  afterData   String?     @db.Text // JSON snapshot after
+  
+  ipAddress   String?
+  userAgent   String?
+  
+  createdAt   DateTime    @default(now())
+
+  @@index([actorId])
+  @@index([resource, resourceId])
+  @@index([action])
+  @@index([createdAt])
+}
+
+// KYC Document Verification
+enum KycStatus {
+  UNVERIFIED
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum KycDocumentType {
+  ID_CARD
+  PASSPORT
+  DRIVERS_LICENSE
+  UTILITY_BILL
+  BANK_STATEMENT
+  SELFIE
+}
+
+model KycDocument {
+  id          String          @id @default(uuid())
+  userId      String
+  user        User            @relation(fields: [userId], references: [id])
+  type        KycDocumentType
+  fileUrl     String
+  fileName    String
+  fileSize    Int
+  mimeType    String
+  
+  status      KycStatus       @default(PENDING)
+  reviewedBy  String?         // Admin ID who reviewed
+  reviewedAt  DateTime?
+  reviewNotes String?
+  
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@index([userId])
+  @@index([status])
 }

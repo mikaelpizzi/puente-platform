@@ -18,6 +18,15 @@ import { OfflineSyncManager } from '../features/inventory/OfflineSyncManager';
 import { logout, selectCurrentUser } from '../features/auth/authSlice';
 import { ConfirmationModal } from '../components/ui/ConfirmationModal';
 import { useTheme } from '../app/ThemeContext';
+import { NotificationBell } from '../features/notifications/NotificationBell';
+import { Breadcrumbs } from '../components/Breadcrumbs';
+import {
+  markAsRead,
+  markAllAsRead,
+  deleteNotification,
+  clearAll,
+} from '../features/notifications/notificationsSlice';
+import type { RootState } from '../app/store';
 
 export const MainLayout: React.FC = () => {
   const dispatch = useDispatch();
@@ -28,11 +37,16 @@ export const MainLayout: React.FC = () => {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
+  // Notifications state from Redux
+  const notifications = useSelector((state: RootState) => state.notifications.notifications);
+  const unreadCount = useSelector((state: RootState) => state.notifications.unreadCount);
+
   const allNavItems = [
     { to: '/', icon: Home, label: 'Inicio', roles: ['SELLER', 'BUYER'] },
     { to: '/marketplace', icon: ShoppingCart, label: 'Comprar', roles: ['BUYER'] },
     { to: '/inventory', icon: Package, label: 'Inventario', roles: ['SELLER'] },
-    { to: '/orders', icon: ClipboardList, label: 'Pedidos', roles: ['SELLER'] },
+    { to: '/orders', icon: ClipboardList, label: 'Mis Ventas', roles: ['SELLER'] },
+    { to: '/orders', icon: ClipboardList, label: 'Mis Compras', roles: ['BUYER'] },
     { to: '/checkout', icon: ShoppingCart, label: 'Cobrar', roles: ['SELLER'] },
     { to: '/finance', icon: DollarSign, label: 'Finanzas', roles: ['SELLER'] },
     { to: '/logistics', icon: Truck, label: 'Envíos', roles: ['SELLER', 'COURIER'] },
@@ -63,67 +77,88 @@ export const MainLayout: React.FC = () => {
       <header className="bg-white dark:bg-gray-800 shadow-sm p-4 sticky top-0 z-20 flex justify-between items-center transition-colors duration-200">
         <h1 className="text-lg font-bold text-gray-900 dark:text-white">Puente</h1>
 
-        <div className="relative" ref={menuRef}>
-          <button
-            onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-            className="flex items-center gap-2 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-          >
-            <div className="w-8 h-8 bg-emerald-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
-              {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
-            </div>
-            <ChevronDown
-              className={`w-4 h-4 text-gray-500 transition-transform ${isUserMenuOpen ? 'rotate-180' : ''}`}
-            />
-          </button>
+        <div className="flex items-center gap-3">
+          {/* Notification Bell */}
+          <NotificationBell
+            notifications={notifications}
+            unreadCount={unreadCount}
+            onMarkAsRead={(id) => dispatch(markAsRead(id))}
+            onMarkAllAsRead={() => dispatch(markAllAsRead())}
+            onDelete={(id) => dispatch(deleteNotification(id))}
+            onClearAll={() => dispatch(clearAll())}
+            onNotificationClick={(notification) => {
+              if (notification.orderId) {
+                navigate(`/orders`);
+              }
+            }}
+          />
 
-          {/* Dropdown Menu */}
-          {isUserMenuOpen && (
-            <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 py-1 animate-in fade-in zoom-in-95 duration-200 origin-top-right">
-              <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-700">
-                <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                  {user?.name || 'Usuario'}
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user?.email}</p>
+          {/* User Menu */}
+          <div className="relative" ref={menuRef}>
+            <button
+              onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+              className="flex items-center gap-2 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            >
+              <div className="w-8 h-8 bg-emerald-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
               </div>
+              <ChevronDown
+                className={`w-4 h-4 text-gray-500 transition-transform ${isUserMenuOpen ? 'rotate-180' : ''}`}
+              />
+            </button>
 
-              <button
-                onClick={() => {
-                  navigate('/profile');
-                  setIsUserMenuOpen(false);
-                }}
-                className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2"
-              >
-                <User className="w-4 h-4" />
-                Mi Perfil
-              </button>
+            {/* Dropdown Menu */}
+            {isUserMenuOpen && (
+              <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 py-1 animate-in fade-in zoom-in-95 duration-200 origin-top-right">
+                <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-700">
+                  <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                    {user?.name || 'Usuario'}
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user?.email}</p>
+                </div>
 
-              <button
-                onClick={() => {
-                  toggleTheme();
-                  // Keep menu open or close? Let's keep it open to see change
-                }}
-                className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2"
-              >
-                {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-                Tema: {isDarkMode ? 'Oscuro' : 'Claro'}
-              </button>
+                <button
+                  onClick={() => {
+                    navigate('/profile');
+                    setIsUserMenuOpen(false);
+                  }}
+                  className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2"
+                >
+                  <User className="w-4 h-4" />
+                  Mi Perfil
+                </button>
 
-              <div className="border-t border-gray-100 dark:border-gray-700 my-1"></div>
+                <button
+                  onClick={() => {
+                    toggleTheme();
+                    // Keep menu open or close? Let's keep it open to see change
+                  }}
+                  className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2"
+                >
+                  {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                  Tema: {isDarkMode ? 'Oscuro' : 'Claro'}
+                </button>
 
-              <button
-                onClick={() => {
-                  setIsUserMenuOpen(false);
-                  setIsLogoutModalOpen(true);
-                }}
-                className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
-              >
-                <LogOut className="w-4 h-4" />
-                Cerrar Sesión
-              </button>
-            </div>
-          )}
+                <div className="border-t border-gray-100 dark:border-gray-700 my-1"></div>
+
+                <button
+                  onClick={() => {
+                    setIsUserMenuOpen(false);
+                    setIsLogoutModalOpen(true);
+                  }}
+                  className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Cerrar Sesión
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </header>
+
+      {/* Breadcrumbs Navigation */}
+      <Breadcrumbs />
 
       <main className="flex-1">
         <Outlet />

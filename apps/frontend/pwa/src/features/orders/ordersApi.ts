@@ -1,4 +1,4 @@
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import { api } from '../../app/api';
 
 export type OrderStatus = 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
 
@@ -36,37 +36,25 @@ export interface CreateOrderRequest {
   notes?: string;
 }
 
-export const ordersApi = createApi({
-  reducerPath: 'ordersApi',
-  baseQuery: fetchBaseQuery({
-    baseUrl: import.meta.env.VITE_API_URL || 'http://localhost:3000/api',
-    prepareHeaders: (headers) => {
-      const token = localStorage.getItem('accessToken');
-      if (token) {
-        headers.set('Authorization', `Bearer ${token}`);
-      }
-      return headers;
-    },
-  }),
-  tagTypes: ['Order'],
+export const ordersApi = api.injectEndpoints({
   endpoints: (builder) => ({
     getOrdersAsBuyer: builder.query<Order[], OrderStatus | undefined>({
       query: (status) => ({
         url: '/orders/buyer',
         params: status ? { status } : undefined,
       }),
-      providesTags: ['Order'],
+      providesTags: ['Orders'],
     }),
     getOrdersAsSeller: builder.query<Order[], OrderStatus | undefined>({
       query: (status) => ({
         url: '/orders/seller',
         params: status ? { status } : undefined,
       }),
-      providesTags: ['Order'],
+      providesTags: ['Orders'],
     }),
     getOrder: builder.query<Order, string>({
       query: (id) => `/orders/${id}`,
-      providesTags: (_result, _error, id) => [{ type: 'Order', id }],
+      providesTags: (_result, _error, id) => [{ type: 'Orders', id }],
     }),
     createOrder: builder.mutation<Order, CreateOrderRequest>({
       query: (body) => ({
@@ -74,7 +62,7 @@ export const ordersApi = createApi({
         method: 'POST',
         body,
       }),
-      invalidatesTags: ['Order'],
+      invalidatesTags: ['Orders'],
     }),
     updateOrderStatus: builder.mutation<Order, { id: string; status: OrderStatus }>({
       query: ({ id, status }) => ({
@@ -82,14 +70,14 @@ export const ordersApi = createApi({
         method: 'PATCH',
         body: { status },
       }),
-      invalidatesTags: (_result, _error, { id }) => [{ type: 'Order', id }, 'Order'],
+      invalidatesTags: (_result, _error, { id }) => [{ type: 'Orders', id }, 'Orders'],
     }),
     cancelOrder: builder.mutation<Order, string>({
       query: (id) => ({
         url: `/orders/${id}/cancel`,
         method: 'PATCH',
       }),
-      invalidatesTags: (_result, _error, id) => [{ type: 'Order', id }, 'Order'],
+      invalidatesTags: (_result, _error, id) => [{ type: 'Orders', id }, 'Orders'],
     }),
   }),
 });

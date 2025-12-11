@@ -26,7 +26,7 @@ export class AddressesController {
    * Create a new saved address.
    */
   @Post()
-  @Roles(Role.BUYER, Role.ADMIN)
+  @Roles(Role.BUYER, Role.SELLER, Role.ADMIN)
   async create(@Body() createAddressDto: CreateAddressDto, @Headers('x-user-id') userId: string) {
     if (!userId) {
       throw new UnauthorizedException('Missing user context (x-user-id)');
@@ -38,7 +38,7 @@ export class AddressesController {
    * Get all addresses for the current user.
    */
   @Get()
-  @Roles(Role.BUYER, Role.ADMIN)
+  @Roles(Role.BUYER, Role.SELLER, Role.ADMIN)
   async findAll(@Headers('x-user-id') userId: string) {
     if (!userId) {
       throw new UnauthorizedException('Missing user context (x-user-id)');
@@ -50,7 +50,7 @@ export class AddressesController {
    * Get the default address for the current user.
    */
   @Get('default')
-  @Roles(Role.BUYER, Role.ADMIN)
+  @Roles(Role.BUYER, Role.SELLER, Role.ADMIN)
   async getDefault(@Headers('x-user-id') userId: string) {
     if (!userId) {
       throw new UnauthorizedException('Missing user context (x-user-id)');
@@ -62,7 +62,7 @@ export class AddressesController {
    * Get a single address by ID.
    */
   @Get(':id')
-  @Roles(Role.BUYER, Role.ADMIN)
+  @Roles(Role.BUYER, Role.SELLER, Role.ADMIN)
   async findOne(@Param('id') id: string, @Headers('x-user-id') userId: string) {
     if (!userId) {
       throw new UnauthorizedException('Missing user context (x-user-id)');
@@ -74,7 +74,7 @@ export class AddressesController {
    * Update an existing address.
    */
   @Patch(':id')
-  @Roles(Role.BUYER, Role.ADMIN)
+  @Roles(Role.BUYER, Role.SELLER, Role.ADMIN)
   async update(
     @Param('id') id: string,
     @Headers('x-user-id') userId: string,
@@ -90,7 +90,7 @@ export class AddressesController {
    * Set an address as default.
    */
   @Patch(':id/set-default')
-  @Roles(Role.BUYER, Role.ADMIN)
+  @Roles(Role.BUYER, Role.SELLER, Role.ADMIN)
   async setDefault(@Param('id') id: string, @Headers('x-user-id') userId: string) {
     if (!userId) {
       throw new UnauthorizedException('Missing user context (x-user-id)');
@@ -102,7 +102,7 @@ export class AddressesController {
    * Delete an address.
    */
   @Delete(':id')
-  @Roles(Role.BUYER, Role.ADMIN)
+  @Roles(Role.BUYER, Role.SELLER, Role.ADMIN)
   async delete(@Param('id') id: string, @Headers('x-user-id') userId: string) {
     if (!userId) {
       throw new UnauthorizedException('Missing user context (x-user-id)');

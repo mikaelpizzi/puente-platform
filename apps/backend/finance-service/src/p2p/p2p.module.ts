@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import Redis from 'ioredis';
 import { P2PService } from './p2p.service';
 import { BinanceAdapter } from './adapters/binance.adapter';
 import { CoinGeckoAdapter } from './adapters/coingecko.adapter';
@@ -15,6 +16,14 @@ import { AbstractP2PAdapter } from './interfaces/p2p-provider.interface';
     CoinGeckoAdapter,
     MockBinanceAdapter,
     RatesCacheService,
+    {
+      provide: 'REDIS_CLIENT',
+      useFactory: (configService: ConfigService) => {
+        const redisUrl = configService.get('REDIS_URL') || 'redis://localhost:6379';
+        return new Redis(redisUrl);
+      },
+      inject: [ConfigService],
+    },
     {
       provide: AbstractP2PAdapter,
       useClass: BinanceAdapter, // Primary adapter (real API)

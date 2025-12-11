@@ -208,7 +208,7 @@ export const MarketplacePage: React.FC = () => {
       {/* Floating Cart Button */}
       {cartItems.length > 0 && (
         <button
-          onClick={() => navigate('/checkout')}
+          onClick={() => navigate('/buyer-checkout')}
           className="fixed bottom-20 right-4 bg-emerald-500 text-white p-4 rounded-full shadow-lg hover:bg-emerald-600 active:scale-95 transition-transform z-30 flex items-center gap-2"
         >
           <ShoppingCart className="w-6 h-6" />

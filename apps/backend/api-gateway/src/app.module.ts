@@ -119,12 +119,18 @@ export class AppModule {
         { path: 'products', method: RequestMethod.ALL },
         { path: 'products/', method: RequestMethod.ALL },
         { path: 'products/*path', method: RequestMethod.ALL },
+        { path: 'orders', method: RequestMethod.ALL },
+        { path: 'orders/', method: RequestMethod.ALL },
+        { path: 'orders/*path', method: RequestMethod.ALL },
         { path: 'finance', method: RequestMethod.ALL },
         { path: 'finance/', method: RequestMethod.ALL },
         { path: 'finance/*path', method: RequestMethod.ALL },
         { path: 'logistics', method: RequestMethod.ALL },
         { path: 'logistics/', method: RequestMethod.ALL },
         { path: 'logistics/*path', method: RequestMethod.ALL },
+        { path: 'addresses', method: RequestMethod.ALL },
+        { path: 'addresses/', method: RequestMethod.ALL },
+        { path: 'addresses/*path', method: RequestMethod.ALL },
       );
 
     consumer
@@ -138,9 +144,15 @@ export class AppModule {
         { path: 'products', method: RequestMethod.ALL },
         { path: 'products/', method: RequestMethod.ALL },
         { path: 'products/*path', method: RequestMethod.ALL },
+        { path: 'orders', method: RequestMethod.ALL },
+        { path: 'orders/', method: RequestMethod.ALL },
+        { path: 'orders/*path', method: RequestMethod.ALL },
         { path: 'tags', method: RequestMethod.ALL },
         { path: 'tags/', method: RequestMethod.ALL },
         { path: 'tags/*path', method: RequestMethod.ALL },
+        { path: 'addresses', method: RequestMethod.ALL },
+        { path: 'addresses/', method: RequestMethod.ALL },
+        { path: 'addresses/*path', method: RequestMethod.ALL },
       );
 
     consumer

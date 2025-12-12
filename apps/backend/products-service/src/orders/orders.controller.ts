@@ -75,6 +75,29 @@ export class OrdersController {
   }
 
   /**
+   * Gets all orders available for courier pickup.
+   * These are orders with status PROCESSING and no courier assigned.
+   */
+  @Get('available-jobs')
+  @Roles(Role.COURIER, Role.ADMIN)
+  async findAvailableJobs() {
+    return this.ordersService.findAvailableForCourier();
+  }
+
+  /**
+   * Dispatches an order for delivery.
+   * Changes status to PROCESSING making it available for couriers.
+   */
+  @Post(':id/dispatch')
+  @Roles(Role.SELLER, Role.ADMIN)
+  async dispatch(@Param('id') id: string, @Headers('x-user-id') userId: string) {
+    if (!userId) {
+      throw new UnauthorizedException('Missing user context (x-user-id)');
+    }
+    return this.ordersService.dispatch(id, userId);
+  }
+
+  /**
    * Gets a single order by ID.
    */
   @Get(':id')
@@ -95,12 +118,25 @@ export class OrdersController {
 
   /**
    * Assigns a courier to an order.
-   * Admin or seller can assign a courier.
+   * Couriers can assign themselves, or admins/sellers can assign a specific courier.
    */
   @Patch(':id/assign-courier')
-  @Roles(Role.SELLER, Role.ADMIN)
-  async assignCourier(@Param('id') id: string, @Body('courierId') courierId: string) {
-    return this.ordersService.assignCourier(id, courierId);
+  @Roles(Role.SELLER, Role.COURIER, Role.ADMIN)
+  async assignCourier(
+    @Param('id') id: string,
+    @Headers('x-user-id') userId: string,
+    @Headers('x-user-role') userRole: string,
+    @Body('courierId') courierId?: string,
+  ) {
+    if (!userId) {
+      throw new UnauthorizedException('Missing user context (x-user-id)');
+    }
+    // If courier is assigning themselves, use their own ID
+    const assigneeCourierId = userRole === 'COURIER' ? userId : courierId;
+    if (!assigneeCourierId) {
+      throw new UnauthorizedException('Courier ID is required');
+    }
+    return this.ordersService.assignCourier(id, assigneeCourierId);
   }
 
   /**

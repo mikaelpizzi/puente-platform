@@ -24,7 +24,7 @@ export interface CreateOrderRequest {
 
 export const financeApi = api.injectEndpoints({
   endpoints: (builder) => ({
-    createOrder: builder.mutation<Order, CreateOrderRequest>({
+    createFinanceOrder: builder.mutation<Order, CreateOrderRequest>({
       query: (body) => ({
         url: '/finance/orders',
         method: 'POST',
@@ -38,4 +38,4 @@ export const financeApi = api.injectEndpoints({
   }),
 });
 
-export const { useCreateOrderMutation, useGetOrderStatusQuery } = financeApi;
+export const { useCreateFinanceOrderMutation, useGetOrderStatusQuery } = financeApi;

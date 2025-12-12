@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { PosKeypad } from './PosKeypad';
 import { PaymentQR } from './PaymentQR';
-import { useCreateOrderMutation, useGetOrderStatusQuery } from './financeApi';
+import { useCreateFinanceOrderMutation, useGetOrderStatusQuery } from './financeApi';
 import { selectCurrentUser } from '../auth/authSlice';
 import { CartItem } from '../checkout/cartSlice';
 import toast from 'react-hot-toast';
@@ -41,7 +41,7 @@ export const PaymentFlow: React.FC<PaymentFlowProps> = ({
   }, [currentOrderId]);
 
   // API Mutations
-  const [createOrder, { isLoading: isCreating }] = useCreateOrderMutation();
+  const [createOrder, { isLoading: isCreating }] = useCreateFinanceOrderMutation();
 
   // Polling Query: Solo buscamos la orden actual si existe
   const { data: orderStatus } = useGetOrderStatusQuery(currentOrderId!, {

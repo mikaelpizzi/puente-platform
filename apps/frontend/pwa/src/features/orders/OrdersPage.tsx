@@ -1,5 +1,17 @@
-import React, { useState } from 'react';
-import { Package, Clock, CheckCircle, AlertCircle, ChevronRight, Loader2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import {
+  Package,
+  Clock,
+  CheckCircle,
+  AlertCircle,
+  ChevronRight,
+  Loader2,
+  MapPin,
+  Star,
+} from 'lucide-react';
+import { useSelector } from 'react-redux';
+import { selectCurrentUser } from '../auth/authSlice';
 import {
   useGetOrdersAsBuyerQuery,
   useGetOrdersAsSellerQuery,
@@ -8,8 +20,28 @@ import {
 } from './ordersApi';
 
 export const OrdersPage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'buyer' | 'seller'>('buyer');
+  const navigate = useNavigate();
+  const user = useSelector(selectCurrentUser);
+  const userRole = user?.role;
+
+  // Determine which tabs to show based on role
+  const canSeeBuyer = userRole === 'BUYER' || userRole === 'ADMIN';
+  const canSeeSeller = userRole === 'SELLER' || userRole === 'ADMIN';
+
+  // Set default tab based on role
+  const getDefaultTab = (): 'buyer' | 'seller' => {
+    if (userRole === 'SELLER') return 'seller';
+    if (userRole === 'BUYER') return 'buyer';
+    return 'buyer'; // ADMIN defaults to buyer
+  };
+
+  const [activeTab, setActiveTab] = useState<'buyer' | 'seller'>(getDefaultTab());
   const [filterStatus, setFilterStatus] = useState<OrderStatus | 'all'>('all');
+
+  // Update tab when role changes
+  useEffect(() => {
+    setActiveTab(getDefaultTab());
+  }, [userRole]);
 
   // Fetch orders based on active tab
   const statusFilter = filterStatus === 'all' ? undefined : filterStatus;
@@ -17,13 +49,13 @@ export const OrdersPage: React.FC = () => {
     data: buyerOrders = [],
     isLoading: buyerLoading,
     error: buyerError,
-  } = useGetOrdersAsBuyerQuery(statusFilter, { skip: activeTab !== 'buyer' });
+  } = useGetOrdersAsBuyerQuery(statusFilter, { skip: activeTab !== 'buyer' || !canSeeBuyer });
 
   const {
     data: sellerOrders = [],
     isLoading: sellerLoading,
     error: sellerError,
-  } = useGetOrdersAsSellerQuery(statusFilter, { skip: activeTab !== 'seller' });
+  } = useGetOrdersAsSellerQuery(statusFilter, { skip: activeTab !== 'seller' || !canSeeSeller });
 
   const orders = activeTab === 'buyer' ? buyerOrders : sellerOrders;
   const isLoading = activeTab === 'buyer' ? buyerLoading : sellerLoading;
@@ -74,34 +106,41 @@ export const OrdersPage: React.FC = () => {
     return labels[status] || status;
   };
 
+  // Show both tabs only for ADMIN, otherwise show only the relevant one
+  const showBothTabs = userRole === 'ADMIN';
+
   return (
     <div className="pb-24 min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="bg-white dark:bg-gray-800 shadow p-4 sticky top-0 z-10">
-        <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-4">Mis Pedidos</h2>
+        <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-4">
+          {userRole === 'SELLER' ? 'Mis Ventas' : userRole === 'BUYER' ? 'Mis Compras' : 'Pedidos'}
+        </h2>
 
-        {/* Role Tabs */}
-        <div className="flex p-1 bg-gray-100 dark:bg-gray-700 rounded-lg mb-4">
-          <button
-            onClick={() => setActiveTab('buyer')}
-            className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${
-              activeTab === 'buyer'
-                ? 'bg-white dark:bg-gray-600 shadow text-emerald-600 dark:text-emerald-400'
-                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700'
-            }`}
-          >
-            Mis Compras
-          </button>
-          <button
-            onClick={() => setActiveTab('seller')}
-            className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${
-              activeTab === 'seller'
-                ? 'bg-white dark:bg-gray-600 shadow text-emerald-600 dark:text-emerald-400'
-                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700'
-            }`}
-          >
-            Mis Ventas
-          </button>
-        </div>
+        {/* Role Tabs - Only show if ADMIN or if we want to show tabs */}
+        {showBothTabs && (
+          <div className="flex p-1 bg-gray-100 dark:bg-gray-700 rounded-lg mb-4">
+            <button
+              onClick={() => setActiveTab('buyer')}
+              className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${
+                activeTab === 'buyer'
+                  ? 'bg-white dark:bg-gray-600 shadow text-emerald-600 dark:text-emerald-400'
+                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700'
+              }`}
+            >
+              Mis Compras
+            </button>
+            <button
+              onClick={() => setActiveTab('seller')}
+              className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${
+                activeTab === 'seller'
+                  ? 'bg-white dark:bg-gray-600 shadow text-emerald-600 dark:text-emerald-400'
+                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700'
+              }`}
+            >
+              Mis Ventas
+            </button>
+          </div>
+        )}
 
         {/* Status Filter */}
         <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
@@ -143,7 +182,9 @@ export const OrdersPage: React.FC = () => {
         {!isLoading && !error && orders.length === 0 && (
           <div className="text-center py-12">
             <Package className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
-            <p className="text-gray-500 dark:text-gray-400">No hay pedidos</p>
+            <p className="text-gray-500 dark:text-gray-400">
+              {userRole === 'SELLER' ? 'No tienes ventas aún' : 'No tienes compras aún'}
+            </p>
           </div>
         )}
 
@@ -151,6 +192,7 @@ export const OrdersPage: React.FC = () => {
         {orders.map((order: Order) => (
           <div
             key={order._id}
+            onClick={() => navigate(`/orders/${order._id}`)}
             className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
           >
             <div className="p-4">
@@ -165,7 +207,7 @@ export const OrdersPage: React.FC = () => {
                     </span>
                   </div>
                   <p className="text-sm text-gray-600 dark:text-gray-300">
-                    {activeTab === 'buyer'
+                    {activeTab === 'buyer' || userRole === 'BUYER'
                       ? `Vendedor: ${order.sellerId.slice(-6)}`
                       : `Cliente: ${order.buyerId.slice(-6)}`}
                   </p>
@@ -200,9 +242,39 @@ export const OrdersPage: React.FC = () => {
                 </span>
               </div>
             </div>
-            <div className="bg-gray-50 dark:bg-gray-700/30 px-4 py-2 flex justify-between items-center">
-              <span className="text-xs text-gray-500 dark:text-gray-400">Ver detalles</span>
-              <ChevronRight className="w-4 h-4 text-gray-400" />
+            <div className="bg-gray-50 dark:bg-gray-700/30 px-4 py-2 flex justify-between items-center gap-2">
+              {/* Tracking button - only for orders being delivered */}
+              {(order.status === 'shipped' || order.status === 'processing') && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(`/track/${order._id}`);
+                  }}
+                  className="flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400 hover:underline font-medium"
+                >
+                  <MapPin className="w-3 h-3" />
+                  Ver Tracking
+                </button>
+              )}
+              {/* Review button for delivered orders (buyers only) */}
+              {order.status === 'delivered' && userRole === 'BUYER' && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    // TODO: Open review modal
+                    alert('Próximamente: Dejar reseña');
+                  }}
+                  className="flex items-center gap-1 text-xs text-yellow-600 dark:text-yellow-400 hover:underline"
+                >
+                  <Star className="w-3 h-3" />
+                  Dejar reseña
+                </button>
+              )}
+              <div className="flex-1" />
+              <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 hover:text-emerald-500 transition-colors">
+                <span>Ver detalles</span>
+                <ChevronRight className="w-4 h-4" />
+              </div>
             </div>
           </div>
         ))}

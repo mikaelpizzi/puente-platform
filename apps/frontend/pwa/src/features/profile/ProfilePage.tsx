@@ -1,8 +1,16 @@
 import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
 import { selectCurrentUser } from '../auth/authSlice';
-import { User, Mail, Shield, Save } from 'lucide-react';
+import { User, Mail, Shield, Save, MapPin } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { AddressSelector } from '../addresses/AddressSelector';
+import { AddressForm } from '../addresses/AddressForm';
+import {
+  useGetAddressesQuery,
+  useDeleteAddressMutation,
+  useSetDefaultAddressMutation,
+  useCreateAddressMutation,
+} from '../addresses/addressesApi';
 
 export const ProfilePage: React.FC = () => {
   const user = useSelector(selectCurrentUser);
@@ -10,6 +18,17 @@ export const ProfilePage: React.FC = () => {
   const [email] = useState(user?.email || '');
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
+  const [showAddressForm, setShowAddressForm] = useState(false);
+  const [selectedAddressId, setSelectedAddressId] = useState<string | undefined>();
+
+  const {
+    data: addresses = [],
+    isLoading: addressesLoading,
+    refetch: refetchAddresses,
+  } = useGetAddressesQuery();
+  const [deleteAddress] = useDeleteAddressMutation();
+  const [setDefaultAddress] = useSetDefaultAddressMutation();
+  const [createAddress] = useCreateAddressMutation();
 
   const handleUpdateProfile = (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,6 +42,28 @@ export const ProfilePage: React.FC = () => {
     toast.success('Contraseña actualizada');
     setCurrentPassword('');
     setNewPassword('');
+  };
+
+  const handleAddressSelect = (address: { _id: string }) => {
+    setSelectedAddressId(address._id);
+  };
+
+  const handleSetDefault = async (id: string) => {
+    try {
+      await setDefaultAddress(id).unwrap();
+      toast.success('Dirección predeterminada actualizada');
+    } catch {
+      toast.error('Error al actualizar dirección');
+    }
+  };
+
+  const handleDeleteAddress = async (id: string) => {
+    try {
+      await deleteAddress(id).unwrap();
+      toast.success('Dirección eliminada');
+    } catch {
+      toast.error('Error al eliminar dirección');
+    }
   };
 
   return (
@@ -77,6 +118,58 @@ export const ProfilePage: React.FC = () => {
               </button>
             </div>
           </form>
+        </div>
+
+        {/* Saved Addresses */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-6 border border-gray-100 dark:border-gray-700">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+            <MapPin className="w-5 h-5" />
+            Mis Direcciones
+          </h3>
+
+          {showAddressForm ? (
+            <AddressForm
+              onSubmit={async (data) => {
+                try {
+                  await createAddress(data).unwrap();
+                  await refetchAddresses();
+                  setShowAddressForm(false);
+                  toast.success('Dirección guardada');
+                } catch (error) {
+                  console.error('Error creating address:', error);
+                  toast.error('Error al guardar dirección');
+                  throw error;
+                }
+              }}
+              onCancel={() => setShowAddressForm(false)}
+            />
+          ) : (
+            <>
+              <AddressSelector
+                addresses={addresses}
+                selectedId={selectedAddressId}
+                onSelect={handleAddressSelect}
+                onAddNew={() => setShowAddressForm(true)}
+                isLoading={addressesLoading}
+              />
+              {selectedAddressId && (
+                <div className="flex gap-2 mt-4">
+                  <button
+                    onClick={() => handleSetDefault(selectedAddressId)}
+                    className="flex-1 py-2 text-sm bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded-lg hover:bg-emerald-200 dark:hover:bg-emerald-900/50"
+                  >
+                    Establecer como predeterminada
+                  </button>
+                  <button
+                    onClick={() => handleDeleteAddress(selectedAddressId)}
+                    className="py-2 px-4 text-sm bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/50"
+                  >
+                    Eliminar
+                  </button>
+                </div>
+              )}
+            </>
+          )}
         </div>
 
         {/* Security */}

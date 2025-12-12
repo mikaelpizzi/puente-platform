@@ -112,6 +112,59 @@ export class OrdersService {
   }
 
   /**
+   * Dispatches an order for delivery (sets status to PROCESSING).
+   * This makes the order available for couriers to pick up.
+   * @param orderId - The order ID.
+   * @param sellerId - The seller's user ID (for validation).
+   * @returns The updated order.
+   */
+  async dispatch(orderId: string, sellerId: string): Promise<Order> {
+    const order = await this.orderModel.findById(orderId).exec();
+    if (!order) {
+      throw new NotFoundException(`Order with ID ${orderId} not found`);
+    }
+
+    // Validate that the seller owns this order
+    if (order.sellerId !== sellerId) {
+      throw new ForbiddenException('You are not the seller of this order');
+    }
+
+    // Validate that order is in PENDING status
+    if (order.status !== OrderStatus.PENDING) {
+      throw new BadRequestException('Only pending orders can be dispatched');
+    }
+
+    // Update status to PROCESSING (available for couriers)
+    const updatedOrder = await this.orderModel
+      .findByIdAndUpdate(
+        orderId,
+        { status: OrderStatus.PROCESSING, dispatchedAt: new Date() },
+        { new: true },
+      )
+      .exec();
+
+    if (!updatedOrder) {
+      throw new NotFoundException(`Order with ID ${orderId} not found`);
+    }
+
+    return updatedOrder;
+  }
+
+  /**
+   * Finds all orders available for courier pickup (status = PROCESSING, no courier assigned).
+   * @returns List of available orders for couriers.
+   */
+  async findAvailableForCourier(): Promise<Order[]> {
+    return this.orderModel
+      .find({
+        status: OrderStatus.PROCESSING,
+        courierId: { $exists: false },
+      })
+      .sort({ createdAt: -1 })
+      .exec();
+  }
+
+  /**
    * Assigns a courier to an order.
    * @param orderId - The order ID.
    * @param courierId - The courier's user ID.

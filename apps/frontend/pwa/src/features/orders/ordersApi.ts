@@ -79,6 +79,13 @@ export const ordersApi = api.injectEndpoints({
       }),
       invalidatesTags: (_result, _error, id) => [{ type: 'Orders', id }, 'Orders'],
     }),
+    dispatchOrder: builder.mutation<Order, string>({
+      query: (id) => ({
+        url: `/orders/${id}/dispatch`,
+        method: 'POST',
+      }),
+      invalidatesTags: (_result, _error, id) => [{ type: 'Orders', id }, 'Orders', 'Jobs'],
+    }),
   }),
 });
 
@@ -89,4 +96,5 @@ export const {
   useCreateOrderMutation,
   useUpdateOrderStatusMutation,
   useCancelOrderMutation,
+  useDispatchOrderMutation,
 } = ordersApi;

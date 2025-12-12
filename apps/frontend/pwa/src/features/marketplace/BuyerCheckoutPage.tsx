@@ -42,9 +42,9 @@ export const BuyerCheckoutPage: React.FC = () => {
 
     try {
       // Group items by seller (for now, we assume single seller - TODO: multi-seller orders)
-      // For demo, we'll use a placeholder sellerId - in real app, each product would have sellerId
+      // Get sellerId from the first cart item (assumes all items from same seller)
       const orderData = {
-        sellerId: 'seller-placeholder', // In real app, get from product
+        sellerId: cartItems[0].sellerId,
         items: cartItems.map((item) => ({
           productId: item.id,
           name: item.name,

@@ -16,6 +16,7 @@ import { ProfilePage } from '../features/profile/ProfilePage';
 import { MarketplacePage } from '../features/marketplace/MarketplacePage';
 import { BuyerCheckoutPage } from '../features/marketplace/BuyerCheckoutPage';
 import { OrdersPage } from '../features/orders/OrdersPage';
+import { OrderDetailsPage } from '../features/orders/OrderDetailsPage';
 
 export const router = createBrowserRouter([
   {
@@ -73,6 +74,14 @@ export const router = createBrowserRouter([
         element: (
           <RequireAuth allowedRoles={['SELLER', 'BUYER']}>
             <OrdersPage />
+          </RequireAuth>
+        ),
+      },
+      {
+        path: 'orders/:orderId',
+        element: (
+          <RequireAuth allowedRoles={['SELLER', 'BUYER']}>
+            <OrderDetailsPage />
           </RequireAuth>
         ),
       },

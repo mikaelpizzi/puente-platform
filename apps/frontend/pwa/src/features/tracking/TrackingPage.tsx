@@ -96,7 +96,7 @@ export const TrackingPage: React.FC = () => {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh]">
         <Loader2 className="w-10 h-10 text-emerald-500 animate-spin mb-4" />
-        <p className="text-gray-500 font-medium">Localizando tu pedido...</p>
+        <p className="text-gray-500 dark:text-gray-400 font-medium">Localizando tu pedido...</p>
       </div>
     );
   }
@@ -104,16 +104,18 @@ export const TrackingPage: React.FC = () => {
   if (error || !delivery) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] p-6 text-center">
-        <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mb-6 animate-bounce">
+        <div className="w-20 h-20 bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center mb-6 animate-bounce">
           <MapPin className="w-10 h-10 text-red-500" />
         </div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Pedido no encontrado</h2>
-        <p className="text-gray-600 mb-8 max-w-xs mx-auto">
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+          Pedido no encontrado
+        </h2>
+        <p className="text-gray-600 dark:text-gray-400 mb-8 max-w-xs mx-auto">
           El enlace podría haber expirado o el código es incorrecto. Verifica la URL.
         </p>
         <a
           href="#"
-          className="inline-flex items-center gap-2 bg-gray-900 text-white px-6 py-3 rounded-xl font-bold shadow-lg hover:bg-gray-800 transition-transform active:scale-95"
+          className="inline-flex items-center gap-2 bg-gray-900 dark:bg-gray-700 text-white px-6 py-3 rounded-xl font-bold shadow-lg hover:bg-gray-800 dark:hover:bg-gray-600 transition-transform active:scale-95"
         >
           <Phone size={18} /> Contactar Soporte
         </a>

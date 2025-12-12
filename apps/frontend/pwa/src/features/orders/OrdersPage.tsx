@@ -192,6 +192,7 @@ export const OrdersPage: React.FC = () => {
         {orders.map((order: Order) => (
           <div
             key={order._id}
+            onClick={() => navigate(`/orders/${order._id}`)}
             className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
           >
             <div className="p-4">
@@ -242,17 +243,17 @@ export const OrdersPage: React.FC = () => {
               </div>
             </div>
             <div className="bg-gray-50 dark:bg-gray-700/30 px-4 py-2 flex justify-between items-center gap-2">
-              {/* Tracking button for orders in transit */}
+              {/* Tracking button - only for orders being delivered */}
               {(order.status === 'shipped' || order.status === 'processing') && (
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
                     navigate(`/track/${order._id}`);
                   }}
-                  className="flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                  className="flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400 hover:underline font-medium"
                 >
                   <MapPin className="w-3 h-3" />
-                  Seguimiento
+                  Ver Tracking
                 </button>
               )}
               {/* Review button for delivered orders (buyers only) */}
@@ -270,7 +271,7 @@ export const OrdersPage: React.FC = () => {
                 </button>
               )}
               <div className="flex-1" />
-              <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
+              <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 hover:text-emerald-500 transition-colors">
                 <span>Ver detalles</span>
                 <ChevronRight className="w-4 h-4" />
               </div>

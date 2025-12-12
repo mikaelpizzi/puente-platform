@@ -1,4 +1,5 @@
 import { api } from '../../app/api';
+import { Order } from '../orders/ordersApi';
 
 export interface Location {
   lat: number;
@@ -30,19 +31,22 @@ export interface PublicDeliveryInfo {
 
 export const logisticsApi = api.injectEndpoints({
   endpoints: (builder) => ({
-    getAvailableJobs: builder.query<Job[], void>({
-      query: () => '/logistics/jobs',
-      providesTags: ['Jobs'],
+    // Get available orders for couriers (from orders service)
+    getAvailableJobs: builder.query<Order[], void>({
+      query: () => '/orders/available-jobs',
+      providesTags: ['Jobs', 'Orders'],
     }),
     getPublicDelivery: builder.query<PublicDeliveryInfo, string>({
       query: (trackingId) => `/logistics/tracking/${trackingId}`,
     }),
-    acceptJob: builder.mutation<Job, string>({
-      query: (jobId) => ({
-        url: `/logistics/jobs/${jobId}/accept`,
-        method: 'POST',
+    // Accept a job (assign courier to order)
+    acceptJob: builder.mutation<Order, string>({
+      query: (orderId) => ({
+        url: `/orders/${orderId}/assign-courier`,
+        method: 'PATCH',
+        body: {}, // courierId will be taken from x-user-id header
       }),
-      invalidatesTags: ['Jobs'],
+      invalidatesTags: ['Jobs', 'Orders'],
     }),
     updateLocation: builder.mutation<void, Location>({
       query: (location) => ({

@@ -115,76 +115,54 @@ export const LogisticsPage: React.FC = () => {
             </div>
           ) : (
             <div className="space-y-4">
-              {jobs.map((job) => (
+              {jobs.map((order) => (
                 <div
-                  key={job.id}
-                  onClick={() => setSelectedJobId(job.id)}
+                  key={order._id}
+                  onClick={() => setSelectedJobId(order._id)}
                   className={`bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border-2 transition-all cursor-pointer ${
-                    selectedJobId === job.id
+                    selectedJobId === order._id
                       ? 'border-emerald-500'
                       : 'border-gray-200 dark:border-gray-700 hover:border-emerald-300'
                   }`}
                 >
                   <div className="flex justify-between items-start mb-3">
-                    <span
-                      className={`text-xs font-bold px-2 py-1 rounded-full ${
-                        job.status === 'available'
-                          ? 'bg-blue-100 text-blue-800'
-                          : job.status === 'accepted'
-                            ? 'bg-yellow-100 text-yellow-800'
-                            : job.status === 'in-progress'
-                              ? 'bg-purple-100 text-purple-800'
-                              : 'bg-green-100 text-green-800'
-                      }`}
-                    >
-                      {job.status.toUpperCase().replace('-', ' ')}
+                    <span className="text-xs font-bold px-2 py-1 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
+                      DISPONIBLE
                     </span>
-                    <span className="font-bold text-emerald-600">${job.earnings.toFixed(2)}</span>
+                    <span className="font-bold text-emerald-600">${order.total.toFixed(2)}</span>
                   </div>
 
-                  <h3 className="font-bold text-gray-900 dark:text-white mb-1">{job.title}</h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">{job.description}</p>
+                  <h3 className="font-bold text-gray-900 dark:text-white mb-1">
+                    Pedido #{order._id.slice(-8).toUpperCase()}
+                  </h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
+                    {order.items.map((i) => `${i.quantity}x ${i.name}`).join(', ')}
+                  </p>
 
-                  <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
-                    <Navigation size={14} className="text-emerald-500" />
-                    <span>{job.distance.toFixed(1)} km</span>
-                  </div>
-
-                  {job.status === 'available' && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleAcceptJob(job.id);
-                      }}
-                      disabled={isAccepting}
-                      className="w-full mt-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg font-medium flex items-center justify-center gap-2"
-                    >
-                      {isAccepting ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <CheckCircle className="w-4 h-4" />
-                      )}
-                      Aceptar Trabajo
-                    </button>
+                  {order.shippingAddress && (
+                    <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 mb-3">
+                      <MapPin size={14} className="text-emerald-500" />
+                      <span>
+                        {order.shippingAddress.street}, {order.shippingAddress.city}
+                      </span>
+                    </div>
                   )}
 
-                  {(job.status === 'accepted' || job.status === 'in-progress') && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleCompleteDelivery(job.id);
-                      }}
-                      disabled={isCompleting}
-                      className="w-full mt-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg font-medium flex items-center justify-center gap-2"
-                    >
-                      {isCompleting ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <CheckCircle className="w-4 h-4" />
-                      )}
-                      Completar Entrega
-                    </button>
-                  )}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleAcceptJob(order._id);
+                    }}
+                    disabled={isAccepting}
+                    className="w-full mt-2 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg font-medium flex items-center justify-center gap-2"
+                  >
+                    {isAccepting ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <CheckCircle className="w-4 h-4" />
+                    )}
+                    Aceptar Trabajo
+                  </button>
                 </div>
               ))}
             </div>

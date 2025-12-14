@@ -52,6 +52,13 @@ export const ordersApi = api.injectEndpoints({
       }),
       providesTags: ['Orders'],
     }),
+    getOrdersAsCourier: builder.query<Order[], OrderStatus | undefined>({
+      query: (status) => ({
+        url: '/orders/courier',
+        params: status ? { status } : undefined,
+      }),
+      providesTags: ['Orders'],
+    }),
     getOrder: builder.query<Order, string>({
       query: (id) => `/orders/${id}`,
       providesTags: (_result, _error, id) => [{ type: 'Orders', id }],
@@ -92,6 +99,7 @@ export const ordersApi = api.injectEndpoints({
 export const {
   useGetOrdersAsBuyerQuery,
   useGetOrdersAsSellerQuery,
+  useGetOrdersAsCourierQuery,
   useGetOrderQuery,
   useCreateOrderMutation,
   useUpdateOrderStatusMutation,

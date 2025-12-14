@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import {
@@ -30,13 +30,41 @@ export const OrderDetailsPage: React.FC = () => {
 
   // Real-time courier location tracking
   const [courierLocation, setCourierLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [isSimulating, setIsSimulating] = useState(false);
 
   useOrderSocket({
     orderId: orderId || '',
     onLocationUpdate: (location) => {
       setCourierLocation({ lat: location.lat, lng: location.lng });
+      setIsSimulating(false); // Got real data, stop simulation
     },
   });
+
+  // Simulation mode: if no real location after 3s on shipped orders, simulate courier movement
+  useEffect(() => {
+    if (order?.status !== 'shipped' || courierLocation) return;
+
+    const timer = setTimeout(() => {
+      // No real data received, start simulation for demo
+      setIsSimulating(true);
+      // Start at Mexico City center
+      let lat = 19.4326;
+      let lng = -99.1332;
+
+      setCourierLocation({ lat, lng });
+
+      // Simulate movement every 2 seconds
+      const interval = setInterval(() => {
+        lat += (Math.random() - 0.5) * 0.002;
+        lng += (Math.random() - 0.5) * 0.002;
+        setCourierLocation({ lat, lng });
+      }, 2000);
+
+      return () => clearInterval(interval);
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, [order?.status, courierLocation]);
 
   const handleDispatch = async () => {
     if (!orderId) return;
@@ -182,9 +210,13 @@ export const OrderDetailsPage: React.FC = () => {
                 Ubicación del Repartidor
               </h3>
               {courierLocation && (
-                <span className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
-                  <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                  En vivo
+                <span
+                  className={`flex items-center gap-1 text-xs ${isSimulating ? 'text-orange-600 dark:text-orange-400' : 'text-green-600 dark:text-green-400'}`}
+                >
+                  <span
+                    className={`w-2 h-2 rounded-full animate-pulse ${isSimulating ? 'bg-orange-500' : 'bg-green-500'}`}
+                  />
+                  {isSimulating ? 'DEMO' : 'En vivo'}
                 </span>
               )}
             </div>

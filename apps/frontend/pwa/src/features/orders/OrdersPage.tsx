@@ -248,7 +248,7 @@ export const OrdersPage: React.FC = () => {
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    navigate(`/track/${order._id}`);
+                    navigate(`/orders/${order._id}`);
                   }}
                   className="flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400 hover:underline font-medium"
                 >

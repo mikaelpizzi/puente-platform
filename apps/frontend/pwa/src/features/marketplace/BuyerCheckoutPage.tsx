@@ -88,7 +88,7 @@ export const BuyerCheckoutPage: React.FC = () => {
           <div className="space-y-3">
             {createdOrderId && (
               <button
-                onClick={() => navigate(`/track/${createdOrderId}`)}
+                onClick={() => navigate(`/orders/${createdOrderId}`)}
                 className="w-full py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-medium flex items-center justify-center gap-2"
               >
                 <MapPin className="w-5 h-5" />

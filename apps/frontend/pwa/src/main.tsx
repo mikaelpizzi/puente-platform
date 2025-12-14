@@ -6,6 +6,7 @@ import { Toaster } from 'react-hot-toast';
 import { store } from './app/store';
 import { router } from './app/router';
 import { ThemeProvider } from './app/ThemeContext';
+import { SocketProvider } from './providers/SocketProvider';
 import { initSentry, initPostHog } from './lib';
 import './index.css';
 
@@ -17,8 +18,10 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <Provider store={store}>
       <ThemeProvider>
-        <Toaster position="top-center" reverseOrder={false} />
-        <RouterProvider router={router} />
+        <SocketProvider>
+          <Toaster position="top-center" reverseOrder={false} />
+          <RouterProvider router={router} />
+        </SocketProvider>
       </ThemeProvider>
     </Provider>
   </React.StrictMode>,

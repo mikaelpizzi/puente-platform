@@ -17,6 +17,7 @@ import { MarketplacePage } from '../features/marketplace/MarketplacePage';
 import { BuyerCheckoutPage } from '../features/marketplace/BuyerCheckoutPage';
 import { OrdersPage } from '../features/orders/OrdersPage';
 import { OrderDetailsPage } from '../features/orders/OrderDetailsPage';
+import { ErrorBoundary } from '../components/ErrorBoundary';
 
 export const router = createBrowserRouter([
   {
@@ -48,6 +49,7 @@ export const router = createBrowserRouter([
         <MainLayout />
       </RequireAuth>
     ),
+    errorElement: <ErrorBoundary />,
     children: [
       {
         index: true,

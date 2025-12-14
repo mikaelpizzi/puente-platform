@@ -171,11 +171,18 @@ export const LoginPage: React.FC = () => {
             <h2 className="mt-6 text-3xl font-extrabold text-gray-900 dark:text-white">
               Bienvenido
             </h2>
-            <p className="mt-2 text-gray-600 dark:text-gray-400">¿Quién eres hoy?</p>
+            <p className="mt-2 text-gray-600 dark:text-gray-400">¿Quién eres?</p>
+          </div>
+
+          {/* Demo label */}
+          <div className="text-center">
+            <span className="inline-flex items-center gap-1 text-xs font-medium text-orange-600 dark:text-orange-400 bg-orange-100 dark:bg-orange-900/30 px-3 py-1 rounded-full">
+              🧪 Cuentas Demo
+            </span>
           </div>
 
           {/* Account Cards */}
-          <div className="space-y-3 mt-8">
+          <div className="space-y-3">
             {DEMO_ACCOUNTS.map((account) => {
               const Icon = account.icon;
               return (

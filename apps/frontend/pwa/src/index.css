@@ -8,6 +8,13 @@ html, body {
   width: 100%;
   overflow-x: hidden;
   touch-action: manipulation; /* Improve touch response */
+  background-color: #f9fafb; /* gray-50 for light mode */
+}
+
+/* Dark mode background - html gets .dark class from ThemeContext */
+html.dark,
+html.dark body {
+  background-color: #111827; /* gray-900 for dark mode */
 }
 
 /* Global smooth transition for Dark Mode */

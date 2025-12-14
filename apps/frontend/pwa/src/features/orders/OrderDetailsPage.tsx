@@ -249,6 +249,52 @@ export const OrderDetailsPage: React.FC = () => {
             <p className="text-gray-900 dark:text-white">{order.notes}</p>
           </div>
         )}
+
+        {/* Proof of Delivery */}
+        {order.status === 'delivered' && order.proofOfDelivery && (
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm">
+            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-3">
+              Prueba de Entrega
+            </h3>
+            <div className="space-y-4">
+              {order.proofOfDelivery.photoUrl && (
+                <div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Foto</p>
+                  <img
+                    src={order.proofOfDelivery.photoUrl}
+                    alt="Prueba de entrega"
+                    className="w-full max-w-sm rounded-lg border border-gray-200 dark:border-gray-700"
+                  />
+                </div>
+              )}
+              {order.proofOfDelivery.signatureUrl && (
+                <div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Firma</p>
+                  <img
+                    src={order.proofOfDelivery.signatureUrl}
+                    alt="Firma del cliente"
+                    className="max-w-xs bg-white rounded-lg border border-gray-200 dark:border-gray-700 p-2"
+                  />
+                </div>
+              )}
+              {order.proofOfDelivery.notes && (
+                <div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                    Notas del repartidor
+                  </p>
+                  <p className="text-gray-900 dark:text-white text-sm">
+                    {order.proofOfDelivery.notes}
+                  </p>
+                </div>
+              )}
+              {order.deliveredAt && (
+                <p className="text-xs text-gray-400">
+                  Entregado: {new Date(order.deliveredAt).toLocaleString()}
+                </p>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

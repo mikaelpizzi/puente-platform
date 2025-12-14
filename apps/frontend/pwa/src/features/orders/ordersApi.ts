@@ -13,6 +13,7 @@ export interface Order {
   _id: string;
   buyerId: string;
   sellerId: string;
+  courierId?: string;
   status: OrderStatus;
   items: OrderItem[];
   total: number;
@@ -24,6 +25,13 @@ export interface Order {
     country?: string;
   };
   notes?: string;
+  proofOfDelivery?: {
+    photoUrl?: string;
+    signatureUrl?: string;
+    capturedAt?: string;
+    notes?: string;
+  };
+  deliveredAt?: string;
   createdAt: string;
   updatedAt: string;
 }

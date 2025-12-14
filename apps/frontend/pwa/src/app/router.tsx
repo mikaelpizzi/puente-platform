@@ -80,7 +80,7 @@ export const router = createBrowserRouter([
       {
         path: 'orders/:orderId',
         element: (
-          <RequireAuth allowedRoles={['SELLER', 'BUYER']}>
+          <RequireAuth allowedRoles={['SELLER', 'BUYER', 'COURIER']}>
             <OrderDetailsPage />
           </RequireAuth>
         ),

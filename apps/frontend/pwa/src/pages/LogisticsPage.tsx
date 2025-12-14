@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Truck,
   MapPin,
@@ -289,6 +290,7 @@ const PODModal: React.FC<PODModalProps> = ({ orderId, onClose, onComplete, isLoa
 };
 
 export const LogisticsPage: React.FC = () => {
+  const navigate = useNavigate();
   const user = useSelector(selectCurrentUser);
   const isCourier = user?.role === 'COURIER';
 
@@ -537,7 +539,7 @@ export const LogisticsPage: React.FC = () => {
 
       {/* Delivery History */}
       {completedDeliveries.length > 0 && (
-        <div className="p-4">
+        <div className="p-4 bg-gray-50 dark:bg-gray-900">
           <button
             onClick={() => setShowHistory(!showHistory)}
             className="w-full flex items-center justify-between p-4 bg-gray-100 dark:bg-gray-800 rounded-xl"
@@ -560,7 +562,7 @@ export const LogisticsPage: React.FC = () => {
               {completedDeliveries.map((order) => (
                 <div
                   key={order._id}
-                  onClick={() => (window.location.href = `/orders/${order._id}`)}
+                  onClick={() => navigate(`/orders/${order._id}`)}
                   className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 cursor-pointer hover:border-emerald-300 transition-colors"
                 >
                   <div className="flex justify-between items-start mb-2">

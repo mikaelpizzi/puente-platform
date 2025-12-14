@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import {
@@ -15,6 +15,8 @@ import {
 import { useGetOrderQuery, useDispatchOrderMutation } from './ordersApi';
 import { selectCurrentUser } from '../auth/authSlice';
 import toast from 'react-hot-toast';
+import { useOrderSocket } from '../../hooks/useOrderSocket';
+import { DeliveryMap } from '../logistics/DeliveryMap';
 
 export const OrderDetailsPage: React.FC = () => {
   const { orderId } = useParams<{ orderId: string }>();
@@ -25,6 +27,16 @@ export const OrderDetailsPage: React.FC = () => {
 
   const isSeller = user?.role === 'SELLER' || user?.role === 'ADMIN';
   const canDispatch = isSeller && order?.status === 'pending';
+
+  // Real-time courier location tracking
+  const [courierLocation, setCourierLocation] = useState<{ lat: number; lng: number } | null>(null);
+
+  useOrderSocket({
+    orderId: orderId || '',
+    onLocationUpdate: (location) => {
+      setCourierLocation({ lat: location.lat, lng: location.lng });
+    },
+  });
 
   const handleDispatch = async () => {
     if (!orderId) return;
@@ -160,6 +172,32 @@ export const OrderDetailsPage: React.FC = () => {
             )}
           </div>
         </div>
+
+        {/* Real-time Courier Tracking Map */}
+        {order.status === 'shipped' && (
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
+            <div className="p-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 flex items-center gap-2">
+                <Truck className="w-4 h-4 text-purple-500" />
+                Ubicación del Repartidor
+              </h3>
+              {courierLocation && (
+                <span className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
+                  <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                  En vivo
+                </span>
+              )}
+            </div>
+            <div className="h-64">
+              <DeliveryMap courierLocation={courierLocation || undefined} />
+            </div>
+            {!courierLocation && (
+              <div className="p-4 text-center text-sm text-gray-500 dark:text-gray-400">
+                Esperando ubicación del repartidor...
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Items */}
         <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm">

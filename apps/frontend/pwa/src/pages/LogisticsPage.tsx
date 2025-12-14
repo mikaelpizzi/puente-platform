@@ -1,5 +1,6 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSocketContext } from '../providers/SocketProvider';
 import {
   Truck,
   MapPin,
@@ -321,6 +322,47 @@ export const LogisticsPage: React.FC = () => {
 
   const activeDeliveries = myDeliveries?.filter((o) => o.status === 'shipped') || [];
   const completedDeliveries = myDeliveries?.filter((o) => o.status === 'delivered') || [];
+
+  // Socket context for real-time location broadcast
+  const { emit, isConnected } = useSocketContext();
+
+  // Broadcast courier location when has active deliveries
+  useEffect(() => {
+    if (!isCourier || activeDeliveries.length === 0 || !isConnected) return;
+
+    let watchId: number | null = null;
+
+    const startTracking = () => {
+      if (!navigator.geolocation) {
+        console.error('Geolocation not supported');
+        return;
+      }
+
+      watchId = navigator.geolocation.watchPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          // Emit location update to socket server
+          emit('updateLocation', {
+            driverId: user?.id,
+            lat: latitude,
+            lng: longitude,
+          });
+        },
+        (error) => {
+          console.error('GPS error:', error);
+        },
+        { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 },
+      );
+    };
+
+    startTracking();
+
+    return () => {
+      if (watchId !== null) {
+        navigator.geolocation.clearWatch(watchId);
+      }
+    };
+  }, [isCourier, activeDeliveries.length, isConnected, emit, user?.id]);
 
   const handleAcceptJob = async (orderId: string) => {
     try {

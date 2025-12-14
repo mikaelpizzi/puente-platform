@@ -9,12 +9,14 @@ import {
   Edit3,
   X,
   Navigation,
+  History,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import { useSelector } from 'react-redux';
 import { selectCurrentUser } from '../features/auth/authSlice';
 import { useGetAvailableJobsQuery, useAcceptJobMutation } from '../features/logistics/logisticsApi';
 import { useGetOrdersAsCourierQuery } from '../features/orders/ordersApi';
-import { DeliveryMap } from '../features/logistics/DeliveryMap';
 import toast from 'react-hot-toast';
 
 interface PODModalProps {
@@ -312,8 +314,10 @@ export const LogisticsPage: React.FC = () => {
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [podModalOrderId, setPodModalOrderId] = useState<string | null>(null);
   const [isCompletingDelivery, setIsCompletingDelivery] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
 
   const activeDeliveries = myDeliveries?.filter((o) => o.status === 'shipped') || [];
+  const completedDeliveries = myDeliveries?.filter((o) => o.status === 'delivered') || [];
 
   const handleAcceptJob = async (orderId: string) => {
     try {
@@ -529,6 +533,59 @@ export const LogisticsPage: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Delivery History */}
+      {completedDeliveries.length > 0 && (
+        <div className="p-4">
+          <button
+            onClick={() => setShowHistory(!showHistory)}
+            className="w-full flex items-center justify-between p-4 bg-gray-100 dark:bg-gray-800 rounded-xl"
+          >
+            <div className="flex items-center gap-2">
+              <History className="w-5 h-5 text-gray-500" />
+              <span className="font-bold text-gray-800 dark:text-white">
+                Historial de Entregas ({completedDeliveries.length})
+              </span>
+            </div>
+            {showHistory ? (
+              <ChevronUp className="w-5 h-5 text-gray-500" />
+            ) : (
+              <ChevronDown className="w-5 h-5 text-gray-500" />
+            )}
+          </button>
+
+          {showHistory && (
+            <div className="mt-3 space-y-3">
+              {completedDeliveries.map((order) => (
+                <div
+                  key={order._id}
+                  className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 opacity-75"
+                >
+                  <div className="flex justify-between items-start mb-2">
+                    <span className="text-xs font-bold px-2 py-1 rounded-full bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
+                      ENTREGADO
+                    </span>
+                    <span className="font-bold text-gray-600 dark:text-gray-400">
+                      ${order.total.toFixed(2)}
+                    </span>
+                  </div>
+                  <h3 className="font-medium text-gray-700 dark:text-gray-300">
+                    Pedido #{order._id.slice(-8).toUpperCase()}
+                  </h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    {order.items.map((i) => `${i.quantity}x ${i.name}`).join(', ')}
+                  </p>
+                  {order.shippingAddress && (
+                    <p className="text-xs text-gray-400 mt-1">
+                      {order.shippingAddress.street}, {order.shippingAddress.city}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };

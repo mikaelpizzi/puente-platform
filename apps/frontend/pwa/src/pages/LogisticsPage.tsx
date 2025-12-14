@@ -315,6 +315,7 @@ export const LogisticsPage: React.FC = () => {
   const [podModalOrderId, setPodModalOrderId] = useState<string | null>(null);
   const [isCompletingDelivery, setIsCompletingDelivery] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+  const [activeTab, setActiveTab] = useState<'jobs' | 'history'>('jobs');
 
   const activeDeliveries = myDeliveries?.filter((o) => o.status === 'shipped') || [];
   const completedDeliveries = myDeliveries?.filter((o) => o.status === 'delivered') || [];
@@ -559,7 +560,8 @@ export const LogisticsPage: React.FC = () => {
               {completedDeliveries.map((order) => (
                 <div
                   key={order._id}
-                  className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 opacity-75"
+                  onClick={() => (window.location.href = `/orders/${order._id}`)}
+                  className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 cursor-pointer hover:border-emerald-300 transition-colors"
                 >
                   <div className="flex justify-between items-start mb-2">
                     <span className="text-xs font-bold px-2 py-1 rounded-full bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
@@ -580,6 +582,7 @@ export const LogisticsPage: React.FC = () => {
                       {order.shippingAddress.street}, {order.shippingAddress.city}
                     </p>
                   )}
+                  <p className="text-xs text-emerald-600 mt-2">Ver detalles →</p>
                 </div>
               ))}
             </div>

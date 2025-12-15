@@ -174,13 +174,6 @@ export const LoginPage: React.FC = () => {
             <p className="mt-2 text-gray-600 dark:text-gray-400">¿Quién eres?</p>
           </div>
 
-          {/* Demo label */}
-          <div className="text-center">
-            <span className="inline-flex items-center gap-1 text-xs font-medium text-orange-600 dark:text-orange-400 bg-orange-100 dark:bg-orange-900/30 px-3 py-1 rounded-full">
-              🧪 Cuentas Demo
-            </span>
-          </div>
-
           {/* Account Cards */}
           <div className="space-y-3">
             {DEMO_ACCOUNTS.map((account) => {
@@ -198,7 +191,12 @@ export const LoginPage: React.FC = () => {
                     <Icon className="w-6 h-6 text-white" />
                   </div>
                   <div className="flex-1 text-left">
-                    <p className="font-semibold text-gray-900 dark:text-white">{account.name}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="font-semibold text-gray-900 dark:text-white">{account.name}</p>
+                      <span className="text-xs font-medium text-orange-600 dark:text-orange-400 bg-orange-100 dark:bg-orange-900/30 px-1.5 py-0.5 rounded">
+                        DEMO
+                      </span>
+                    </div>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
                       {account.description}
                     </p>

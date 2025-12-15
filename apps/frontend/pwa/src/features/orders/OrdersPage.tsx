@@ -261,8 +261,7 @@ export const OrdersPage: React.FC = () => {
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    // TODO: Open review modal
-                    alert('Próximamente: Dejar reseña');
+                    navigate(`/orders/${order._id}`);
                   }}
                   className="flex items-center gap-1 text-xs text-yellow-600 dark:text-yellow-400 hover:underline"
                 >

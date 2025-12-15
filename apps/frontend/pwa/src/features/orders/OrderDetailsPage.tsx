@@ -11,12 +11,15 @@ import {
   Truck,
   Loader2,
   Send,
+  Star,
+  X,
 } from 'lucide-react';
 import { useGetOrderQuery, useDispatchOrderMutation } from './ordersApi';
 import { selectCurrentUser } from '../auth/authSlice';
 import toast from 'react-hot-toast';
 import { useOrderSocket } from '../../hooks/useOrderSocket';
 import { DeliveryMap } from '../logistics/DeliveryMap';
+import { ReviewForm, ReviewFormData } from '../reviews/ReviewForm';
 
 export const OrderDetailsPage: React.FC = () => {
   const { orderId } = useParams<{ orderId: string }>();
@@ -26,7 +29,12 @@ export const OrderDetailsPage: React.FC = () => {
   const [dispatchOrder, { isLoading: isDispatching }] = useDispatchOrderMutation();
 
   const isSeller = user?.role === 'SELLER' || user?.role === 'ADMIN';
+  const isBuyer = user?.role === 'BUYER';
   const canDispatch = isSeller && order?.status === 'pending';
+  const canReview = isBuyer && order?.status === 'delivered';
+
+  // Review modal state
+  const [showReviewModal, setShowReviewModal] = useState(false);
 
   // Real-time courier location tracking
   const [courierLocation, setCourierLocation] = useState<{ lat: number; lng: number } | null>(null);
@@ -362,6 +370,55 @@ export const OrderDetailsPage: React.FC = () => {
                   Entregado: {new Date(order.deliveredAt).toLocaleString()}
                 </p>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* Leave Review - Only for BUYER on delivered orders */}
+        {canReview && (
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-medium text-gray-900 dark:text-white">
+                  ¿Cómo fue tu experiencia?
+                </h3>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Deja una reseña al vendedor
+                </p>
+              </div>
+              <button
+                onClick={() => setShowReviewModal(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg font-medium transition-colors"
+              >
+                <Star className="w-4 h-4" />
+                Dejar reseña
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Review Modal */}
+        {showReviewModal && order && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="relative max-w-lg w-full">
+              <button
+                onClick={() => setShowReviewModal(false)}
+                className="absolute -top-3 -right-3 bg-white dark:bg-gray-800 rounded-full p-2 shadow-lg z-10"
+              >
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+              <ReviewForm
+                orderId={order._id}
+                targetId={order.sellerId}
+                targetType="seller"
+                onSubmit={async (data: ReviewFormData) => {
+                  // For now, simulate success (would call API in real implementation)
+                  console.log('Review submitted:', data);
+                  toast.success('¡Gracias por tu reseña!');
+                  setShowReviewModal(false);
+                }}
+                onCancel={() => setShowReviewModal(false)}
+              />
             </div>
           </div>
         )}

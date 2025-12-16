@@ -171,7 +171,9 @@
     "noTags": "No hay etiquetas.",
     "placeholderName": "Ej. Taza de cerámica",
     "placeholderDescription": "Detalles del producto...",
-    "placeholderSku": "Código único"
+    "placeholderSku": "Código único",
+    "available": "{{count}} disponibles",
+    "fix": "Corregir"
   },
   "images": {
     "maxAllowed": "Máximo {{max}} imágenes permitidas",

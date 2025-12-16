@@ -171,7 +171,9 @@
     "noTags": "No tags available.",
     "placeholderName": "E.g. Ceramic mug",
     "placeholderDescription": "Product details...",
-    "placeholderSku": "Unique code"
+    "placeholderSku": "Unique code",
+    "available": "{{count}} available",
+    "fix": "Fix"
   },
   "images": {
     "maxAllowed": "Maximum {{max}} images allowed",

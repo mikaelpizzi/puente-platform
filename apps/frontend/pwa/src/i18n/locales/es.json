@@ -23,6 +23,9 @@
     "move": "Mover",
     "new": "Nuevo",
     "optional": "Opcional",
+    "linkCopied": "Enlace copiado al portapapeles",
+    "details": "Detalles",
+    "share": "Compartir",
     "user": "Usuario"
   },
   "dashboard": {
@@ -188,7 +191,8 @@
     "main": "Principal",
     "uploadingText": "Subiendo...",
     "clickOrDrag": "Haz click o arrastra imágenes",
-    "countFormat": "{{current}}/{{max}} imágenes (JPG, PNG, WEBP)"
+    "countFormat": "{{current}}/{{max}} imágenes (JPG, PNG, WEBP)",
+    "noImage": "Sin imagen"
   },
   "notFound": {
     "title": "Página no encontrada",

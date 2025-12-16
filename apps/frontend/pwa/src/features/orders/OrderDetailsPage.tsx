@@ -21,8 +21,10 @@ import { useOrderSocket } from '../../hooks/useOrderSocket';
 import { DeliveryMap } from '../logistics/DeliveryMap';
 import { ReviewForm, ReviewFormData } from '../reviews/ReviewForm';
 import { useCreateReviewMutation } from '../reviews/reviewsApi';
+import { useTranslation } from 'react-i18next';
 
 export const OrderDetailsPage: React.FC = () => {
+  const { t } = useTranslation();
   const { orderId } = useParams<{ orderId: string }>();
   const navigate = useNavigate();
   const user = useSelector(selectCurrentUser);
@@ -121,14 +123,7 @@ export const OrderDetailsPage: React.FC = () => {
   };
 
   const getStatusLabel = (status: string) => {
-    const labels: Record<string, string> = {
-      pending: 'Pendiente',
-      processing: 'Procesando',
-      shipped: 'En Camino',
-      delivered: 'Entregado',
-      cancelled: 'Cancelado',
-    };
-    return labels[status] || status;
+    return t(`orders.status.${status}`, status);
   };
 
   if (isLoading) {
@@ -144,16 +139,14 @@ export const OrderDetailsPage: React.FC = () => {
       <div className="p-6 text-center">
         <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
         <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-          Pedido no encontrado
+          {t('orderDetails.notFound')}
         </h2>
-        <p className="text-gray-500 dark:text-gray-400 mb-6">
-          No pudimos encontrar los detalles de este pedido.
-        </p>
+        <p className="text-gray-500 dark:text-gray-400 mb-6">{t('orderDetails.notFoundMessage')}</p>
         <button
           onClick={() => navigate('/orders')}
           className="px-6 py-2 bg-emerald-500 text-white rounded-lg"
         >
-          Volver a Mis Pedidos
+          {t('orderDetails.backToOrders')}
         </button>
       </div>
     );
@@ -172,7 +165,7 @@ export const OrderDetailsPage: React.FC = () => {
           </button>
           <div>
             <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-              Pedido #{order._id.slice(-8).toUpperCase()}
+              {t('orders.orderNumber', { number: order._id.slice(-8).toUpperCase() })}
             </h1>
             <p className="text-sm text-gray-500 dark:text-gray-400">
               {new Date(order.createdAt).toLocaleString()}
@@ -185,7 +178,7 @@ export const OrderDetailsPage: React.FC = () => {
         {/* Status Card */}
         <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm">
           <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-3">
-            Estado del Pedido
+            {t('orderDetails.orderStatus')}
           </h3>
           <div className="flex items-center justify-between">
             <div
@@ -205,7 +198,7 @@ export const OrderDetailsPage: React.FC = () => {
                 ) : (
                   <Send className="w-4 h-4" />
                 )}
-                Enviar a Repartidor
+                {t('orderDetails.sendToCourier')}
               </button>
             )}
           </div>
@@ -217,7 +210,7 @@ export const OrderDetailsPage: React.FC = () => {
             <div className="p-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
               <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 flex items-center gap-2">
                 <Truck className="w-4 h-4 text-purple-500" />
-                Ubicación del Repartidor
+                {t('orderDetails.courierLocation')}
               </h3>
               {courierLocation && (
                 <span
@@ -226,7 +219,7 @@ export const OrderDetailsPage: React.FC = () => {
                   <span
                     className={`w-2 h-2 rounded-full animate-pulse ${isSimulating ? 'bg-orange-500' : 'bg-green-500'}`}
                   />
-                  {isSimulating ? 'DEMO' : 'En vivo'}
+                  {isSimulating ? 'DEMO' : t('orderDetails.live')}
                 </span>
               )}
             </div>
@@ -235,7 +228,7 @@ export const OrderDetailsPage: React.FC = () => {
             </div>
             {!courierLocation && (
               <div className="p-4 text-center text-sm text-gray-500 dark:text-gray-400">
-                Esperando ubicación del repartidor...
+                {t('orderDetails.waitingCourier')}
               </div>
             )}
           </div>
@@ -243,7 +236,9 @@ export const OrderDetailsPage: React.FC = () => {
 
         {/* Items */}
         <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm">
-          <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-3">Productos</h3>
+          <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-3">
+            {t('orderDetails.products')}
+          </h3>
           <div className="space-y-3">
             {order.items.map((item, idx) => (
               <div
@@ -253,7 +248,7 @@ export const OrderDetailsPage: React.FC = () => {
                 <div>
                   <p className="font-medium text-gray-900 dark:text-white">{item.name}</p>
                   <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Cantidad: {item.quantity} × ${item.price.toFixed(2)}
+                    {t('orderDetails.quantity')}: {item.quantity} × ${item.price.toFixed(2)}
                   </p>
                 </div>
                 <span className="font-bold text-gray-900 dark:text-white">
@@ -263,7 +258,7 @@ export const OrderDetailsPage: React.FC = () => {
             ))}
           </div>
           <div className="border-t border-gray-200 dark:border-gray-700 mt-4 pt-4 flex justify-between items-center">
-            <span className="font-medium text-gray-900 dark:text-white">Total</span>
+            <span className="font-medium text-gray-900 dark:text-white">{t('orders.total')}</span>
             <span className="text-xl font-bold text-emerald-600">${order.total.toFixed(2)}</span>
           </div>
         </div>
@@ -272,7 +267,7 @@ export const OrderDetailsPage: React.FC = () => {
         {order.shippingAddress && (
           <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm">
             <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-3">
-              Dirección de Envío
+              {t('checkout.shippingAddress')}
             </h3>
             <div className="flex items-start gap-3">
               <MapPin className="w-5 h-5 text-emerald-500 mt-0.5" />
@@ -283,7 +278,7 @@ export const OrderDetailsPage: React.FC = () => {
                 </p>
                 {order.shippingAddress.zipCode && (
                   <p className="text-gray-500 dark:text-gray-400">
-                    CP: {order.shippingAddress.zipCode}
+                    {t('orderDetails.zipCode')}: {order.shippingAddress.zipCode}
                   </p>
                 )}
               </div>
@@ -294,27 +289,27 @@ export const OrderDetailsPage: React.FC = () => {
         {/* Order Info */}
         <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm">
           <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-3">
-            Información del Pedido
+            {t('orderDetails.orderInfo')}
           </h3>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-gray-500 dark:text-gray-400">ID del Pedido</span>
+              <span className="text-gray-500 dark:text-gray-400">{t('orderDetails.orderId')}</span>
               <span className="text-gray-900 dark:text-white font-mono">{order._id}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-500 dark:text-gray-400">Vendedor ID</span>
+              <span className="text-gray-500 dark:text-gray-400">{t('orderDetails.sellerId')}</span>
               <span className="text-gray-900 dark:text-white font-mono">
                 {order.sellerId.slice(-8)}
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-500 dark:text-gray-400">Comprador ID</span>
+              <span className="text-gray-500 dark:text-gray-400">{t('orderDetails.buyerId')}</span>
               <span className="text-gray-900 dark:text-white font-mono">
                 {order.buyerId.slice(-8)}
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-500 dark:text-gray-400">Fecha</span>
+              <span className="text-gray-500 dark:text-gray-400">{t('orders.date')}</span>
               <span className="text-gray-900 dark:text-white">
                 {new Date(order.createdAt).toLocaleDateString()}
               </span>
@@ -325,7 +320,9 @@ export const OrderDetailsPage: React.FC = () => {
         {/* Notes */}
         {order.notes && (
           <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm">
-            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Notas</h3>
+            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">
+              {t('orderDetails.notes')}
+            </h3>
             <p className="text-gray-900 dark:text-white">{order.notes}</p>
           </div>
         )}
@@ -334,7 +331,7 @@ export const OrderDetailsPage: React.FC = () => {
         {order.status === 'delivered' && order.proofOfDelivery && (
           <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm">
             <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-3">
-              Prueba de Entrega
+              {t('orderDetails.proofOfDelivery')}
             </h3>
             <div className="space-y-4">
               {order.proofOfDelivery.photoUrl && (

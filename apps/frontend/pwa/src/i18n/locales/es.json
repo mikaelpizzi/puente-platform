@@ -40,9 +40,15 @@
   },
   "nav": {
     "home": "Inicio",
+    "buy": "Comprar",
     "marketplace": "Marketplace",
     "inventory": "Inventario",
     "orders": "Pedidos",
+    "mySales": "Mis Ventas",
+    "myOrders": "Mis Compras",
+    "charge": "Cobrar",
+    "finance": "Finanzas",
+    "shipping": "Envíos",
     "profile": "Perfil",
     "settings": "Configuración",
     "notifications": "Notificaciones"

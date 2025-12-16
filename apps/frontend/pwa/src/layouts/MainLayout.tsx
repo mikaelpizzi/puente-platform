@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 import { Home, Package, Truck, ShoppingCart, ClipboardList, DollarSign } from 'lucide-react';
 import { OfflineSyncManager } from '../features/inventory/OfflineSyncManager';
 import { ConflictResolver } from '../features/sync/ConflictResolver';
@@ -18,6 +19,7 @@ import {
 import type { RootState } from '../app/store';
 
 export const MainLayout: React.FC = () => {
+  const { t } = useTranslation();
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const user = useSelector(selectCurrentUser);
@@ -29,14 +31,14 @@ export const MainLayout: React.FC = () => {
   const unreadCount = useSelector((state: RootState) => state.notifications.unreadCount);
 
   const allNavItems = [
-    { to: '/', icon: Home, label: 'Inicio', roles: ['SELLER', 'BUYER'] },
-    { to: '/marketplace', icon: ShoppingCart, label: 'Comprar', roles: ['BUYER'] },
-    { to: '/inventory', icon: Package, label: 'Inventario', roles: ['SELLER'] },
-    { to: '/orders', icon: ClipboardList, label: 'Mis Ventas', roles: ['SELLER'] },
-    { to: '/orders', icon: ClipboardList, label: 'Mis Compras', roles: ['BUYER'] },
-    { to: '/checkout', icon: ShoppingCart, label: 'Cobrar', roles: ['SELLER'] },
-    { to: '/finance', icon: DollarSign, label: 'Finanzas', roles: ['SELLER'] },
-    { to: '/logistics', icon: Truck, label: 'Envíos', roles: ['SELLER', 'COURIER'] },
+    { to: '/', icon: Home, labelKey: 'nav.home', roles: ['SELLER', 'BUYER'] },
+    { to: '/marketplace', icon: ShoppingCart, labelKey: 'nav.buy', roles: ['BUYER'] },
+    { to: '/inventory', icon: Package, labelKey: 'nav.inventory', roles: ['SELLER'] },
+    { to: '/orders', icon: ClipboardList, labelKey: 'nav.mySales', roles: ['SELLER'] },
+    { to: '/orders', icon: ClipboardList, labelKey: 'nav.myOrders', roles: ['BUYER'] },
+    { to: '/checkout', icon: ShoppingCart, labelKey: 'nav.charge', roles: ['SELLER'] },
+    { to: '/finance', icon: DollarSign, labelKey: 'nav.finance', roles: ['SELLER'] },
+    { to: '/logistics', icon: Truck, labelKey: 'nav.shipping', roles: ['SELLER', 'COURIER'] },
   ];
 
   const navItems = allNavItems.filter((item) => user?.role && item.roles.includes(user.role));
@@ -105,9 +107,9 @@ export const MainLayout: React.FC = () => {
 
       <nav className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 fixed bottom-0 w-full pb-safe z-20 transition-colors duration-200">
         <div className="flex justify-around items-center h-16">
-          {navItems.map(({ to, icon: Icon, label }) => (
+          {navItems.map(({ to, icon: Icon, labelKey }) => (
             <NavLink
-              key={to}
+              key={`${to}-${labelKey}`}
               to={to}
               className={({ isActive }) =>
                 `flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors ${
@@ -118,7 +120,7 @@ export const MainLayout: React.FC = () => {
               }
             >
               <Icon className="w-6 h-6" />
-              <span className="text-[10px] font-medium">{label}</span>
+              <span className="text-[10px] font-medium">{t(labelKey)}</span>
             </NavLink>
           ))}
         </div>

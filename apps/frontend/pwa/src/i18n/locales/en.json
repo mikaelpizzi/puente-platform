@@ -40,9 +40,15 @@
   },
   "nav": {
     "home": "Home",
+    "buy": "Shop",
     "marketplace": "Marketplace",
     "inventory": "Inventory",
     "orders": "Orders",
+    "mySales": "My Sales",
+    "myOrders": "My Orders",
+    "charge": "Charge",
+    "finance": "Finance",
+    "shipping": "Shipping",
     "profile": "Profile",
     "settings": "Settings",
     "notifications": "Notifications"

@@ -140,9 +140,9 @@ export const MainLayout: React.FC = () => {
         isOpen={isLogoutModalOpen}
         onClose={() => setIsLogoutModalOpen(false)}
         onConfirm={handleLogout}
-        title="Cerrar Sesión"
-        message="¿Estás seguro que deseas salir de tu cuenta?"
-        confirmText="Salir"
+        title={t('auth.logout')}
+        message={t('auth.logoutConfirm')}
+        confirmText={t('auth.logoutButton')}
         variant="danger"
       />
     </div>

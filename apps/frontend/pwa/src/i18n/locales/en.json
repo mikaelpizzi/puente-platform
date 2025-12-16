@@ -96,7 +96,9 @@
     },
     "signInWithAccount": "Sign in with your account",
     "signingIn": "Signing in...",
-    "backToQuickSelect": "← Back to quick select"
+    "backToQuickSelect": "← Back to quick select",
+    "logoutConfirm": "Are you sure you want to log out?",
+    "logoutButton": "Log out"
   },
   "nav": {
     "home": "Home",

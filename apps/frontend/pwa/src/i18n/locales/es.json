@@ -96,7 +96,9 @@
     },
     "signInWithAccount": "Ingresa con tu cuenta",
     "signingIn": "Ingresando...",
-    "backToQuickSelect": "← Volver a selección rápida"
+    "backToQuickSelect": "← Volver a selección rápida",
+    "logoutConfirm": "¿Estás seguro que deseas salir de tu cuenta?",
+    "logoutButton": "Salir"
   },
   "nav": {
     "home": "Inicio",

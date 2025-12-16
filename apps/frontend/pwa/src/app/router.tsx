@@ -14,9 +14,11 @@ import { TrackingPage } from '../features/tracking/TrackingPage';
 import { DashboardHome } from '../pages/DashboardHome';
 import { ProfilePage } from '../features/profile/ProfilePage';
 import { MarketplacePage } from '../features/marketplace/MarketplacePage';
+import { ProductDetailPage } from '../features/marketplace/ProductDetailPage';
 import { BuyerCheckoutPage } from '../features/marketplace/BuyerCheckoutPage';
 import { OrdersPage } from '../features/orders/OrdersPage';
 import { OrderDetailsPage } from '../features/orders/OrderDetailsPage';
+import { ErrorBoundary } from '../components/ErrorBoundary';
 
 export const router = createBrowserRouter([
   {
@@ -48,6 +50,7 @@ export const router = createBrowserRouter([
         <MainLayout />
       </RequireAuth>
     ),
+    errorElement: <ErrorBoundary />,
     children: [
       {
         index: true,
@@ -58,6 +61,14 @@ export const router = createBrowserRouter([
         element: (
           <RequireAuth allowedRoles={['BUYER']}>
             <MarketplacePage />
+          </RequireAuth>
+        ),
+      },
+      {
+        path: 'marketplace/:productId',
+        element: (
+          <RequireAuth allowedRoles={['BUYER']}>
+            <ProductDetailPage />
           </RequireAuth>
         ),
       },
@@ -80,7 +91,7 @@ export const router = createBrowserRouter([
       {
         path: 'orders/:orderId',
         element: (
-          <RequireAuth allowedRoles={['SELLER', 'BUYER']}>
+          <RequireAuth allowedRoles={['SELLER', 'BUYER', 'COURIER']}>
             <OrderDetailsPage />
           </RequireAuth>
         ),

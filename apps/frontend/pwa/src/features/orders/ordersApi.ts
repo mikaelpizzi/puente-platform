@@ -13,6 +13,7 @@ export interface Order {
   _id: string;
   buyerId: string;
   sellerId: string;
+  courierId?: string;
   status: OrderStatus;
   items: OrderItem[];
   total: number;
@@ -24,6 +25,13 @@ export interface Order {
     country?: string;
   };
   notes?: string;
+  proofOfDelivery?: {
+    photoUrl?: string;
+    signatureUrl?: string;
+    capturedAt?: string;
+    notes?: string;
+  };
+  deliveredAt?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -48,6 +56,13 @@ export const ordersApi = api.injectEndpoints({
     getOrdersAsSeller: builder.query<Order[], OrderStatus | undefined>({
       query: (status) => ({
         url: '/orders/seller',
+        params: status ? { status } : undefined,
+      }),
+      providesTags: ['Orders'],
+    }),
+    getOrdersAsCourier: builder.query<Order[], OrderStatus | undefined>({
+      query: (status) => ({
+        url: '/orders/courier',
         params: status ? { status } : undefined,
       }),
       providesTags: ['Orders'],
@@ -92,6 +107,7 @@ export const ordersApi = api.injectEndpoints({
 export const {
   useGetOrdersAsBuyerQuery,
   useGetOrdersAsSellerQuery,
+  useGetOrdersAsCourierQuery,
   useGetOrderQuery,
   useCreateOrderMutation,
   useUpdateOrderStatusMutation,

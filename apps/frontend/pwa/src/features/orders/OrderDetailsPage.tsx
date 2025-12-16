@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import {
@@ -11,10 +11,16 @@ import {
   Truck,
   Loader2,
   Send,
+  Star,
+  X,
 } from 'lucide-react';
 import { useGetOrderQuery, useDispatchOrderMutation } from './ordersApi';
 import { selectCurrentUser } from '../auth/authSlice';
 import toast from 'react-hot-toast';
+import { useOrderSocket } from '../../hooks/useOrderSocket';
+import { DeliveryMap } from '../logistics/DeliveryMap';
+import { ReviewForm, ReviewFormData } from '../reviews/ReviewForm';
+import { useCreateReviewMutation } from '../reviews/reviewsApi';
 
 export const OrderDetailsPage: React.FC = () => {
   const { orderId } = useParams<{ orderId: string }>();
@@ -22,9 +28,53 @@ export const OrderDetailsPage: React.FC = () => {
   const user = useSelector(selectCurrentUser);
   const { data: order, isLoading, error } = useGetOrderQuery(orderId || '', { skip: !orderId });
   const [dispatchOrder, { isLoading: isDispatching }] = useDispatchOrderMutation();
+  const [createReview] = useCreateReviewMutation();
 
   const isSeller = user?.role === 'SELLER' || user?.role === 'ADMIN';
+  const isBuyer = user?.role === 'BUYER';
   const canDispatch = isSeller && order?.status === 'pending';
+  const canReview = isBuyer && order?.status === 'delivered';
+
+  // Review modal state
+  const [showReviewModal, setShowReviewModal] = useState(false);
+
+  // Real-time courier location tracking
+  const [courierLocation, setCourierLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [isSimulating, setIsSimulating] = useState(false);
+
+  useOrderSocket({
+    orderId: orderId || '',
+    onLocationUpdate: (location) => {
+      setCourierLocation({ lat: location.lat, lng: location.lng });
+      setIsSimulating(false); // Got real data, stop simulation
+    },
+  });
+
+  // Simulation mode: if no real location after 3s on shipped orders, simulate courier movement
+  useEffect(() => {
+    if (order?.status !== 'shipped' || courierLocation) return;
+
+    const timer = setTimeout(() => {
+      // No real data received, start simulation for demo
+      setIsSimulating(true);
+      // Start at Mexico City center
+      let lat = 19.4326;
+      let lng = -99.1332;
+
+      setCourierLocation({ lat, lng });
+
+      // Simulate movement every 2 seconds
+      const interval = setInterval(() => {
+        lat += (Math.random() - 0.5) * 0.002;
+        lng += (Math.random() - 0.5) * 0.002;
+        setCourierLocation({ lat, lng });
+      }, 2000);
+
+      return () => clearInterval(interval);
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, [order?.status, courierLocation]);
 
   const handleDispatch = async () => {
     if (!orderId) return;
@@ -161,6 +211,36 @@ export const OrderDetailsPage: React.FC = () => {
           </div>
         </div>
 
+        {/* Real-time Courier Tracking Map */}
+        {order.status === 'shipped' && (
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
+            <div className="p-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 flex items-center gap-2">
+                <Truck className="w-4 h-4 text-purple-500" />
+                Ubicación del Repartidor
+              </h3>
+              {courierLocation && (
+                <span
+                  className={`flex items-center gap-1 text-xs ${isSimulating ? 'text-orange-600 dark:text-orange-400' : 'text-green-600 dark:text-green-400'}`}
+                >
+                  <span
+                    className={`w-2 h-2 rounded-full animate-pulse ${isSimulating ? 'bg-orange-500' : 'bg-green-500'}`}
+                  />
+                  {isSimulating ? 'DEMO' : 'En vivo'}
+                </span>
+              )}
+            </div>
+            <div className="h-64">
+              <DeliveryMap courierLocation={courierLocation || undefined} />
+            </div>
+            {!courierLocation && (
+              <div className="p-4 text-center text-sm text-gray-500 dark:text-gray-400">
+                Esperando ubicación del repartidor...
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Items */}
         <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm">
           <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-3">Productos</h3>
@@ -247,6 +327,106 @@ export const OrderDetailsPage: React.FC = () => {
           <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm">
             <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Notas</h3>
             <p className="text-gray-900 dark:text-white">{order.notes}</p>
+          </div>
+        )}
+
+        {/* Proof of Delivery */}
+        {order.status === 'delivered' && order.proofOfDelivery && (
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm">
+            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-3">
+              Prueba de Entrega
+            </h3>
+            <div className="space-y-4">
+              {order.proofOfDelivery.photoUrl && (
+                <div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Foto</p>
+                  <img
+                    src={order.proofOfDelivery.photoUrl}
+                    alt="Prueba de entrega"
+                    className="w-full max-w-sm rounded-lg border border-gray-200 dark:border-gray-700"
+                  />
+                </div>
+              )}
+              {order.proofOfDelivery.signatureUrl && (
+                <div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Firma</p>
+                  <img
+                    src={order.proofOfDelivery.signatureUrl}
+                    alt="Firma del cliente"
+                    className="max-w-xs bg-white rounded-lg border border-gray-200 dark:border-gray-700 p-2"
+                  />
+                </div>
+              )}
+              {order.proofOfDelivery.notes && (
+                <div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                    Notas del repartidor
+                  </p>
+                  <p className="text-gray-900 dark:text-white text-sm">
+                    {order.proofOfDelivery.notes}
+                  </p>
+                </div>
+              )}
+              {order.deliveredAt && (
+                <p className="text-xs text-gray-400">
+                  Entregado: {new Date(order.deliveredAt).toLocaleString()}
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Leave Review - Only for BUYER on delivered orders */}
+        {canReview && (
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-medium text-gray-900 dark:text-white">
+                  ¿Cómo fue tu experiencia?
+                </h3>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Deja una reseña al vendedor
+                </p>
+              </div>
+              <button
+                onClick={() => setShowReviewModal(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg font-medium transition-colors"
+              >
+                <Star className="w-4 h-4" />
+                Dejar reseña
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Review Modal */}
+        {showReviewModal && order && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="relative max-w-lg w-full">
+              <button
+                onClick={() => setShowReviewModal(false)}
+                className="absolute -top-3 -right-3 bg-white dark:bg-gray-800 rounded-full p-2 shadow-lg z-10"
+              >
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+              <ReviewForm
+                orderId={order._id}
+                targetId={order.sellerId}
+                targetType="seller"
+                onSubmit={async (data: ReviewFormData) => {
+                  try {
+                    await createReview(data).unwrap();
+                    toast.success('¡Gracias por tu reseña!');
+                    setShowReviewModal(false);
+                  } catch (err: any) {
+                    console.error('Review submission error:', err);
+                    const errorMessage = err?.data?.message || 'Error al enviar la reseña';
+                    toast.error(errorMessage);
+                  }
+                }}
+                onCancel={() => setShowReviewModal(false)}
+              />
+            </div>
           </div>
         )}
       </div>

@@ -15,6 +15,7 @@ import {
   ClipboardList,
 } from 'lucide-react';
 import { OfflineSyncManager } from '../features/inventory/OfflineSyncManager';
+import { ConflictResolver } from '../features/sync/ConflictResolver';
 import { logout, selectCurrentUser } from '../features/auth/authSlice';
 import { ConfirmationModal } from '../components/ui/ConfirmationModal';
 import { useTheme } from '../app/ThemeContext';
@@ -73,6 +74,7 @@ export const MainLayout: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col transition-colors duration-200">
       <OfflineSyncManager />
+      <ConflictResolver />
 
       <header className="bg-white dark:bg-gray-800 shadow-sm p-4 sticky top-0 z-20 flex justify-between items-center transition-colors duration-200">
         <h1 className="text-lg font-bold text-gray-900 dark:text-white">Puente</h1>

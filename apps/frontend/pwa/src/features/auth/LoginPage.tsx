@@ -92,7 +92,7 @@ export const LoginPage: React.FC = () => {
       };
 
       dispatch(setCredentials({ user, token }));
-      toast.success(`¡Bienvenido, ${account.name}!`, {
+      toast.success(t('auth.welcomeUser', { name: account.name }), {
         id: loadingToast,
         style: { background: '#10B981', color: '#fff' },
         iconTheme: { primary: '#fff', secondary: '#10B981' },
@@ -105,9 +105,9 @@ export const LoginPage: React.FC = () => {
       else navigate('/');
     } catch (err: any) {
       console.error('Failed to login:', err);
-      let errorMessage = 'Error al iniciar sesión';
+      let errorMessage = t('errors.loginFailed');
       if (err.status === 'FETCH_ERROR') {
-        errorMessage = 'Error de conexión. Verifica que el backend esté corriendo.';
+        errorMessage = t('auth.connectionError');
       } else if (err.data?.message) {
         errorMessage = err.data.message;
       }

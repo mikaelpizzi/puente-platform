@@ -98,7 +98,8 @@
     "signingIn": "Ingresando...",
     "backToQuickSelect": "← Volver a selección rápida",
     "logoutConfirm": "¿Estás seguro que deseas salir de tu cuenta?",
-    "logoutButton": "Salir"
+    "logoutButton": "Salir",
+    "welcomeUser": "¡Bienvenido, {{name}}!"
   },
   "nav": {
     "home": "Inicio",
@@ -331,6 +332,7 @@
   },
   "errors": {
     "generic": "Ha ocurrido un error",
+    "loginFailed": "Error al iniciar sesión",
     "network": "Error de conexión",
     "unauthorized": "No autorizado",
     "notFound": "No encontrado",

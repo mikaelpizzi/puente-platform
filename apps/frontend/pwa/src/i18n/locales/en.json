@@ -98,7 +98,8 @@
     "signingIn": "Signing in...",
     "backToQuickSelect": "← Back to quick select",
     "logoutConfirm": "Are you sure you want to log out?",
-    "logoutButton": "Log out"
+    "logoutButton": "Log out",
+    "welcomeUser": "Welcome, {{name}}!"
   },
   "nav": {
     "home": "Home",
@@ -329,7 +330,8 @@
     "noReviews": "No reviews yet"
   },
   "errors": {
-    "generic": "An error occurred",
+    "generic": "An error has occurred",
+    "loginFailed": "Login failed",
     "network": "Connection error",
     "unauthorized": "Unauthorized",
     "notFound": "Not found",

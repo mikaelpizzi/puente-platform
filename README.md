@@ -224,6 +224,7 @@ SELLER creates order → dispatches → COURIER accepts job
 | `NotificationBell` | MainLayout header | ✅ Dropdown with NotificationCenter           |
 | `ConflictResolver` | MainLayout        | ✅ Side-by-side diff for 409 conflicts        |
 | `ReviewForm`       | OrderDetailsPage  | ✅ Star rating + comment for delivered orders |
+| `ReviewsList`      | ProductDetailPage | ✅ Seller reviews with rating distribution    |
 | `PODModal`         | LogisticsPage     | ✅ Camera, signature canvas, notes            |
 | `DeliveryMap`      | OrderDetailsPage  | ✅ Real-time courier tracking (WebSocket)     |
 

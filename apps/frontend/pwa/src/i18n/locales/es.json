@@ -36,7 +36,21 @@
     "invalidCredentials": "Credenciales inválidas",
     "emailRequired": "El correo es requerido",
     "passwordRequired": "La contraseña es requerida",
-    "passwordMinLength": "La contraseña debe tener al menos 6 caracteres"
+    "passwordMinLength": "La contraseña debe tener al menos 6 caracteres",
+    "welcome": "Bienvenido",
+    "whoAreYou": "¿Quién eres?",
+    "enteringAs": "Entrando como {{name}}...",
+    "welcomeBack": "¡Bienvenido de vuelta!",
+    "connectionError": "Error de conexión. Verifica que el backend esté corriendo.",
+    "useOtherAccount": "Usar otra cuenta",
+    "demoRoles": {
+      "seller": "Gestiona inventario y ventas",
+      "buyer": "Compra y recibe productos",
+      "courier": "Entrega pedidos en tiempo real"
+    },
+    "signInWithAccount": "Ingresa con tu cuenta",
+    "signingIn": "Ingresando...",
+    "backToQuickSelect": "← Volver a selección rápida"
   },
   "nav": {
     "home": "Inicio",

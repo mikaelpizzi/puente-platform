@@ -36,7 +36,21 @@
     "invalidCredentials": "Invalid credentials",
     "emailRequired": "Email is required",
     "passwordRequired": "Password is required",
-    "passwordMinLength": "Password must be at least 6 characters"
+    "passwordMinLength": "Password must be at least 6 characters",
+    "welcome": "Welcome",
+    "whoAreYou": "Who are you?",
+    "enteringAs": "Signing in as {{name}}...",
+    "welcomeBack": "Welcome back!",
+    "connectionError": "Connection error. Make sure the backend is running.",
+    "useOtherAccount": "Use another account",
+    "demoRoles": {
+      "seller": "Manage inventory and sales",
+      "buyer": "Buy and receive products",
+      "courier": "Deliver orders in real time"
+    },
+    "signInWithAccount": "Sign in with your account",
+    "signingIn": "Signing in...",
+    "backToQuickSelect": "← Back to quick select"
   },
   "nav": {
     "home": "Home",

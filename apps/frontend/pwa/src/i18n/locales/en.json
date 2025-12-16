@@ -192,6 +192,19 @@
     "message": "Sorry, the page you are looking for does not exist or has been moved.",
     "backHome": "Back to Home"
   },
+  "tags": {
+    "manage": "Manage Tags",
+    "placeholder": "New tag (e.g. Offers)",
+    "limitReached": "Tag limit reached",
+    "limitMessage": "You have reached the maximum limit of {{max}} tags. Delete some to create new ones.",
+    "created": "Tag created",
+    "createError": "Error creating tag",
+    "deleted": "Tag deleted",
+    "deleteError": "Error deleting tag",
+    "deleteTitle": "Delete Tag",
+    "deleteMessage": "Are you sure you want to delete the tag \"{{name}}\"? This action cannot be undone.",
+    "noTags": "You have no custom tags"
+  },
   "orders": {
     "title": "My Orders",
     "orderNumber": "Order #{{number}}",

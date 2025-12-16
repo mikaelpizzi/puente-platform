@@ -192,6 +192,19 @@
     "message": "Lo sentimos, la página que buscas no existe o ha sido movida.",
     "backHome": "Volver al Inicio"
   },
+  "tags": {
+    "manage": "Gestionar Etiquetas",
+    "placeholder": "Nueva etiqueta (ej. Ofertas)",
+    "limitReached": "Límite de etiquetas alcanzado",
+    "limitMessage": "Has alcanzado el límite máximo de {{max}} etiquetas. Elimina algunas para crear nuevas.",
+    "created": "Etiqueta creada",
+    "createError": "Error al crear etiqueta",
+    "deleted": "Etiqueta eliminada",
+    "deleteError": "Error al eliminar etiqueta",
+    "deleteTitle": "Eliminar Etiqueta",
+    "deleteMessage": "¿Estás seguro de que deseas eliminar la etiqueta \"{{name}}\"? Esta acción no se puede deshacer.",
+    "noTags": "No tienes etiquetas personalizadas"
+  },
   "orders": {
     "title": "Mis Pedidos",
     "orderNumber": "Pedido #{{number}}",

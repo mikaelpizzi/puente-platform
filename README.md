@@ -199,6 +199,49 @@ These are the three actors already wired across Auth, Products, Finance, Logisti
 
 > Need deeper API-by-API steps? Head to `docs/backend/postman-guide.md` for the full happy-path workflow (health checks, auth, finance, logistics, courier telemetry, metrics scraping) plus ready-to-paste JSON payloads.
 
+## 📱 PWA Features Implemented
+
+### 🗺️ Navigation by Role
+
+| Role        | Tabs Available                         | Key Features                                  |
+| ----------- | -------------------------------------- | --------------------------------------------- |
+| **SELLER**  | Inicio, Inventario, Mis Ventas, Cobrar | Dispatch orders to couriers, manage inventory |
+| **BUYER**   | Inicio, Comprar, Mis Compras           | Real-time tracking, post-delivery reviews     |
+| **COURIER** | Envíos                                 | Accept jobs, complete delivery with POD       |
+
+### 📦 Complete Order Flow
+
+```
+SELLER creates order → dispatches → COURIER accepts job
+    → COURIER navigates (Google Maps) → completes delivery (photo/signature)
+    → BUYER receives → leaves review ⭐
+```
+
+### ✅ Integrated Components
+
+| Component          | Location          | Status                                        |
+| ------------------ | ----------------- | --------------------------------------------- |
+| `NotificationBell` | MainLayout header | ✅ Dropdown with NotificationCenter           |
+| `ConflictResolver` | MainLayout        | ✅ Side-by-side diff for 409 conflicts        |
+| `ReviewForm`       | OrderDetailsPage  | ✅ Star rating + comment for delivered orders |
+| `PODModal`         | LogisticsPage     | ✅ Camera, signature canvas, notes            |
+| `DeliveryMap`      | OrderDetailsPage  | ✅ Real-time courier tracking (WebSocket)     |
+
+### 🔄 Courier Workflow (LogisticsPage)
+
+1. **Trabajos Disponibles** - Orders awaiting courier (`GET /orders/available-jobs`)
+2. **Aceptar Trabajo** - Self-assign via `PATCH /orders/:id/assign-courier`
+3. **Mis Entregas Activas** - Assigned orders (`GET /orders/courier`)
+4. **Navegación** - Open address in Google Maps
+5. **Completar Entrega** - POD modal with `POST /orders/:id/complete-delivery`
+
+### ⭐ Post-Delivery Reviews
+
+- BUYER can leave review after order status = `delivered`
+- Star rating (1-5) with optional comment
+- Persisted via `POST /products/reviews`
+- Backend validates: only buyer, only delivered orders, one review per order
+
 ## 📦 Deployment
 
 The project is configured for **Continuous Deployment** via GitHub Actions:

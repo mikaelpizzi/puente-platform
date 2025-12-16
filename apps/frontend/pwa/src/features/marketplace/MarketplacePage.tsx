@@ -201,6 +201,7 @@ export const MarketplacePage: React.FC = () => {
               product={product}
               variant="buyer"
               onAddToCart={handleAddToCart}
+              onView={(p) => navigate(`/marketplace/${p._id || p.id}`)}
             />
           ))
         )}

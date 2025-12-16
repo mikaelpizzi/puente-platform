@@ -90,6 +90,10 @@ export const productsApi = api.injectEndpoints({
       }),
       invalidatesTags: ['Products'],
     }),
+    getProduct: builder.query<Product, string>({
+      query: (id) => `/products/${id}`,
+      providesTags: ['Products'],
+    }),
     uploadImage: builder.mutation<{ public_id: string; secure_url: string; url: string }, File>({
       query: (file) => {
         const formData = new FormData();
@@ -106,6 +110,7 @@ export const productsApi = api.injectEndpoints({
 
 export const {
   useGetProductsQuery,
+  useGetProductQuery,
   useCreateProductMutation,
   useUpdateProductMutation,
   useUploadImageMutation,

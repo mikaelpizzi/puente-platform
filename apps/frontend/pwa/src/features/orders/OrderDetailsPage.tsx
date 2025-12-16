@@ -20,6 +20,7 @@ import toast from 'react-hot-toast';
 import { useOrderSocket } from '../../hooks/useOrderSocket';
 import { DeliveryMap } from '../logistics/DeliveryMap';
 import { ReviewForm, ReviewFormData } from '../reviews/ReviewForm';
+import { useCreateReviewMutation } from '../reviews/reviewsApi';
 
 export const OrderDetailsPage: React.FC = () => {
   const { orderId } = useParams<{ orderId: string }>();
@@ -27,6 +28,7 @@ export const OrderDetailsPage: React.FC = () => {
   const user = useSelector(selectCurrentUser);
   const { data: order, isLoading, error } = useGetOrderQuery(orderId || '', { skip: !orderId });
   const [dispatchOrder, { isLoading: isDispatching }] = useDispatchOrderMutation();
+  const [createReview] = useCreateReviewMutation();
 
   const isSeller = user?.role === 'SELLER' || user?.role === 'ADMIN';
   const isBuyer = user?.role === 'BUYER';
@@ -412,10 +414,15 @@ export const OrderDetailsPage: React.FC = () => {
                 targetId={order.sellerId}
                 targetType="seller"
                 onSubmit={async (data: ReviewFormData) => {
-                  // For now, simulate success (would call API in real implementation)
-                  console.log('Review submitted:', data);
-                  toast.success('¡Gracias por tu reseña!');
-                  setShowReviewModal(false);
+                  try {
+                    await createReview(data).unwrap();
+                    toast.success('¡Gracias por tu reseña!');
+                    setShowReviewModal(false);
+                  } catch (err: any) {
+                    console.error('Review submission error:', err);
+                    const errorMessage = err?.data?.message || 'Error al enviar la reseña';
+                    toast.error(errorMessage);
+                  }
                 }}
                 onCancel={() => setShowReviewModal(false)}
               />

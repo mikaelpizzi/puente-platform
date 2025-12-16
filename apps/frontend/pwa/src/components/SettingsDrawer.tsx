@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 import i18n from '../i18n';
 import {
   X,
@@ -19,7 +20,7 @@ import {
   Wallet,
   Building2,
 } from 'lucide-react';
-import { selectCurrentUser, logout } from '../features/auth/authSlice';
+import { selectCurrentUser } from '../features/auth/authSlice';
 import { useTheme } from '../app/ThemeContext';
 
 interface SettingsDrawerProps {
@@ -28,11 +29,11 @@ interface SettingsDrawerProps {
   onLogout: () => void;
 }
 
-const ROLE_LABELS: Record<string, { label: string; color: string }> = {
-  SELLER: { label: 'Vendedor', color: 'bg-emerald-500' },
-  BUYER: { label: 'Comprador', color: 'bg-blue-500' },
-  COURIER: { label: 'Repartidor', color: 'bg-purple-500' },
-  ADMIN: { label: 'Administrador', color: 'bg-red-500' },
+const ROLE_LABELS: Record<string, { labelKey: string; color: string }> = {
+  SELLER: { labelKey: 'settingsDrawer.roles.SELLER', color: 'bg-emerald-500' },
+  BUYER: { labelKey: 'settingsDrawer.roles.BUYER', color: 'bg-blue-500' },
+  COURIER: { labelKey: 'settingsDrawer.roles.COURIER', color: 'bg-purple-500' },
+  ADMIN: { labelKey: 'settingsDrawer.roles.ADMIN', color: 'bg-red-500' },
 };
 
 const LANGUAGES = [
@@ -41,6 +42,7 @@ const LANGUAGES = [
 ];
 
 export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({ isOpen, onClose, onLogout }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const user = useSelector(selectCurrentUser);
   const { isDarkMode, toggleTheme } = useTheme();
@@ -81,7 +83,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({ isOpen, onClose,
                   <span
                     className={`inline-block mt-1 px-2 py-0.5 rounded-full text-xs font-medium ${roleInfo.color}`}
                   >
-                    {roleInfo.label}
+                    {t(roleInfo.labelKey)}
                   </span>
                 )}
               </div>
@@ -100,7 +102,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({ isOpen, onClose,
           {/* General Section */}
           <div className="p-4">
             <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3 px-2">
-              General
+              {t('settingsDrawer.general')}
             </h3>
             <div className="space-y-1">
               {/* Language Selector */}
@@ -108,7 +110,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({ isOpen, onClose,
                 <div className="flex items-center gap-3 mb-3">
                   <Globe className="w-5 h-5 text-gray-500" />
                   <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Idioma
+                    {t('settingsDrawer.language')}
                   </span>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
@@ -140,7 +142,9 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({ isOpen, onClose,
                   ) : (
                     <Sun className="w-5 h-5 text-amber-500" />
                   )}
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Tema</span>
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    {t('settingsDrawer.theme')}
+                  </span>
                 </div>
                 <div
                   className={`px-3 py-1 rounded-full text-xs font-medium ${
@@ -149,7 +153,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({ isOpen, onClose,
                       : 'bg-amber-100 text-amber-600'
                   }`}
                 >
-                  {isDarkMode ? 'Oscuro' : 'Claro'}
+                  {isDarkMode ? t('settingsDrawer.themeDark') : t('settingsDrawer.themeLight')}
                 </div>
               </button>
 
@@ -161,7 +165,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({ isOpen, onClose,
                 <div className="flex items-center gap-3">
                   <Bell className="w-5 h-5 text-gray-500" />
                   <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Notificaciones
+                    {t('settingsDrawer.notifications')}
                   </span>
                 </div>
                 <ChevronRight className="w-4 h-4 text-gray-400" />
@@ -172,7 +176,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({ isOpen, onClose,
           {/* Account Section */}
           <div className="p-4 pt-0">
             <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3 px-2">
-              Cuenta
+              {t('settingsDrawer.account')}
             </h3>
             <div className="space-y-1">
               <button
@@ -182,7 +186,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({ isOpen, onClose,
                 <div className="flex items-center gap-3">
                   <User className="w-5 h-5 text-gray-500" />
                   <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Editar Perfil
+                    {t('settingsDrawer.editProfile')}
                   </span>
                 </div>
                 <ChevronRight className="w-4 h-4 text-gray-400" />
@@ -195,7 +199,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({ isOpen, onClose,
                 <div className="flex items-center gap-3">
                   <Shield className="w-5 h-5 text-gray-500" />
                   <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Seguridad
+                    {t('settingsDrawer.security')}
                   </span>
                 </div>
                 <ChevronRight className="w-4 h-4 text-gray-400" />
@@ -206,7 +210,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({ isOpen, onClose,
           {/* Finance Section */}
           <div className="p-4 pt-0">
             <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3 px-2">
-              Finanzas
+              {t('settingsDrawer.finance')}
             </h3>
             <div className="space-y-1">
               <button
@@ -217,9 +221,11 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({ isOpen, onClose,
                   <Building2 className="w-5 h-5 text-gray-500" />
                   <div className="text-left">
                     <span className="text-sm font-medium text-gray-700 dark:text-gray-300 block">
-                      Cuentas Bancarias
+                      {t('settingsDrawer.bankAccounts')}
                     </span>
-                    <span className="text-xs text-gray-400">Gestiona tus cuentas de pago</span>
+                    <span className="text-xs text-gray-400">
+                      {t('settingsDrawer.bankAccountsDesc')}
+                    </span>
                   </div>
                 </div>
                 <ChevronRight className="w-4 h-4 text-gray-400" />
@@ -233,9 +239,11 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({ isOpen, onClose,
                   <Wallet className="w-5 h-5 text-gray-500" />
                   <div className="text-left">
                     <span className="text-sm font-medium text-gray-700 dark:text-gray-300 block">
-                      Billeteras Crypto
+                      {t('settingsDrawer.cryptoWallets')}
                     </span>
-                    <span className="text-xs text-gray-400">Binance, USDT, Bitcoin</span>
+                    <span className="text-xs text-gray-400">
+                      {t('settingsDrawer.cryptoWalletsDesc')}
+                    </span>
                   </div>
                 </div>
                 <ChevronRight className="w-4 h-4 text-gray-400" />
@@ -248,7 +256,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({ isOpen, onClose,
                 <div className="flex items-center gap-3">
                   <CreditCard className="w-5 h-5 text-gray-500" />
                   <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Métodos de Cobro
+                    {t('settingsDrawer.paymentMethods')}
                   </span>
                 </div>
                 <ChevronRight className="w-4 h-4 text-gray-400" />
@@ -260,7 +268,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({ isOpen, onClose,
           {user?.role === 'BUYER' && (
             <div className="p-4 pt-0">
               <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3 px-2">
-                Comprador
+                {t('settingsDrawer.buyer')}
               </h3>
               <div className="space-y-1">
                 <button
@@ -270,7 +278,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({ isOpen, onClose,
                   <div className="flex items-center gap-3">
                     <MapPin className="w-5 h-5 text-blue-500" />
                     <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Direcciones Guardadas
+                      {t('settingsDrawer.savedAddresses')}
                     </span>
                   </div>
                   <ChevronRight className="w-4 h-4 text-gray-400" />
@@ -282,7 +290,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({ isOpen, onClose,
           {user?.role === 'COURIER' && (
             <div className="p-4 pt-0">
               <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3 px-2">
-                Repartidor
+                {t('settingsDrawer.courier')}
               </h3>
               <div className="space-y-1">
                 <div className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-800 rounded-xl">
@@ -290,9 +298,11 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({ isOpen, onClose,
                     <Truck className="w-5 h-5 text-purple-500" />
                     <div>
                       <span className="text-sm font-medium text-gray-700 dark:text-gray-300 block">
-                        Disponibilidad
+                        {t('settingsDrawer.availability')}
                       </span>
-                      <span className="text-xs text-gray-400">Recibir nuevos pedidos</span>
+                      <span className="text-xs text-gray-400">
+                        {t('settingsDrawer.availabilityDesc')}
+                      </span>
                     </div>
                   </div>
                   {/* Toggle Switch */}
@@ -313,7 +323,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({ isOpen, onClose,
                   <div className="flex items-center gap-3">
                     <Settings className="w-5 h-5 text-gray-500" />
                     <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Configuración GPS
+                      {t('settingsDrawer.gpsSettings')}
                     </span>
                   </div>
                   <ChevronRight className="w-4 h-4 text-gray-400" />
@@ -325,7 +335,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({ isOpen, onClose,
           {user?.role === 'SELLER' && (
             <div className="p-4 pt-0">
               <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3 px-2">
-                Vendedor
+                {t('settingsDrawer.seller')}
               </h3>
               <div className="space-y-1">
                 <button
@@ -335,7 +345,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({ isOpen, onClose,
                   <div className="flex items-center gap-3">
                     <Settings className="w-5 h-5 text-emerald-500" />
                     <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Configuración de Tienda
+                      {t('settingsDrawer.storeSettings')}
                     </span>
                   </div>
                   <ChevronRight className="w-4 h-4 text-gray-400" />
@@ -352,9 +362,9 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({ isOpen, onClose,
             className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl font-medium transition-colors"
           >
             <LogOut className="w-5 h-5" />
-            Cerrar Sesión
+            {t('settingsDrawer.logout')}
           </button>
-          <p className="text-center text-xs text-gray-400 mt-3">Puente Platform v1.0.0</p>
+          <p className="text-center text-xs text-gray-400 mt-3">{t('settingsDrawer.version')}</p>
         </div>
       </div>
     </>

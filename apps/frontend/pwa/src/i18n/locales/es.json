@@ -148,5 +148,38 @@
     "notFound": "No encontrado",
     "serverError": "Error del servidor",
     "conflict": "Conflicto detectado"
+  },
+  "settingsDrawer": {
+    "general": "General",
+    "language": "Idioma",
+    "theme": "Tema",
+    "themeDark": "Oscuro",
+    "themeLight": "Claro",
+    "notifications": "Notificaciones",
+    "account": "Cuenta",
+    "editProfile": "Editar Perfil",
+    "security": "Seguridad",
+    "finance": "Finanzas",
+    "bankAccounts": "Cuentas Bancarias",
+    "bankAccountsDesc": "Gestiona tus cuentas de pago",
+    "cryptoWallets": "Billeteras Crypto",
+    "cryptoWalletsDesc": "Binance, USDT, Bitcoin",
+    "paymentMethods": "Métodos de Cobro",
+    "buyer": "Comprador",
+    "savedAddresses": "Direcciones Guardadas",
+    "courier": "Repartidor",
+    "availability": "Disponibilidad",
+    "availabilityDesc": "Recibir nuevos pedidos",
+    "gpsSettings": "Configuración GPS",
+    "seller": "Vendedor",
+    "storeSettings": "Configuración de Tienda",
+    "logout": "Cerrar Sesión",
+    "version": "Puente Platform v1.0.0",
+    "roles": {
+      "SELLER": "Vendedor",
+      "BUYER": "Comprador",
+      "COURIER": "Repartidor",
+      "ADMIN": "Administrador"
+    }
   }
 }

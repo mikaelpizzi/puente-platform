@@ -8,6 +8,7 @@ import { router } from './app/router';
 import { ThemeProvider } from './app/ThemeContext';
 import { SocketProvider } from './providers/SocketProvider';
 import { initSentry, initPostHog } from './lib';
+import './i18n'; // Initialize i18n before React mounts
 import './index.css';
 
 // Initialize observability before React mounts

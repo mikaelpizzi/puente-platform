@@ -148,5 +148,38 @@
     "notFound": "Not found",
     "serverError": "Server error",
     "conflict": "Conflict detected"
+  },
+  "settingsDrawer": {
+    "general": "General",
+    "language": "Language",
+    "theme": "Theme",
+    "themeDark": "Dark",
+    "themeLight": "Light",
+    "notifications": "Notifications",
+    "account": "Account",
+    "editProfile": "Edit Profile",
+    "security": "Security",
+    "finance": "Finance",
+    "bankAccounts": "Bank Accounts",
+    "bankAccountsDesc": "Manage your payment accounts",
+    "cryptoWallets": "Crypto Wallets",
+    "cryptoWalletsDesc": "Binance, USDT, Bitcoin",
+    "paymentMethods": "Payment Methods",
+    "buyer": "Buyer",
+    "savedAddresses": "Saved Addresses",
+    "courier": "Courier",
+    "availability": "Availability",
+    "availabilityDesc": "Receive new orders",
+    "gpsSettings": "GPS Settings",
+    "seller": "Seller",
+    "storeSettings": "Store Settings",
+    "logout": "Log Out",
+    "version": "Puente Platform v1.0.0",
+    "roles": {
+      "SELLER": "Seller",
+      "BUYER": "Buyer",
+      "COURIER": "Courier",
+      "ADMIN": "Administrator"
+    }
   }
 }

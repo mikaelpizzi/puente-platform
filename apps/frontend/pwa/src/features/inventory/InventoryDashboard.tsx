@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 import {
   useGetProductsQuery,
   useCreateProductMutation,
@@ -25,6 +26,7 @@ import { Check, X, Tag as TagIcon, Plus, Trash2, RefreshCw, AlertTriangle } from
 import toast from 'react-hot-toast';
 
 export const InventoryDashboard: React.FC = () => {
+  const { t } = useTranslation();
   const dispatch = useDispatch();
   const user = useSelector(selectCurrentUser);
   const {
@@ -110,7 +112,7 @@ export const InventoryDashboard: React.FC = () => {
         return { ...prev, tags: currentTags.filter((t) => t !== tagName) };
       }
       if (currentTags.length >= 5) {
-        toast.error('Máximo 5 etiquetas por producto');
+        toast.error(t('inventory.maxTags'));
         return prev;
       }
       return { ...prev, tags: [...currentTags, tagName] };
@@ -152,10 +154,10 @@ export const InventoryDashboard: React.FC = () => {
     try {
       if (editingProductId) {
         await updateProduct({ id: editingProductId, data: productData }).unwrap();
-        toast.success('Producto actualizado');
+        toast.success(t('inventory.productUpdated'));
       } else {
         await createProduct(productData).unwrap();
-        toast.success('Producto creado');
+        toast.success(t('inventory.productCreated'));
       }
       setIsModalOpen(false);
       resetForm();
@@ -215,7 +217,7 @@ export const InventoryDashboard: React.FC = () => {
 
   const handleBulkTagAssign = async () => {
     if (selectedProducts.length === 0 || bulkSelectedTags.length === 0) return;
-    const toastId = toast.loading('Asignando etiquetas...');
+    const toastId = toast.loading(t('inventory.assigningTags'));
     try {
       await Promise.all(
         selectedProducts.map((id) => {
@@ -229,13 +231,13 @@ export const InventoryDashboard: React.FC = () => {
           return updateProduct({ id, data: { tags: newTags } }).unwrap();
         }),
       );
-      toast.success('Etiquetas actualizadas', { id: toastId });
+      toast.success(t('inventory.tagsUpdated'), { id: toastId });
       setIsBulkTagModalOpen(false);
       setSelectedProducts([]);
       setIsSelectionMode(false);
       setBulkSelectedTags([]);
     } catch (error) {
-      toast.error('Error al actualizar etiquetas', { id: toastId });
+      toast.error(t('errors.generic'), { id: toastId });
     }
   };
 
@@ -243,9 +245,9 @@ export const InventoryDashboard: React.FC = () => {
   const handleTrashRequest = (product: any) => {
     setConfirmationModal({
       isOpen: true,
-      title: 'Mover a Papelera',
-      message: `¿Estás seguro de que deseas mover "${product.name}" a la papelera?`,
-      confirmText: 'Mover',
+      title: t('inventory.moveToTrash'),
+      message: t('inventory.confirmMoveToTrash', { name: product.name }),
+      confirmText: t('common.move'),
       variant: 'warning',
       onConfirm: async () => {
         try {
@@ -253,9 +255,9 @@ export const InventoryDashboard: React.FC = () => {
             id: product.id || product._id,
             data: { inventoryStatus: 'TRASH' },
           }).unwrap();
-          toast.success('Producto movido a papelera');
+          toast.success(t('inventory.movedToTrash'));
         } catch (e) {
-          toast.error('Error al mover a papelera');
+          toast.error(t('errors.generic'));
         }
       },
     });
@@ -267,18 +269,18 @@ export const InventoryDashboard: React.FC = () => {
         id: product.id || product._id,
         data: { inventoryStatus: 'ACTIVE' },
       }).unwrap();
-      toast.success('Producto restaurado');
+      toast.success(t('inventory.productRestored'));
     } catch (e) {
-      toast.error('Error al restaurar');
+      toast.error(t('errors.generic'));
     }
   };
 
   const handleDeletePermanentlyRequest = (product: any) => {
     setConfirmationModal({
       isOpen: true,
-      title: 'Eliminar Definitivamente',
-      message: `¿Estás seguro de que deseas eliminar "${product.name}" permanentemente? Esta acción no se puede deshacer.`,
-      confirmText: 'Eliminar',
+      title: t('inventory.deleteForever'),
+      message: t('inventory.confirmDeleteForever', { name: product.name }),
+      confirmText: t('common.delete'),
       variant: 'danger',
       onConfirm: async () => {
         // Placeholder for now
@@ -310,7 +312,7 @@ export const InventoryDashboard: React.FC = () => {
   }
 
   if (error) {
-    return <div className="p-4 text-red-500">Error al cargar inventario</div>;
+    return <div className="p-4 text-red-500">{t('errors.generic')}</div>;
   }
 
   const allProductsRaw = [
@@ -338,10 +340,12 @@ export const InventoryDashboard: React.FC = () => {
         <div className="p-4 flex flex-col gap-4">
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-3">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white">Mi Inventario</h2>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                {t('inventory.title')}
+              </h2>
               {isSelectionMode && (
                 <span className="bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 text-xs px-2 py-1 rounded-full font-medium">
-                  {selectedProducts.length} seleccionados
+                  {t('inventory.selected', { count: selectedProducts.length })}
                 </span>
               )}
             </div>
@@ -364,7 +368,7 @@ export const InventoryDashboard: React.FC = () => {
                       className="bg-emerald-500 text-white px-4 py-2 rounded-full text-sm font-medium shadow-sm hover:bg-emerald-600 transition-colors flex items-center gap-2"
                     >
                       <TagIcon className="w-4 h-4" />
-                      Asignar
+                      {t('inventory.assign')}
                     </button>
                   )}
                 </>
@@ -374,7 +378,7 @@ export const InventoryDashboard: React.FC = () => {
                     onClick={() => setIsSelectionMode(true)}
                     className="text-emerald-600 dark:text-emerald-400 px-3 py-2 text-sm font-medium hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg transition-colors"
                   >
-                    Seleccionar
+                    {t('inventory.select')}
                   </button>
                   {currentTab === 'ACTIVE' && (
                     <>
@@ -382,7 +386,7 @@ export const InventoryDashboard: React.FC = () => {
                         onClick={() => setIsTagManagerOpen(true)}
                         className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-full text-sm font-medium shadow-sm hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
                       >
-                        Etiquetas
+                        {t('inventory.tags')}
                       </button>
                       <button
                         onClick={() => {
@@ -391,7 +395,7 @@ export const InventoryDashboard: React.FC = () => {
                         }}
                         className="bg-emerald-500 text-white px-4 py-2 rounded-full text-sm font-medium shadow-lg active:scale-95 transition-transform hover:bg-emerald-600"
                       >
-                        + Nuevo
+                        + {t('common.new')}
                       </button>
                     </>
                   )}
@@ -406,14 +410,14 @@ export const InventoryDashboard: React.FC = () => {
               onClick={() => setCurrentTab('ACTIVE')}
               className={`pb-2 text-sm font-medium transition-colors border-b-2 ${currentTab === 'ACTIVE' ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400' : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400'}`}
             >
-              Activos
+              {t('inventory.active')}
             </button>
             <button
               onClick={() => setCurrentTab('TRASH')}
               className={`pb-2 text-sm font-medium transition-colors border-b-2 flex items-center gap-1 ${currentTab === 'TRASH' ? 'border-red-500 text-red-600 dark:text-red-400' : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400'}`}
             >
               <Trash2 className="w-4 h-4" />
-              Papelera
+              {t('inventory.trash')}
             </button>
           </div>
         </div>
@@ -425,11 +429,11 @@ export const InventoryDashboard: React.FC = () => {
           <div className="text-center py-10 text-gray-500 dark:text-gray-400 col-span-full">
             {currentTab === 'ACTIVE' ? (
               <>
-                <p>No tienes productos activos.</p>
-                <p className="text-sm">¡Agrega el primero!</p>
+                <p>{t('inventory.noActiveProducts')}</p>
+                <p className="text-sm">{t('inventory.addFirstProduct')}</p>
               </>
             ) : (
-              <p>La papelera está vacía.</p>
+              <p>{t('inventory.trashEmpty')}</p>
             )}
           </div>
         ) : (
@@ -527,13 +531,13 @@ export const InventoryDashboard: React.FC = () => {
       <ModalWrapper
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title={editingProductId ? 'Editar Producto' : 'Nuevo Producto'}
+        title={editingProductId ? t('inventory.editProduct') : t('inventory.newProduct')}
       >
         {/* Reuse form logic here or split into component for cleaner file if needed */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Nombre
+              {t('inventory.productName')}
             </label>
             <input
               type="text"
@@ -548,7 +552,7 @@ export const InventoryDashboard: React.FC = () => {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Descripción
+              {t('inventory.description')}
             </label>
             <textarea
               name="description"
@@ -563,7 +567,7 @@ export const InventoryDashboard: React.FC = () => {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Imágenes del Producto (Máx 5)
+              {t('inventory.images')} ({t('inventory.max5')})
             </label>
             <MultiImageDropzone images={formData.images} onChange={handleImagesChange} />
           </div>
@@ -571,7 +575,7 @@ export const InventoryDashboard: React.FC = () => {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Precio ($)
+                {t('inventory.price')} ($)
               </label>
               <input
                 type="number"
@@ -587,7 +591,7 @@ export const InventoryDashboard: React.FC = () => {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Stock
+                {t('inventory.stock')}
               </label>
               <input
                 type="number"
@@ -605,13 +609,13 @@ export const InventoryDashboard: React.FC = () => {
           <div className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-100 dark:border-gray-700">
             <div className="flex justify-between items-center mb-2">
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Etiquetas (Máx. 5)
+                {t('inventory.tags')} ({t('inventory.max5')})
               </label>
               <span
                 className="text-xs text-emerald-600 cursor-pointer hover:underline"
                 onClick={() => setIsTagManagerOpen(true)}
               >
-                + Gestionar
+                + {t('inventory.manage')}
               </span>
             </div>
 
@@ -644,7 +648,7 @@ export const InventoryDashboard: React.FC = () => {
                 className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-emerald-500 outline-none appearance-none"
                 disabled={formData.tags.length >= 5}
               >
-                <option value="">Agregar etiqueta...</option>
+                <option value="">{t('inventory.addTag')}...</option>
                 {tags?.map((tag) => (
                   <option
                     key={tag._id}
@@ -660,7 +664,7 @@ export const InventoryDashboard: React.FC = () => {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              SKU (Opcional)
+              {t('inventory.sku')} ({t('common.optional')})
             </label>
             <input
               type="text"
@@ -702,13 +706,13 @@ export const InventoryDashboard: React.FC = () => {
               onClick={() => setIsModalOpen(false)}
               className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
             >
-              Cancelar
+              {t('common.cancel')}
             </button>
             <button
               type="submit"
               className="flex-1 px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors font-medium shadow-md active:scale-95"
             >
-              {editingProductId ? 'Guardar Cambios' : 'Crear Producto'}
+              {editingProductId ? t('inventory.saveChanges') : t('inventory.createProduct')}
             </button>
           </div>
         </form>
@@ -722,12 +726,11 @@ export const InventoryDashboard: React.FC = () => {
         <ModalWrapper
           isOpen={isBulkTagModalOpen}
           onClose={() => setIsBulkTagModalOpen(false)}
-          title="Asignación Masiva de Etiquetas"
+          title={t('inventory.bulkTagAssignment')}
         >
           <div className="space-y-4">
             <p className="text-sm text-gray-600 dark:text-gray-300">
-              Selecciona las etiquetas para asignar a <strong>{selectedProducts.length}</strong>{' '}
-              productos.
+              {t('inventory.selectTagsFor', { count: selectedProducts.length })}
             </p>
 
             <div className="flex flex-wrap gap-2 max-h-60 overflow-y-auto">
@@ -745,7 +748,7 @@ export const InventoryDashboard: React.FC = () => {
                 </button>
               ))}
               {tags?.length === 0 && (
-                <span className="text-gray-400 text-sm">No hay etiquetas.</span>
+                <span className="text-gray-400 text-sm">{t('inventory.noTags')}</span>
               )}
             </div>
 
@@ -754,7 +757,7 @@ export const InventoryDashboard: React.FC = () => {
                 onClick={() => setIsBulkTagModalOpen(false)}
                 className="px-4 py-2 text-sm text-gray-500"
               >
-                Cancelar
+                {t('common.cancel')}
               </button>
               <button
                 onClick={handleBulkTagAssign}

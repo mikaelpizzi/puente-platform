@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 import { useGetProductsQuery } from '../inventory/productsApi';
 import { useGetTagsQuery } from '../inventory/tagsApi';
 import {
@@ -15,6 +16,7 @@ import { ShoppingCart, Trash2, Plus, Minus, Search, Package, X } from 'lucide-re
 import toast from 'react-hot-toast';
 
 export const CheckoutPage: React.FC = () => {
+  const { t } = useTranslation();
   const dispatch = useDispatch();
   const cartItems = useSelector(selectCartItems);
   const total = useSelector(selectCartTotal);
@@ -49,7 +51,7 @@ export const CheckoutPage: React.FC = () => {
     const currentQty = existingItem ? existingItem.quantity : 0;
 
     if (currentQty + 1 > product.stock) {
-      toast.error('No hay suficiente stock');
+      toast.error(t('pos.notEnoughStock'));
       return;
     }
 
@@ -61,7 +63,7 @@ export const CheckoutPage: React.FC = () => {
         quantity: 1,
       }),
     );
-    toast.success('Producto agregado');
+    toast.success(t('pos.productAdded'));
   };
 
   const handleIncrement = (item: any) => {
@@ -69,7 +71,7 @@ export const CheckoutPage: React.FC = () => {
     if (!product) return;
 
     if (item.quantity + 1 > product.stock) {
-      toast.error('No hay suficiente stock');
+      toast.error(t('pos.notEnoughStock'));
       return;
     }
     dispatch(updateQuantity({ id: item.id, quantity: item.quantity + 1 }));
@@ -106,11 +108,9 @@ export const CheckoutPage: React.FC = () => {
               <div className="p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
                 <ShoppingCart className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />
               </div>
-              Punto de Venta
+              {t('pos.title')}
             </h2>
-            <p className="text-gray-500 dark:text-gray-400 mt-1 ml-14">
-              Gestiona tus ventas de forma rápida y eficiente
-            </p>
+            <p className="text-gray-500 dark:text-gray-400 mt-1 ml-14">{t('pos.subtitle')}</p>
           </div>
         </div>
 
@@ -125,7 +125,7 @@ export const CheckoutPage: React.FC = () => {
                   <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
                   <input
                     type="text"
-                    placeholder="Buscar productos..."
+                    placeholder={t('pos.searchProducts')}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="w-full pl-12 pr-4 py-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all text-gray-900 dark:text-white placeholder-gray-400"
@@ -152,7 +152,7 @@ export const CheckoutPage: React.FC = () => {
                           : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                       }`}
                     >
-                      {cat === 'all' ? 'Todos' : cat.charAt(0).toUpperCase() + cat.slice(1)}
+                      {cat === 'all' ? t('orders.all') : cat.charAt(0).toUpperCase() + cat.slice(1)}
                     </button>
                   ))}
                 </div>
@@ -175,11 +175,9 @@ export const CheckoutPage: React.FC = () => {
                   <Package className="w-8 h-8 text-gray-400" />
                 </div>
                 <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-                  No se encontraron productos
+                  {t('common.noResults')}
                 </h3>
-                <p className="text-gray-500 dark:text-gray-400 mt-1">
-                  Intenta con otra búsqueda o categoría
-                </p>
+                <p className="text-gray-500 dark:text-gray-400 mt-1">{t('pos.tryAnotherSearch')}</p>
               </div>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
@@ -236,7 +234,9 @@ export const CheckoutPage: React.FC = () => {
               {/* Cart Header */}
               <div className="p-6 border-b border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50 backdrop-blur-sm">
                 <div className="flex justify-between items-center">
-                  <h3 className="font-bold text-xl text-gray-900 dark:text-white">Carrito</h3>
+                  <h3 className="font-bold text-xl text-gray-900 dark:text-white">
+                    {t('checkout.cart')}
+                  </h3>
                   <span className="bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 text-xs font-bold px-3 py-1 rounded-full">
                     {cartItems.length} items
                   </span>
@@ -248,10 +248,8 @@ export const CheckoutPage: React.FC = () => {
                 {cartItems.length === 0 ? (
                   <div className="h-full flex flex-col items-center justify-center text-center p-8 text-gray-400">
                     <ShoppingCart className="w-12 h-12 mb-4 opacity-20" />
-                    <p>Tu carrito está vacío</p>
-                    <p className="text-sm mt-2 opacity-60">
-                      Selecciona productos para comenzar una venta
-                    </p>
+                    <p>{t('checkout.emptyCart')}</p>
+                    <p className="text-sm mt-2 opacity-60">{t('pos.selectProductsToSell')}</p>
                   </div>
                 ) : (
                   cartItems.map((item, index) => (
@@ -305,7 +303,9 @@ export const CheckoutPage: React.FC = () => {
               {/* Cart Footer */}
               <div className="p-6 bg-white dark:bg-gray-800 border-t border-gray-100 dark:border-gray-700 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
                 <div className="flex justify-between items-end mb-4">
-                  <span className="text-gray-500 dark:text-gray-400 text-sm">Total a cobrar</span>
+                  <span className="text-gray-500 dark:text-gray-400 text-sm">
+                    {t('pos.totalToCharge')}
+                  </span>
                   <span className="text-3xl font-extrabold text-gray-900 dark:text-white">
                     ${total.toFixed(2)}
                   </span>
@@ -316,7 +316,7 @@ export const CheckoutPage: React.FC = () => {
                   disabled={cartItems.length === 0}
                   className="w-full py-4 bg-emerald-500 hover:bg-emerald-600 disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:cursor-not-allowed text-white rounded-xl font-bold text-lg shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/40 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
                 >
-                  <span>Cobrar</span>
+                  <span>{t('nav.charge')}</span>
                   <div className="bg-white/20 rounded-lg px-2 py-0.5 text-sm">
                     {cartItems.length}
                   </div>

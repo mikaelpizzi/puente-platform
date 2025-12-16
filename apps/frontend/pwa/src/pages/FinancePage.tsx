@@ -1,25 +1,30 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { DollarSign, TrendingUp, Calendar } from 'lucide-react';
 
 export const FinancePage: React.FC = () => {
+  const { t } = useTranslation();
+
   return (
     <div className="p-4 pb-24">
       <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-6 flex items-center gap-2">
         <DollarSign className="text-emerald-500 dark:text-emerald-400" />
-        Finanzas
+        {t('nav.finance')}
       </h2>
 
       <div className="bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-2xl p-6 text-white shadow-lg mb-6">
-        <p className="text-emerald-100 text-sm font-medium mb-1">Balance Total</p>
+        <p className="text-emerald-100 text-sm font-medium mb-1">{t('finance.totalBalance')}</p>
         <h3 className="text-4xl font-bold">$12,450.00</h3>
         <div className="mt-4 flex gap-2">
           <span className="bg-white/20 px-2 py-1 rounded text-xs flex items-center gap-1">
-            <TrendingUp size={12} /> +15% vs mes anterior
+            <TrendingUp size={12} /> {t('finance.vsLastMonth', { percent: 15 })}
           </span>
         </div>
       </div>
 
-      <h3 className="font-bold text-gray-800 dark:text-gray-200 mb-4">Movimientos Recientes</h3>
+      <h3 className="font-bold text-gray-800 dark:text-gray-200 mb-4">
+        {t('finance.recentMovements')}
+      </h3>
       <div className="space-y-3">
         {[1, 2, 3, 4].map((i) => (
           <div
@@ -31,9 +36,11 @@ export const FinancePage: React.FC = () => {
                 <DollarSign size={20} />
               </div>
               <div>
-                <p className="font-bold text-gray-900 dark:text-white">Venta #{1000 + i}</p>
+                <p className="font-bold text-gray-900 dark:text-white">
+                  {t('finance.sale')} #{1000 + i}
+                </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
-                  <Calendar size={10} /> Hoy, 10:30 AM
+                  <Calendar size={10} /> {t('finance.today')}, 10:30 AM
                 </p>
               </div>
             </div>

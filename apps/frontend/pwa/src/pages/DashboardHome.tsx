@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Package,
   ShoppingCart,
@@ -13,6 +14,7 @@ import { useSelector } from 'react-redux';
 import { selectCurrentUser } from '../features/auth/authSlice';
 
 export const DashboardHome: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const user = useSelector(selectCurrentUser);
   const userRole = user?.role;
@@ -20,66 +22,66 @@ export const DashboardHome: React.FC = () => {
   // Role-specific quick actions
   const sellerActions = [
     {
-      title: 'Mi Inventario',
+      titleKey: 'dashboard.myInventory',
       icon: Package,
       path: '/inventory',
       color: 'bg-blue-500',
-      description: 'Gestionar productos y stock',
+      descriptionKey: 'dashboard.manageProductsStock',
     },
     {
-      title: 'Mis Ventas',
+      titleKey: 'nav.mySales',
       icon: ClipboardList,
       path: '/orders',
       color: 'bg-purple-500',
-      description: 'Ver órdenes recibidas',
+      descriptionKey: 'dashboard.viewReceivedOrders',
     },
     {
-      title: 'Cobrar',
+      titleKey: 'nav.charge',
       icon: ShoppingCart,
       path: '/checkout',
       color: 'bg-emerald-500',
-      description: 'Punto de venta y cobros QR',
+      descriptionKey: 'dashboard.posAndQr',
     },
     {
-      title: 'Finanzas',
+      titleKey: 'nav.finance',
       icon: DollarSign,
       path: '/finance',
       color: 'bg-yellow-500',
-      description: 'Balance y transacciones',
+      descriptionKey: 'dashboard.balanceTransactions',
     },
   ];
 
   const buyerActions = [
     {
-      title: 'Explorar',
+      titleKey: 'dashboard.explore',
       icon: ShoppingCart,
       path: '/marketplace',
       color: 'bg-emerald-500',
-      description: 'Buscar y comprar productos',
+      descriptionKey: 'dashboard.searchBuyProducts',
     },
     {
-      title: 'Mis Compras',
+      titleKey: 'nav.myOrders',
       icon: ClipboardList,
       path: '/orders',
       color: 'bg-blue-500',
-      description: 'Historial de pedidos',
+      descriptionKey: 'dashboard.orderHistory',
     },
   ];
 
   const courierActions = [
     {
-      title: 'Mis Entregas',
+      titleKey: 'dashboard.myDeliveries',
       icon: Truck,
       path: '/logistics',
       color: 'bg-emerald-600',
-      description: 'Ver trabajos asignados',
+      descriptionKey: 'dashboard.viewAssignedJobs',
     },
     {
-      title: 'Mapa de Rutas',
+      titleKey: 'dashboard.routeMap',
       icon: MapPin,
       path: '/logistics',
       color: 'bg-blue-500',
-      description: 'Navegación y seguimiento',
+      descriptionKey: 'dashboard.navigationTracking',
     },
   ];
 
@@ -97,13 +99,13 @@ export const DashboardHome: React.FC = () => {
   const getRoleGreeting = () => {
     switch (userRole) {
       case 'SELLER':
-        return 'Aquí tienes un resumen de tu negocio hoy.';
+        return t('dashboard.greetingSeller');
       case 'BUYER':
-        return '¿Qué quieres comprar hoy?';
+        return t('dashboard.greetingBuyer');
       case 'COURIER':
-        return 'Estas son tus entregas pendientes.';
+        return t('dashboard.greetingCourier');
       default:
-        return 'Bienvenido a Puente.';
+        return t('dashboard.greetingDefault');
     }
   };
 
@@ -112,7 +114,7 @@ export const DashboardHome: React.FC = () => {
       {/* Header */}
       <div className="mb-8 mt-4">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-          Hola, {user?.name || 'Usuario'} 👋
+          {t('dashboard.hello', { name: user?.name || t('common.user') })} 👋
         </h1>
         <p className="text-gray-500 dark:text-gray-400">{getRoleGreeting()}</p>
       </div>
@@ -126,7 +128,7 @@ export const DashboardHome: React.FC = () => {
                 <TrendingUp size={18} />
               </div>
               <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                Ventas Hoy
+                {t('dashboard.salesToday')}
               </span>
             </div>
             <p className="text-2xl font-bold text-gray-900 dark:text-white">$0.00</p>
@@ -137,7 +139,7 @@ export const DashboardHome: React.FC = () => {
                 <Package size={18} />
               </div>
               <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                Productos
+                {t('dashboard.products')}
               </span>
             </div>
             <p className="text-2xl font-bold text-gray-900 dark:text-white">--</p>
@@ -150,7 +152,7 @@ export const DashboardHome: React.FC = () => {
         <div className="bg-gradient-to-r from-emerald-500 to-teal-500 p-6 rounded-2xl mb-8 text-white">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm opacity-90">Entregas pendientes</p>
+              <p className="text-sm opacity-90">{t('dashboard.pendingDeliveries')}</p>
               <p className="text-4xl font-bold">0</p>
             </div>
             <Truck size={48} className="opacity-80" />
@@ -160,12 +162,12 @@ export const DashboardHome: React.FC = () => {
 
       {/* Quick Actions */}
       <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4">
-        {userRole === 'COURIER' ? 'Acceso Rápido' : 'Acciones Rápidas'}
+        {userRole === 'COURIER' ? t('dashboard.quickAccess') : t('dashboard.quickActions')}
       </h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {quickActions.map((action) => (
           <button
-            key={action.title}
+            key={action.titleKey}
             onClick={() => navigate(action.path)}
             className="flex items-center p-4 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all active:scale-[0.98] text-left group"
           >
@@ -175,8 +177,10 @@ export const DashboardHome: React.FC = () => {
               <action.icon size={24} />
             </div>
             <div>
-              <h3 className="font-bold text-gray-900 dark:text-white text-lg">{action.title}</h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400">{action.description}</p>
+              <h3 className="font-bold text-gray-900 dark:text-white text-lg">
+                {t(action.titleKey)}
+              </h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{t(action.descriptionKey)}</p>
             </div>
           </button>
         ))}

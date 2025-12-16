@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Clock,
   AlertTriangle,
@@ -47,6 +48,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   onTrash,
   onView,
 }) => {
+  const { t } = useTranslation();
   const [isLoading, setIsLoading] = React.useState(true);
   const [hasError, setHasError] = React.useState(false);
   const [currentImageIndex, setCurrentImageIndex] = React.useState(0);

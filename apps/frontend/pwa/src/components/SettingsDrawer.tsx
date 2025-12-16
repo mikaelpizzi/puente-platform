@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useSelector, useDispatch } from 'react-redux';
-import { useTranslation } from 'react-i18next';
+import { useSelector } from 'react-redux';
+import i18n from '../i18n';
 import {
   X,
   User,
@@ -41,16 +41,16 @@ const LANGUAGES = [
 ];
 
 export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({ isOpen, onClose, onLogout }) => {
-  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const user = useSelector(selectCurrentUser);
   const { isDarkMode, toggleTheme } = useTheme();
+  const [currentLang, setCurrentLang] = useState(i18n.language || 'es');
 
   const roleInfo = user?.role ? ROLE_LABELS[user.role] : null;
-  const currentLang = i18n.language || 'es';
 
   const handleLanguageChange = (langCode: string) => {
     i18n.changeLanguage(langCode);
+    setCurrentLang(langCode);
   };
 
   const handleNavigate = (path: string) => {
@@ -65,8 +65,8 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({ isOpen, onClose,
       {/* Backdrop */}
       <div className="fixed inset-0 bg-black/50 z-40 transition-opacity" onClick={onClose} />
 
-      {/* Drawer */}
-      <div className="fixed right-0 top-0 h-full w-full max-w-sm bg-white dark:bg-gray-900 z-50 shadow-2xl transform transition-transform duration-300 ease-out flex flex-col">
+      {/* Drawer - Slides from LEFT */}
+      <div className="fixed left-0 top-0 h-full w-full max-w-sm bg-white dark:bg-gray-900 z-50 shadow-2xl transform transition-transform duration-300 ease-out flex flex-col">
         {/* Header */}
         <div className="bg-gradient-to-r from-emerald-600 to-emerald-500 p-6 text-white">
           <div className="flex items-start justify-between mb-4">

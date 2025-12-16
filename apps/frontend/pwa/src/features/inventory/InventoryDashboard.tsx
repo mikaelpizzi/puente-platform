@@ -546,7 +546,7 @@ export const InventoryDashboard: React.FC = () => {
               onChange={handleInputChange}
               required
               className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-emerald-500 outline-none transition-all"
-              placeholder="Ej. Taza de cerámica"
+              placeholder={t('inventory.placeholderName')}
             />
           </div>
 
@@ -561,7 +561,7 @@ export const InventoryDashboard: React.FC = () => {
               required
               rows={3}
               className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-emerald-500 outline-none transition-all resize-none"
-              placeholder="Detalles del producto..."
+              placeholder={t('inventory.placeholderDescription')}
             />
           </div>
 
@@ -672,7 +672,7 @@ export const InventoryDashboard: React.FC = () => {
               value={formData.sku || ''}
               onChange={handleInputChange}
               className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-emerald-500 outline-none transition-all"
-              placeholder="Código único"
+              placeholder={t('inventory.placeholderSku')}
             />
           </div>
 

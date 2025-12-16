@@ -168,7 +168,27 @@
     "trashEmpty": "La papelera está vacía.",
     "bulkTagAssignment": "Asignación Masiva de Etiquetas",
     "selectTagsFor": "Selecciona las etiquetas para asignar a {{count}} productos.",
-    "noTags": "No hay etiquetas."
+    "noTags": "No hay etiquetas.",
+    "placeholderName": "Ej. Taza de cerámica",
+    "placeholderDescription": "Detalles del producto...",
+    "placeholderSku": "Código único"
+  },
+  "images": {
+    "maxAllowed": "Máximo {{max}} imágenes permitidas",
+    "uploading": "Subiendo {{count}} imagen(es)...",
+    "uploaded": "Imágenes subidas",
+    "uploadError": "Error al subir imágenes",
+    "uploadingImages": "Subiendo imagen(es)...",
+    "someIgnored": "Algunos archivos no eran imágenes y fueron ignorados",
+    "main": "Principal",
+    "uploadingText": "Subiendo...",
+    "clickOrDrag": "Haz click o arrastra imágenes",
+    "countFormat": "{{current}}/{{max}} imágenes (JPG, PNG, WEBP)"
+  },
+  "notFound": {
+    "title": "Página no encontrada",
+    "message": "Lo sentimos, la página que buscas no existe o ha sido movida.",
+    "backHome": "Volver al Inicio"
   },
   "orders": {
     "title": "Mis Pedidos",

@@ -168,7 +168,27 @@
     "trashEmpty": "Trash is empty.",
     "bulkTagAssignment": "Bulk Tag Assignment",
     "selectTagsFor": "Select tags to assign to {{count}} products.",
-    "noTags": "No tags available."
+    "noTags": "No tags available.",
+    "placeholderName": "E.g. Ceramic mug",
+    "placeholderDescription": "Product details...",
+    "placeholderSku": "Unique code"
+  },
+  "images": {
+    "maxAllowed": "Maximum {{max}} images allowed",
+    "uploading": "Uploading {{count}} image(s)...",
+    "uploaded": "Images uploaded",
+    "uploadError": "Error uploading images",
+    "uploadingImages": "Uploading image(s)...",
+    "someIgnored": "Some files were not images and were ignored",
+    "main": "Main",
+    "uploadingText": "Uploading...",
+    "clickOrDrag": "Click or drag images",
+    "countFormat": "{{current}}/{{max}} images (JPG, PNG, WEBP)"
+  },
+  "notFound": {
+    "title": "Page not found",
+    "message": "Sorry, the page you are looking for does not exist or has been moved.",
+    "backHome": "Back to Home"
   },
   "orders": {
     "title": "My Orders",

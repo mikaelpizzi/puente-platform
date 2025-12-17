@@ -1,0 +1,57 @@
+name: Pipeline Frontend (PWA)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/frontend/pwa/**'
+      - 'packages/**'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+  workflow_dispatch:
+
+jobs:
+  # 1. VALIDACIÓN: Si esto falla, NO se despliega nada.
+  quality-check:
+    name: 🛡️ Lint & Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Ejecuta el lint solo del Frontend
+      - name: Lint PWA
+        run: pnpm --filter ./apps/frontend/pwa run lint
+
+      # Si tienes tests unitarios, descomenta esto:
+      # - name: Test PWA
+      #   run: pnpm --filter ./apps/frontend/pwa run test
+
+  # 2. DESPLIEGUE: Solo corre si quality-check pasa (needs: quality-check)
+  deploy-render:
+    name: 🚀 Deploy to Render
+    needs: quality-check
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' # Solo desplegar en rama main
+    environment: render-production
+    steps:
+      - name: Trigger Render Deploy Hook
+        run: |
+          if [ -n "${{ secrets.RENDER_DEPLOY_HOOK_URL }}" ]; then
+            curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"
+            echo "✅ Despliegue disparado en Render."
+          else
+            echo "⚠️ RENDER_DEPLOY_HOOK_URL no configurado. Saltando despliegue."
+            # No fallamos el pipeline para que no te salga error rojo mientras configuras las cuentas
+          fi

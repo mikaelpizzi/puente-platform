@@ -132,7 +132,11 @@
     "inStock": "In stock",
     "filters": "Filters",
     "sortBy": "Sort by",
-    "priceRange": "Price range"
+    "priceRange": "Price range",
+    "productNotFound": "Product not found",
+    "productNotFoundMessage": "The product you're looking for doesn't exist or has been removed.",
+    "seller": "Seller",
+    "outOfStockMessage": "This product is temporarily out of stock. It will be available soon."
   },
   "inventory": {
     "title": "My Inventory",
@@ -282,7 +286,9 @@
     "total": "Total",
     "placeOrder": "Place Order",
     "orderSuccess": "Order placed successfully!",
-    "emptyCart": "Your cart is empty"
+    "emptyCart": "Your cart is empty",
+    "quantity": "Quantity",
+    "addToCart": "Add to cart"
   },
   "logistics": {
     "title": "Logistics",
@@ -331,7 +337,9 @@
     "rating": "Rating",
     "comment": "Comment",
     "submitReview": "Submit review",
-    "noReviews": "No reviews yet"
+    "noReviews": "No reviews yet",
+    "reviews": "reviews",
+    "sellerReviews": "Seller Reviews"
   },
   "errors": {
     "generic": "An error has occurred",

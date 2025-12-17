@@ -9,6 +9,10 @@ export interface OrderItem {
   price: number;
 }
 
+export interface OrderItemWithSeller extends OrderItem {
+  sellerId: string;
+}
+
 export interface Order {
   _id: string;
   buyerId: string;
@@ -36,12 +40,23 @@ export interface Order {
   updatedAt: string;
 }
 
+// Split Orders: Request can have items from multiple sellers
 export interface CreateOrderRequest {
-  sellerId: string;
-  items: OrderItem[];
+  items: OrderItemWithSeller[];
   total: number;
   shippingAddress?: Order['shippingAddress'];
   notes?: string;
+}
+
+// Split Orders: Response contains multiple orders and a single payment link
+export interface CreateOrderResponse {
+  orders: Order[];
+  paymentLink: {
+    id: string;
+    init_point: string;
+    sandbox_init_point?: string;
+  };
+  grandTotal: number;
 }
 
 export const ordersApi = api.injectEndpoints({
@@ -71,7 +86,7 @@ export const ordersApi = api.injectEndpoints({
       query: (id) => `/orders/${id}`,
       providesTags: (_result, _error, id) => [{ type: 'Orders', id }],
     }),
-    createOrder: builder.mutation<Order, CreateOrderRequest>({
+    createOrder: builder.mutation<CreateOrderResponse, CreateOrderRequest>({
       query: (body) => ({
         url: '/orders',
         method: 'POST',

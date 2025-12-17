@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ShoppingCart, MapPin, CreditCard, ArrowLeft, Trash2, CheckCircle } from 'lucide-react';
 import { selectCartItems, selectCartTotal, clearCart, removeFromCart } from '../checkout/cartSlice';
-import { useCreateOrderMutation } from '../orders/ordersApi';
+import { useCreateOrderMutation, Order } from '../orders/ordersApi';
 import { useGetAddressesQuery } from '../addresses/addressesApi';
 import toast from 'react-hot-toast';
 
@@ -19,7 +19,8 @@ export const BuyerCheckoutPage: React.FC = () => {
 
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [step, setStep] = useState<'cart' | 'address' | 'confirm' | 'success'>('cart');
-  const [createdOrderId, setCreatedOrderId] = useState<string | null>(null);
+  // Split Orders: Store array of created orders
+  const [createdOrders, setCreatedOrders] = useState<Order[]>([]);
 
   const selectedAddress = addresses?.find((a: any) => a._id === selectedAddressId);
 
@@ -43,12 +44,11 @@ export const BuyerCheckoutPage: React.FC = () => {
     if (!selectedAddress || cartItems.length === 0) return;
 
     try {
-      // Group items by seller (for now, we assume single seller - TODO: multi-seller orders)
-      // Get sellerId from the first cart item (assumes all items from same seller)
+      // Split Orders: Include sellerId per item, not at top level
       const orderData = {
-        sellerId: cartItems[0].sellerId,
         items: cartItems.map((item) => ({
           productId: item.id,
+          sellerId: item.sellerId,
           name: item.name,
           quantity: item.quantity,
           price: item.price,
@@ -63,11 +63,18 @@ export const BuyerCheckoutPage: React.FC = () => {
         },
       };
 
-      const order = await createOrder(orderData).unwrap();
-      setCreatedOrderId(order._id);
+      const result = await createOrder(orderData).unwrap();
+      // Split Orders: Store array of orders
+      setCreatedOrders(result.orders || []);
       dispatch(clearCart());
       setStep('success');
-      toast.success(t('checkout.orderSuccess'));
+
+      const orderCount = result.orders?.length || 1;
+      toast.success(
+        orderCount > 1
+          ? `¡${orderCount} pedidos creados exitosamente!`
+          : t('checkout.orderSuccess'),
+      );
     } catch (error: any) {
       console.error('Error creating order:', error);
       toast.error(error.data?.message || t('errors.generic'));
@@ -82,15 +89,42 @@ export const BuyerCheckoutPage: React.FC = () => {
             <CheckCircle className="w-10 h-10 text-emerald-600 dark:text-emerald-400" />
           </div>
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-            ¡Pedido Realizado!
+            {createdOrders.length > 1
+              ? `¡${createdOrders.length} Pedidos Creados!`
+              : '¡Pedido Realizado!'}
           </h2>
-          <p className="text-gray-500 dark:text-gray-400 mb-8">
-            Tu pedido ha sido creado exitosamente. Puedes seguir su estado en "Mis Compras".
+          <p className="text-gray-500 dark:text-gray-400 mb-4">
+            {createdOrders.length > 1
+              ? 'Tus pedidos han sido creados. Recibirás envíos separados de cada vendedor.'
+              : 'Tu pedido ha sido creado exitosamente. Puedes seguir su estado en "Mis Compras".'}
           </p>
+
+          {/* Show created orders list */}
+          {createdOrders.length > 0 && (
+            <div className="mb-6 space-y-2">
+              {createdOrders.map((order, index) => (
+                <div
+                  key={order._id}
+                  className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">📦</span>
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Pedido #{order._id?.slice(-6) || index + 1}
+                    </span>
+                  </div>
+                  <span className="text-sm font-bold text-emerald-600">
+                    ${Number(order.total || 0).toFixed(2)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+
           <div className="space-y-3">
-            {createdOrderId && (
+            {createdOrders.length === 1 && createdOrders[0]?._id && (
               <button
-                onClick={() => navigate(`/orders/${createdOrderId}`)}
+                onClick={() => navigate(`/orders/${createdOrders[0]._id}`)}
                 className="w-full py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-medium flex items-center justify-center gap-2"
               >
                 <MapPin className="w-5 h-5" />

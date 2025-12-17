@@ -1,0 +1,72 @@
+name: Pipeline Backend (Monorepo)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/backend/**'
+      - 'packages/**'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+  workflow_dispatch:
+
+jobs:
+  # 1. VALIDACIÓN: Lint y Test de todo el Backend
+  quality-check:
+    name: 🛡️ Lint & Test Backend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Ejecuta Lint en todos los servicios del backend
+      - name: Lint Backend
+        run: pnpm --filter "./apps/backend/*" run lint
+
+      # Ejecuta Tests en todos los servicios del backend (Si fallan, no despliega)
+      - name: Test Backend
+        run: pnpm --filter "./apps/backend/*" run test
+
+  # 2. DESPLIEGUE: Matriz para desplegar los 5 servicios a Fly.io
+  deploy-fly:
+    name: 🚀 Deploy ${{ matrix.service }}
+    needs: quality-check
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - api-gateway
+          - auth-service
+          - products-service
+          - finance-service
+          - logistics-service
+          # Nota: notification-service se agregará cuando tenga su fly.toml
+    steps:
+      - uses: actions/checkout@v4
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Deploy to Fly.io
+        run: |
+          if [ -n "${{ secrets.FLY_API_TOKEN }}" ]; then
+            flyctl deploy \
+              --remote-only \
+              --config apps/backend/${{ matrix.service }}/fly.toml \
+              --dockerfile apps/backend/${{ matrix.service }}/Dockerfile \
+              --ha=false
+            echo "✅ Despliegue de ${{ matrix.service }} iniciado."
+          else
+            echo "⚠️ FLY_API_TOKEN no configurado. Saltando despliegue real."
+          fi
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}

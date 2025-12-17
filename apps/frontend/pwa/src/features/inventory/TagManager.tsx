@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useGetTagsQuery, useCreateTagMutation, useDeleteTagMutation } from './tagsApi';
 import { X, Plus, Trash2, Tag as TagIcon } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -10,6 +11,7 @@ interface TagManagerProps {
 }
 
 export const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose }) => {
+  const { t } = useTranslation();
   const { data: tags, isLoading } = useGetTagsQuery();
   const [createTag, { isLoading: isCreating }] = useCreateTagMutation();
   const [deleteTag] = useDeleteTagMutation();
@@ -25,9 +27,9 @@ export const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose }) => {
     try {
       await createTag({ name: newTagName }).unwrap();
       setNewTagName('');
-      toast.success('Etiqueta creada');
+      toast.success(t('tags.created'));
     } catch (error) {
-      toast.error('Error al crear etiqueta');
+      toast.error(t('tags.createError'));
     }
   };
 
@@ -35,10 +37,10 @@ export const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose }) => {
     if (!tagToDelete) return;
     try {
       await deleteTag(tagToDelete.id).unwrap();
-      toast.success('Etiqueta eliminada');
+      toast.success(t('tags.deleted'));
       setTagToDelete(null);
     } catch (error) {
-      toast.error('Error al eliminar etiqueta');
+      toast.error(t('tags.deleteError'));
     }
   };
 
@@ -52,7 +54,7 @@ export const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose }) => {
         <div className="p-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-800/50">
           <h3 className="font-bold text-lg text-gray-900 dark:text-white flex items-center gap-2">
             <TagIcon className="w-5 h-5 text-emerald-500" />
-            Gestionar Etiquetas
+            {t('tags.manage')}
             <span
               className={`text-xs px-2 py-0.5 rounded-full ${isLimitReached ? 'bg-red-100 text-red-600' : 'bg-gray-200 text-gray-600'}`}
             >
@@ -73,9 +75,7 @@ export const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose }) => {
               type="text"
               value={newTagName}
               onChange={(e) => setNewTagName(e.target.value)}
-              placeholder={
-                isLimitReached ? 'Límite de etiquetas alcanzado' : 'Nueva etiqueta (ej. Ofertas)'
-              }
+              placeholder={isLimitReached ? t('tags.limitReached') : t('tags.placeholder')}
               disabled={isLimitReached}
               className="flex-1 px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 outline-none disabled:opacity-50 disabled:cursor-not-allowed"
               autoFocus
@@ -90,17 +90,16 @@ export const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose }) => {
           </form>
           {isLimitReached && (
             <p className="text-xs text-red-500 text-center">
-              Has alcanzado el límite máximo de {MAX_TAGS} etiquetas. Elimina algunas para crear
-              nuevas.
+              {t('tags.limitMessage', { max: MAX_TAGS })}
             </p>
           )}
 
           <div className="space-y-2 max-h-60 overflow-y-auto custom-scrollbar">
             {isLoading ? (
-              <div className="text-center py-4 text-gray-400">Cargando...</div>
+              <div className="text-center py-4 text-gray-400">{t('common.loading')}</div>
             ) : tags?.length === 0 ? (
               <div className="text-center py-8 text-gray-400 border-2 border-dashed border-gray-100 dark:border-gray-700 rounded-xl">
-                No tienes etiquetas personalizadas
+                {t('tags.noTags')}
               </div>
             ) : (
               tags?.map((tag) => (
@@ -126,9 +125,9 @@ export const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose }) => {
         isOpen={!!tagToDelete}
         onClose={() => setTagToDelete(null)}
         onConfirm={confirmDelete}
-        title="Eliminar Etiqueta"
-        message={`¿Estás seguro de que deseas eliminar la etiqueta "${tagToDelete?.name}"? Esta acción no se puede deshacer.`}
-        confirmText="Eliminar"
+        title={t('tags.deleteTitle')}
+        message={t('tags.deleteMessage', { name: tagToDelete?.name })}
+        confirmText={t('common.delete')}
         variant="danger"
       />
     </div>

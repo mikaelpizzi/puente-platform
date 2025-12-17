@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Clock,
   AlertTriangle,
@@ -47,6 +48,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   onTrash,
   onView,
 }) => {
+  const { t } = useTranslation();
   const [isLoading, setIsLoading] = React.useState(true);
   const [hasError, setHasError] = React.useState(false);
   const [currentImageIndex, setCurrentImageIndex] = React.useState(0);
@@ -230,7 +232,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           <div
             className={`text-xs font-medium ${product.stock > 0 ? 'text-emerald-600' : 'text-red-500'}`}
           >
-            {product.stock > 0 ? `${product.stock} disponibles` : 'Agotado'}
+            {product.stock > 0
+              ? t('inventory.available', { count: product.stock })
+              : t('marketplace.outOfStock')}
           </div>
 
           <div className="flex gap-2 items-center">
@@ -244,7 +248,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                     }}
                     className="text-white bg-red-500 hover:bg-red-600 px-3 py-1.5 rounded-md text-xs font-medium transition-colors shadow-sm"
                   >
-                    Corregir
+                    {t('inventory.fix')}
                   </button>
                 ) : (
                   <div className="flex items-center gap-1">
@@ -256,7 +260,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                           onTrash(product);
                         }}
                         className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                        title="Eliminar"
+                        title={t('common.delete')}
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -269,7 +273,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                       className="flex items-center gap-1.5 text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 hover:text-emerald-600 dark:hover:text-emerald-400 px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
                     >
                       <Edit2 className="w-3.5 h-3.5" />
-                      Editar
+                      {t('common.edit')}
                     </button>
                   </div>
                 )}
@@ -284,7 +288,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                   className="text-white bg-emerald-600 hover:bg-emerald-700 px-4 py-1.5 rounded-full text-xs font-bold transition-all shadow-sm hover:shadow active:scale-95 flex items-center gap-1"
                 >
                   <ShoppingCart className="w-3 h-3" />
-                  Agregar
+                  {t('common.add')}
                 </button>
               )
             )}

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 import { selectCurrentUser } from '../auth/authSlice';
 import { User, Mail, Shield, Save, MapPin } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -13,6 +14,7 @@ import {
 } from '../addresses/addressesApi';
 
 export const ProfilePage: React.FC = () => {
+  const { t } = useTranslation();
   const user = useSelector(selectCurrentUser);
   const [name, setName] = useState(user?.name || '');
   const [email] = useState(user?.email || '');
@@ -33,13 +35,13 @@ export const ProfilePage: React.FC = () => {
   const handleUpdateProfile = (e: React.FormEvent) => {
     e.preventDefault();
     // Mock update
-    toast.success('Perfil actualizado correctamente');
+    toast.success(t('profile.profileUpdated'));
   };
 
   const handleChangePassword = (e: React.FormEvent) => {
     e.preventDefault();
     // Mock password change
-    toast.success('Contraseña actualizada');
+    toast.success(t('profile.passwordUpdated'));
     setCurrentPassword('');
     setNewPassword('');
   };
@@ -51,18 +53,18 @@ export const ProfilePage: React.FC = () => {
   const handleSetDefault = async (id: string) => {
     try {
       await setDefaultAddress(id).unwrap();
-      toast.success('Dirección predeterminada actualizada');
+      toast.success(t('profile.defaultAddressUpdated'));
     } catch {
-      toast.error('Error al actualizar dirección');
+      toast.error(t('errors.generic'));
     }
   };
 
   const handleDeleteAddress = async (id: string) => {
     try {
       await deleteAddress(id).unwrap();
-      toast.success('Dirección eliminada');
+      toast.success(t('profile.addressDeleted'));
     } catch {
-      toast.error('Error al eliminar dirección');
+      toast.error(t('errors.generic'));
     }
   };
 
@@ -70,19 +72,19 @@ export const ProfilePage: React.FC = () => {
     <div className="p-4 max-w-2xl mx-auto pb-24">
       <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
         <User className="w-6 h-6" />
-        Mi Perfil
+        {t('profile.title')}
       </h2>
 
       <div className="space-y-6">
         {/* Personal Info */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-6 border border-gray-100 dark:border-gray-700">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-            Información Personal
+            {t('profile.personalInfo')}
           </h3>
           <form onSubmit={handleUpdateProfile} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Nombre Completo
+                {t('profile.fullName')}
               </label>
               <div className="relative">
                 <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -96,7 +98,7 @@ export const ProfilePage: React.FC = () => {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Correo Electrónico
+                {t('auth.email')}
               </label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -114,7 +116,7 @@ export const ProfilePage: React.FC = () => {
                 className="flex items-center gap-2 bg-emerald-500 text-white px-4 py-2 rounded-lg hover:bg-emerald-600 transition-colors"
               >
                 <Save className="w-4 h-4" />
-                Guardar Cambios
+                {t('inventory.saveChanges')}
               </button>
             </div>
           </form>
@@ -124,7 +126,7 @@ export const ProfilePage: React.FC = () => {
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-6 border border-gray-100 dark:border-gray-700">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
             <MapPin className="w-5 h-5" />
-            Mis Direcciones
+            {t('profile.myAddresses')}
           </h3>
 
           {showAddressForm ? (
@@ -134,10 +136,10 @@ export const ProfilePage: React.FC = () => {
                   await createAddress(data).unwrap();
                   await refetchAddresses();
                   setShowAddressForm(false);
-                  toast.success('Dirección guardada');
+                  toast.success(t('profile.addressSaved'));
                 } catch (error) {
                   console.error('Error creating address:', error);
-                  toast.error('Error al guardar dirección');
+                  toast.error(t('errors.generic'));
                   throw error;
                 }
               }}
@@ -158,13 +160,13 @@ export const ProfilePage: React.FC = () => {
                     onClick={() => handleSetDefault(selectedAddressId)}
                     className="flex-1 py-2 text-sm bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded-lg hover:bg-emerald-200 dark:hover:bg-emerald-900/50"
                   >
-                    Establecer como predeterminada
+                    {t('profile.setAsDefault')}
                   </button>
                   <button
                     onClick={() => handleDeleteAddress(selectedAddressId)}
                     className="py-2 px-4 text-sm bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/50"
                   >
-                    Eliminar
+                    {t('common.delete')}
                   </button>
                 </div>
               )}
@@ -174,7 +176,9 @@ export const ProfilePage: React.FC = () => {
 
         {/* Security */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-6 border border-gray-100 dark:border-gray-700">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Seguridad</h3>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+            {t('profile.security')}
+          </h3>
           <form onSubmit={handleChangePassword} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">

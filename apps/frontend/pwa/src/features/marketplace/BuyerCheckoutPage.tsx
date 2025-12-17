@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { ShoppingCart, MapPin, CreditCard, ArrowLeft, Trash2, CheckCircle } from 'lucide-react';
 import { selectCartItems, selectCartTotal, clearCart, removeFromCart } from '../checkout/cartSlice';
 import { useCreateOrderMutation } from '../orders/ordersApi';
@@ -8,6 +9,7 @@ import { useGetAddressesQuery } from '../addresses/addressesApi';
 import toast from 'react-hot-toast';
 
 export const BuyerCheckoutPage: React.FC = () => {
+  const { t } = useTranslation();
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const cartItems = useSelector(selectCartItems);
@@ -23,7 +25,7 @@ export const BuyerCheckoutPage: React.FC = () => {
 
   const handleProceedToAddress = () => {
     if (cartItems.length === 0) {
-      toast.error('Tu carrito está vacío');
+      toast.error(t('checkout.emptyCart'));
       return;
     }
     setStep('address');
@@ -31,7 +33,7 @@ export const BuyerCheckoutPage: React.FC = () => {
 
   const handleProceedToConfirm = () => {
     if (!selectedAddressId) {
-      toast.error('Selecciona una dirección de envío');
+      toast.error(t('checkout.selectAddress'));
       return;
     }
     setStep('confirm');
@@ -65,10 +67,10 @@ export const BuyerCheckoutPage: React.FC = () => {
       setCreatedOrderId(order._id);
       dispatch(clearCart());
       setStep('success');
-      toast.success('¡Pedido creado exitosamente!');
+      toast.success(t('checkout.orderSuccess'));
     } catch (error: any) {
       console.error('Error creating order:', error);
-      toast.error(error.data?.message || 'Error al crear el pedido');
+      toast.error(error.data?.message || t('errors.generic'));
     }
   };
 

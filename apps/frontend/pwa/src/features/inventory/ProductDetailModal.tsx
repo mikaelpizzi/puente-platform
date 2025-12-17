@@ -11,6 +11,7 @@ import {
 import { useSelector } from 'react-redux';
 import { selectCurrentUser } from '../auth/authSlice';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 interface ProductDetailModalProps {
   isOpen: boolean;
@@ -27,6 +28,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   onEdit,
   onAddToCart,
 }) => {
+  const { t } = useTranslation();
   const user = useSelector(selectCurrentUser);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
@@ -75,7 +77,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   const handleShare = () => {
     const url = window.location.origin + `/products/${product.id}`;
     navigator.clipboard.writeText(url);
-    toast.success('Enlace copiado al portapapeles');
+    toast.success(t('common.linkCopied'));
   };
 
   return (
@@ -134,7 +136,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
               className="w-full h-full object-contain max-h-[50vh] md:max-h-full p-4 md:p-0"
             />
           ) : (
-            <div className="text-gray-400 dark:text-gray-500 text-sm">Sin imagen</div>
+            <div className="text-gray-400 dark:text-gray-500 text-sm">{t('images.noImage')}</div>
           )}
         </div>
 
@@ -169,7 +171,9 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
               <span
                 className={`text-sm font-medium px-3 py-1 rounded-full ${product.stock > 0 ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300' : 'bg-red-100 text-red-800'}`}
               >
-                {product.stock > 0 ? `${product.stock} disponibles` : 'Agotado'}
+                {product.stock > 0
+                  ? t('inventory.available', { count: product.stock })
+                  : t('marketplace.outOfStock')}
               </span>
             </div>
 
@@ -197,7 +201,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
             {product.attributes && Object.keys(product.attributes).length > 0 && (
               <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 border border-gray-100 dark:border-gray-700/50">
                 <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">
-                  Detalles
+                  {t('common.details')}
                 </h3>
                 <div className="grid grid-cols-2 gap-y-4 gap-x-2">
                   {Object.entries(product.attributes).map(([key, value]) => (
@@ -220,7 +224,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
               className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-200 font-medium hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
             >
               <Share2 className="w-5 h-5" />
-              <span className="sm:hidden">Compartir</span>
+              <span className="sm:hidden">{t('common.share')}</span>
             </button>
 
             {isSeller ? (
@@ -232,7 +236,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                 className="flex-1 flex items-center justify-center gap-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 px-6 py-3 rounded-xl font-bold hover:opacity-90 transition-opacity"
               >
                 <Edit className="w-5 h-5" />
-                Editar Producto
+                {t('inventory.editProduct')}
               </button>
             ) : (
               <button
@@ -243,7 +247,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                 className="flex-1 flex items-center justify-center gap-2 bg-emerald-600 text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-emerald-600/20 hover:bg-emerald-700 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <ShoppingCart className="w-5 h-5" />
-                Agregar al Carrito
+                {t('checkout.addToCart')}
               </button>
             )}
           </div>

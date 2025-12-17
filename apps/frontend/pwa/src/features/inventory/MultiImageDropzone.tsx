@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Upload, X } from 'lucide-react';
 import { useUploadImageMutation } from './productsApi';
 import toast from 'react-hot-toast';
@@ -14,6 +15,7 @@ export const MultiImageDropzone: React.FC<MultiImageDropzoneProps> = ({
   onChange,
   maxImages = 5,
 }) => {
+  const { t } = useTranslation();
   const [uploadImage] = useUploadImageMutation();
   const [isUploading, setIsUploading] = useState(false);
 
@@ -25,12 +27,12 @@ export const MultiImageDropzone: React.FC<MultiImageDropzoneProps> = ({
     if (!files || files.length === 0) return;
 
     if (currentImages.length + files.length > maxImages) {
-      toast.error(`Máximo ${maxImages} imágenes permitidas`);
+      toast.error(t('images.maxAllowed', { max: maxImages }));
       return;
     }
 
     setIsUploading(true);
-    const toastId = toast.loading(`Subiendo ${files.length} imagen(es)...`);
+    const toastId = toast.loading(t('images.uploading', { count: files.length }));
 
     try {
       const uploadPromises = Array.from(files).map((file) => uploadImage(file).unwrap());
@@ -38,10 +40,10 @@ export const MultiImageDropzone: React.FC<MultiImageDropzoneProps> = ({
       const newUrls = results.map((res) => res.secure_url);
 
       onChange([...currentImages, ...newUrls]);
-      toast.success('Imágenes subidas', { id: toastId });
+      toast.success(t('images.uploaded'), { id: toastId });
     } catch (error) {
       console.error('Error uploading images:', error);
-      toast.error('Error al subir imágenes', { id: toastId });
+      toast.error(t('images.uploadError'), { id: toastId });
     } finally {
       setIsUploading(false);
       // Reset input
@@ -66,17 +68,17 @@ export const MultiImageDropzone: React.FC<MultiImageDropzoneProps> = ({
     if (!files || files.length === 0) return;
 
     if (currentImages.length + files.length > maxImages) {
-      toast.error(`Máximo ${maxImages} imágenes permitidas`);
+      toast.error(t('images.maxAllowed', { max: maxImages }));
       return;
     }
 
     setIsUploading(true);
-    const toastId = toast.loading('Subiendo imagen(es)...');
+    const toastId = toast.loading(t('images.uploadingImages'));
 
     try {
       const validFiles = Array.from(files).filter((file) => file.type.startsWith('image/'));
       if (validFiles.length < files.length) {
-        toast('Algunos archivos no eran imágenes y fueron ignorados', { icon: '⚠️' });
+        toast(t('images.someIgnored'), { icon: '⚠️' });
       }
 
       const uploadPromises = validFiles.map((file) => uploadImage(file).unwrap());
@@ -84,9 +86,9 @@ export const MultiImageDropzone: React.FC<MultiImageDropzoneProps> = ({
       const newUrls = results.map((res) => res.secure_url);
 
       onChange([...currentImages, ...newUrls]);
-      toast.success('Imágenes subidas', { id: toastId });
+      toast.success(t('images.uploaded'), { id: toastId });
     } catch (error) {
-      toast.error('Error al subir', { id: toastId });
+      toast.error(t('images.uploadError'), { id: toastId });
     } finally {
       setIsUploading(false);
     }
@@ -136,7 +138,7 @@ export const MultiImageDropzone: React.FC<MultiImageDropzoneProps> = ({
               {/* Cover Badge for first image */}
               {idx === 0 && (
                 <div className="absolute bottom-0 left-0 right-0 bg-emerald-600/90 text-white text-[10px] text-center py-0.5 backdrop-blur-sm font-medium">
-                  Principal
+                  {t('images.main')}
                 </div>
               )}
             </div>
@@ -175,10 +177,10 @@ export const MultiImageDropzone: React.FC<MultiImageDropzoneProps> = ({
               </div>
               <div>
                 <p className="font-medium text-gray-900 dark:text-white">
-                  {isUploading ? 'Subiendo...' : 'Haz click o arrastra imágenes'}
+                  {isUploading ? t('images.uploadingText') : t('images.clickOrDrag')}
                 </p>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                  {currentImages.length}/{maxImages} imágenes (JPG, PNG, WEBP)
+                  {t('images.countFormat', { current: currentImages.length, max: maxImages })}
                 </p>
               </div>
             </div>

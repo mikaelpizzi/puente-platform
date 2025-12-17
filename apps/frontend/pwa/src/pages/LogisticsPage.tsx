@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useSocketContext } from '../providers/SocketProvider';
 import {
   Truck,
@@ -291,6 +292,7 @@ const PODModal: React.FC<PODModalProps> = ({ orderId, onClose, onComplete, isLoa
 };
 
 export const LogisticsPage: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const user = useSelector(selectCurrentUser);
   const isCourier = user?.role === 'COURIER';
@@ -417,7 +419,7 @@ export const LogisticsPage: React.FC = () => {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh]">
         <Loader2 className="w-10 h-10 text-emerald-500 animate-spin mb-4" />
-        <p className="text-gray-500 dark:text-gray-400">Cargando entregas...</p>
+        <p className="text-gray-500 dark:text-gray-400">{t('logistics.loadingDeliveries')}</p>
       </div>
     );
   }
@@ -427,11 +429,11 @@ export const LogisticsPage: React.FC = () => {
       <div className="p-4 pb-24">
         <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-6 flex items-center gap-2">
           <Truck className="text-emerald-500" />
-          Mis Envíos
+          {t('nav.shipping')}
         </h2>
         <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 text-center">
           <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <p className="text-gray-500 dark:text-gray-400">Esta sección es solo para repartidores</p>
+          <p className="text-gray-500 dark:text-gray-400">{t('logistics.courierOnly')}</p>
         </div>
       </div>
     );
@@ -454,7 +456,7 @@ export const LogisticsPage: React.FC = () => {
         <div className="p-4 bg-emerald-50 dark:bg-emerald-900/20">
           <h2 className="text-lg font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
             <Package className="text-emerald-500" />
-            Mis Entregas Activas ({activeDeliveries.length})
+            {t('logistics.activeDeliveries')} ({activeDeliveries.length})
           </h2>
           <div className="space-y-3">
             {activeDeliveries.map((order) => (
@@ -464,7 +466,7 @@ export const LogisticsPage: React.FC = () => {
               >
                 <div className="flex justify-between items-start mb-2">
                   <span className="text-xs font-bold px-2 py-1 rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400">
-                    EN CAMINO
+                    {t('logistics.enRoute')}
                   </span>
                   <span className="font-bold text-emerald-600">${order.total.toFixed(2)}</span>
                 </div>

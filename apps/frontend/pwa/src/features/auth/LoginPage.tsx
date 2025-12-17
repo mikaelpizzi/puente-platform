@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useLoginMutation } from './authApi';
 import { useAppDispatch } from '../../app/hooks';
 import { setCredentials } from './authSlice';
@@ -51,6 +52,7 @@ const DEMO_ACCOUNTS = [
 const DEMO_PASSWORD = 'password123';
 
 export const LoginPage: React.FC = () => {
+  const { t } = useTranslation();
   const [showAccountSelector, setShowAccountSelector] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -61,7 +63,7 @@ export const LoginPage: React.FC = () => {
 
   const handleAccountSelect = async (account: (typeof DEMO_ACCOUNTS)[0]) => {
     // Auto-fill and submit with demo credentials
-    const loadingToast = toast.loading(`Entrando como ${account.name}...`);
+    const loadingToast = toast.loading(t('auth.enteringAs', { name: account.name }));
 
     try {
       const loginResponse = await login({
@@ -90,7 +92,7 @@ export const LoginPage: React.FC = () => {
       };
 
       dispatch(setCredentials({ user, token }));
-      toast.success(`¡Bienvenido, ${account.name}!`, {
+      toast.success(t('auth.welcomeUser', { name: account.name }), {
         id: loadingToast,
         style: { background: '#10B981', color: '#fff' },
         iconTheme: { primary: '#fff', secondary: '#10B981' },
@@ -103,9 +105,9 @@ export const LoginPage: React.FC = () => {
       else navigate('/');
     } catch (err: any) {
       console.error('Failed to login:', err);
-      let errorMessage = 'Error al iniciar sesión';
+      let errorMessage = t('errors.loginFailed');
       if (err.status === 'FETCH_ERROR') {
-        errorMessage = 'Error de conexión. Verifica que el backend esté corriendo.';
+        errorMessage = t('auth.connectionError');
       } else if (err.data?.message) {
         errorMessage = err.data.message;
       }
@@ -140,7 +142,7 @@ export const LoginPage: React.FC = () => {
       };
 
       dispatch(setCredentials({ user, token }));
-      toast.success(`¡Bienvenido de vuelta!`, { id: loadingToast });
+      toast.success(t('auth.welcomeBack'), { id: loadingToast });
 
       if (user.role === 'SELLER') navigate('/inventory');
       else if (user.role === 'COURIER') navigate('/logistics');
@@ -148,9 +150,9 @@ export const LoginPage: React.FC = () => {
       else navigate('/');
     } catch (err: any) {
       console.error('Failed to login:', err);
-      let errorMessage = 'Credenciales incorrectas';
+      let errorMessage = t('auth.invalidCredentials');
       if (err.status === 'FETCH_ERROR') {
-        errorMessage = 'Error de conexión. Verifica que el backend esté corriendo.';
+        errorMessage = t('auth.connectionError');
       } else if (err.data?.message) {
         errorMessage = err.data.message;
       }
@@ -169,9 +171,9 @@ export const LoginPage: React.FC = () => {
               <span className="text-white font-bold text-3xl">P</span>
             </div>
             <h2 className="mt-6 text-3xl font-extrabold text-gray-900 dark:text-white">
-              Bienvenido
+              {t('auth.welcome')}
             </h2>
-            <p className="mt-2 text-gray-600 dark:text-gray-400">¿Quién eres?</p>
+            <p className="mt-2 text-gray-600 dark:text-gray-400">{t('auth.whoAreYou')}</p>
           </div>
 
           {/* Account Cards */}
@@ -227,7 +229,7 @@ export const LoginPage: React.FC = () => {
               className="inline-flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
             >
               <UserPlus className="w-4 h-4" />
-              Usar otra cuenta o registrarse
+              {t('auth.useOtherAccount')}
             </button>
           </div>
         </div>
@@ -244,10 +246,10 @@ export const LoginPage: React.FC = () => {
             <span className="text-white font-bold text-2xl">P</span>
           </div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900 dark:text-white">
-            Iniciar Sesión
+            {t('auth.login')}
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
-            Ingresa con tu cuenta
+            {t('auth.signInWithAccount')}
           </p>
         </div>
 
@@ -258,7 +260,7 @@ export const LoginPage: React.FC = () => {
                 htmlFor="email"
                 className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
               >
-                Correo Electrónico
+                {t('auth.email')}
               </label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -278,7 +280,7 @@ export const LoginPage: React.FC = () => {
                 htmlFor="password"
                 className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
               >
-                Contraseña
+                {t('auth.password')}
               </label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -304,10 +306,10 @@ export const LoginPage: React.FC = () => {
 
           <div className="flex items-center justify-between">
             <Link to="/register" className="text-sm text-emerald-600 hover:text-emerald-500">
-              Crear cuenta
+              {t('auth.register')}
             </Link>
             <Link to="/forgot-password" className="text-sm text-emerald-600 hover:text-emerald-500">
-              ¿Olvidaste tu contraseña?
+              {t('auth.forgotPassword')}
             </Link>
           </div>
 
@@ -319,10 +321,10 @@ export const LoginPage: React.FC = () => {
             {isLoading ? (
               <>
                 <Loader2 className="animate-spin h-5 w-5" />
-                Ingresando...
+                {t('auth.signingIn')}
               </>
             ) : (
-              'Iniciar Sesión'
+              t('auth.login')
             )}
           </button>
 
@@ -333,7 +335,7 @@ export const LoginPage: React.FC = () => {
               onClick={() => setShowAccountSelector(true)}
               className="text-sm text-gray-500 hover:text-emerald-600 transition-colors"
             >
-              ← Volver a selección rápida
+              {t('auth.backToQuickSelect')}
             </button>
           </div>
         </form>

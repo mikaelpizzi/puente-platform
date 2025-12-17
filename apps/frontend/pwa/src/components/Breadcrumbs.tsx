@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { ChevronRight, Home } from 'lucide-react';
 
 interface BreadcrumbItem {
@@ -7,20 +8,21 @@ interface BreadcrumbItem {
   path: string;
 }
 
-// Route to breadcrumb mapping
-const routeLabels: Record<string, string> = {
-  '': 'Inicio',
-  marketplace: 'Comprar',
-  inventory: 'Inventario',
-  orders: 'Pedidos',
-  checkout: 'Cobrar',
-  finance: 'Finanzas',
-  logistics: 'Envíos',
-  profile: 'Mi Perfil',
-  track: 'Seguimiento',
+// Route to translation key mapping
+const routeKeys: Record<string, string> = {
+  '': 'nav.home',
+  marketplace: 'nav.buy',
+  inventory: 'nav.inventory',
+  orders: 'nav.mySales',
+  checkout: 'nav.charge',
+  finance: 'nav.finance',
+  logistics: 'nav.shipping',
+  profile: 'profile.title',
+  track: 'orders.trackOrder',
 };
 
 export const Breadcrumbs: React.FC = () => {
+  const { t } = useTranslation();
   const location = useLocation();
   const pathSegments = location.pathname.split('/').filter(Boolean);
 
@@ -29,12 +31,13 @@ export const Breadcrumbs: React.FC = () => {
     return null;
   }
 
-  const breadcrumbs: BreadcrumbItem[] = [{ label: 'Inicio', path: '/' }];
+  const breadcrumbs: BreadcrumbItem[] = [{ label: t('nav.home'), path: '/' }];
 
   let currentPath = '';
   pathSegments.forEach((segment) => {
     currentPath += `/${segment}`;
-    const label = routeLabels[segment] || segment;
+    const key = routeKeys[segment];
+    const label = key ? t(key) : segment;
     breadcrumbs.push({ label, path: currentPath });
   });
 

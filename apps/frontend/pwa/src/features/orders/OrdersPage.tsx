@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Package,
   Clock,
@@ -20,6 +21,7 @@ import {
 } from './ordersApi';
 
 export const OrdersPage: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const user = useSelector(selectCurrentUser);
   const userRole = user?.role;
@@ -96,14 +98,7 @@ export const OrdersPage: React.FC = () => {
   };
 
   const getStatusLabel = (status: string) => {
-    const labels: Record<string, string> = {
-      pending: 'Pendiente',
-      processing: 'Procesando',
-      shipped: 'En Camino',
-      delivered: 'Entregado',
-      cancelled: 'Cancelado',
-    };
-    return labels[status] || status;
+    return t(`orders.${status}`, { defaultValue: status });
   };
 
   // Show both tabs only for ADMIN, otherwise show only the relevant one
@@ -113,7 +108,11 @@ export const OrdersPage: React.FC = () => {
     <div className="pb-24 min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="bg-white dark:bg-gray-800 shadow p-4 sticky top-0 z-10">
         <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-4">
-          {userRole === 'SELLER' ? 'Mis Ventas' : userRole === 'BUYER' ? 'Mis Compras' : 'Pedidos'}
+          {userRole === 'SELLER'
+            ? t('nav.mySales')
+            : userRole === 'BUYER'
+              ? t('nav.myOrders')
+              : t('orders.title')}
         </h2>
 
         {/* Role Tabs - Only show if ADMIN or if we want to show tabs */}
@@ -127,7 +126,7 @@ export const OrdersPage: React.FC = () => {
                   : 'text-gray-500 dark:text-gray-400 hover:text-gray-700'
               }`}
             >
-              Mis Compras
+              {t('nav.myOrders')}
             </button>
             <button
               onClick={() => setActiveTab('seller')}
@@ -137,7 +136,7 @@ export const OrdersPage: React.FC = () => {
                   : 'text-gray-500 dark:text-gray-400 hover:text-gray-700'
               }`}
             >
-              Mis Ventas
+              {t('nav.mySales')}
             </button>
           </div>
         )}
@@ -155,7 +154,7 @@ export const OrdersPage: React.FC = () => {
                     : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200'
                 }`}
               >
-                {status === 'all' ? 'Todos' : getStatusLabel(status)}
+                {status === 'all' ? t('orders.all') : getStatusLabel(status)}
               </button>
             ),
           )}
@@ -174,7 +173,7 @@ export const OrdersPage: React.FC = () => {
         {error && (
           <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4 text-center">
             <AlertCircle className="w-8 h-8 text-red-500 mx-auto mb-2" />
-            <p className="text-red-600 dark:text-red-400">Error al cargar pedidos</p>
+            <p className="text-red-600 dark:text-red-400">{t('errors.generic')}</p>
           </div>
         )}
 

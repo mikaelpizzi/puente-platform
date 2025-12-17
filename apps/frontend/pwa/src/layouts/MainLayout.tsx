@@ -1,26 +1,16 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import {
-  Home,
-  Package,
-  DollarSign,
-  Truck,
-  ShoppingCart,
-  LogOut,
-  Moon,
-  Sun,
-  User,
-  ChevronDown,
-  ClipboardList,
-} from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { Home, Package, Truck, ShoppingCart, ClipboardList, DollarSign } from 'lucide-react';
 import { OfflineSyncManager } from '../features/inventory/OfflineSyncManager';
 import { ConflictResolver } from '../features/sync/ConflictResolver';
 import { logout, selectCurrentUser } from '../features/auth/authSlice';
 import { ConfirmationModal } from '../components/ui/ConfirmationModal';
-import { useTheme } from '../app/ThemeContext';
+import { SettingsDrawer } from '../components/SettingsDrawer';
 import { NotificationBell } from '../features/notifications/NotificationBell';
 import { Breadcrumbs } from '../components/Breadcrumbs';
+import { FloatingCart } from '../components/FloatingCart';
 import {
   markAsRead,
   markAllAsRead,
@@ -30,46 +20,47 @@ import {
 import type { RootState } from '../app/store';
 
 export const MainLayout: React.FC = () => {
+  const { t } = useTranslation();
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const user = useSelector(selectCurrentUser);
-  const { isDarkMode, toggleTheme } = useTheme();
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
-  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   // Notifications state from Redux
   const notifications = useSelector((state: RootState) => state.notifications.notifications);
   const unreadCount = useSelector((state: RootState) => state.notifications.unreadCount);
 
   const allNavItems = [
-    { to: '/', icon: Home, label: 'Inicio', roles: ['SELLER', 'BUYER'] },
-    { to: '/marketplace', icon: ShoppingCart, label: 'Comprar', roles: ['BUYER'] },
-    { to: '/inventory', icon: Package, label: 'Inventario', roles: ['SELLER'] },
-    { to: '/orders', icon: ClipboardList, label: 'Mis Ventas', roles: ['SELLER'] },
-    { to: '/orders', icon: ClipboardList, label: 'Mis Compras', roles: ['BUYER'] },
-    { to: '/checkout', icon: ShoppingCart, label: 'Cobrar', roles: ['SELLER'] },
-    { to: '/finance', icon: DollarSign, label: 'Finanzas', roles: ['SELLER'] },
-    { to: '/logistics', icon: Truck, label: 'Envíos', roles: ['SELLER', 'COURIER'] },
+    { to: '/', icon: Home, labelKey: 'nav.home', roles: ['SELLER', 'BUYER'] },
+    { to: '/marketplace', icon: ShoppingCart, labelKey: 'nav.buy', roles: ['BUYER'] },
+    { to: '/inventory', icon: Package, labelKey: 'nav.inventory', roles: ['SELLER'] },
+    { to: '/orders', icon: ClipboardList, labelKey: 'nav.mySales', roles: ['SELLER'] },
+    { to: '/orders', icon: ClipboardList, labelKey: 'nav.myOrders', roles: ['BUYER'] },
+    { to: '/checkout', icon: ShoppingCart, labelKey: 'nav.charge', roles: ['SELLER'] },
+    { to: '/finance', icon: DollarSign, labelKey: 'nav.finance', roles: ['SELLER'] },
+    { to: '/logistics', icon: Truck, labelKey: 'nav.shipping', roles: ['SELLER', 'COURIER'] },
   ];
 
   const navItems = allNavItems.filter((item) => user?.role && item.roles.includes(user.role));
 
   const handleLogout = () => {
     dispatch(logout());
+    setIsLogoutModalOpen(false);
     navigate('/login');
   };
 
-  // Close menu when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setIsUserMenuOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  const isDarkMode = document.documentElement.classList.contains('dark');
+
+  const toggleTheme = () => {
+    if (isDarkMode) {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    } else {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col transition-colors duration-200">
@@ -95,67 +86,16 @@ export const MainLayout: React.FC = () => {
             }}
           />
 
-          {/* User Menu */}
-          <div className="relative" ref={menuRef}>
-            <button
-              onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-              className="flex items-center gap-2 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-            >
-              <div className="w-8 h-8 bg-emerald-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
-              </div>
-              <ChevronDown
-                className={`w-4 h-4 text-gray-500 transition-transform ${isUserMenuOpen ? 'rotate-180' : ''}`}
-              />
-            </button>
-
-            {/* Dropdown Menu */}
-            {isUserMenuOpen && (
-              <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 py-1 animate-in fade-in zoom-in-95 duration-200 origin-top-right">
-                <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-700">
-                  <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                    {user?.name || 'Usuario'}
-                  </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user?.email}</p>
-                </div>
-
-                <button
-                  onClick={() => {
-                    navigate('/profile');
-                    setIsUserMenuOpen(false);
-                  }}
-                  className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2"
-                >
-                  <User className="w-4 h-4" />
-                  Mi Perfil
-                </button>
-
-                <button
-                  onClick={() => {
-                    toggleTheme();
-                    // Keep menu open or close? Let's keep it open to see change
-                  }}
-                  className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2"
-                >
-                  {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-                  Tema: {isDarkMode ? 'Oscuro' : 'Claro'}
-                </button>
-
-                <div className="border-t border-gray-100 dark:border-gray-700 my-1"></div>
-
-                <button
-                  onClick={() => {
-                    setIsUserMenuOpen(false);
-                    setIsLogoutModalOpen(true);
-                  }}
-                  className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
-                >
-                  <LogOut className="w-4 h-4" />
-                  Cerrar Sesión
-                </button>
-              </div>
-            )}
-          </div>
+          {/* User Avatar - Opens Settings Drawer */}
+          <button
+            onClick={() => setIsSettingsOpen(true)}
+            className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            aria-label="Abrir configuración"
+          >
+            <div className="w-9 h-9 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-md">
+              {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+            </div>
+          </button>
         </div>
       </header>
 
@@ -166,11 +106,14 @@ export const MainLayout: React.FC = () => {
         <Outlet />
       </main>
 
+      {/* Floating Cart for Buyers */}
+      <FloatingCart />
+
       <nav className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 fixed bottom-0 w-full pb-safe z-20 transition-colors duration-200">
         <div className="flex justify-around items-center h-16">
-          {navItems.map(({ to, icon: Icon, label }) => (
+          {navItems.map(({ to, icon: Icon, labelKey }) => (
             <NavLink
-              key={to}
+              key={`${to}-${labelKey}`}
               to={to}
               className={({ isActive }) =>
                 `flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors ${
@@ -181,19 +124,29 @@ export const MainLayout: React.FC = () => {
               }
             >
               <Icon className="w-6 h-6" />
-              <span className="text-[10px] font-medium">{label}</span>
+              <span className="text-[10px] font-medium">{t(labelKey)}</span>
             </NavLink>
           ))}
         </div>
       </nav>
 
+      {/* Settings Drawer */}
+      <SettingsDrawer
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        onLogout={() => {
+          setIsSettingsOpen(false);
+          setIsLogoutModalOpen(true);
+        }}
+      />
+
       <ConfirmationModal
         isOpen={isLogoutModalOpen}
         onClose={() => setIsLogoutModalOpen(false)}
         onConfirm={handleLogout}
-        title="Cerrar Sesión"
-        message="¿Estás seguro que deseas salir de tu cuenta?"
-        confirmText="Salir"
+        title={t('auth.logout')}
+        message={t('auth.logoutConfirm')}
+        confirmText={t('auth.logoutButton')}
         variant="danger"
       />
     </div>

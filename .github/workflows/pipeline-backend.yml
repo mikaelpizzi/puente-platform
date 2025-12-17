@@ -51,7 +51,7 @@ jobs:
           - products-service
           - finance-service
           - logistics-service
-          # Nota: notification-service se agregará cuando tenga su fly.toml
+          - notification-service
     steps:
       - uses: actions/checkout@v4
       - uses: superfly/flyctl-actions/setup-flyctl@master

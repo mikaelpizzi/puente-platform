@@ -54,6 +54,8 @@ services:
         value: 3003
       - key: DATABASE_URL
         sync: false
+      - key: REDIS_URL
+        sync: false
 
   # 5. LOGISTICS SERVICE
   - type: web
@@ -90,9 +92,11 @@ services:
         sync: false
       - key: MAIL_HOST
         value: 'smtp.resend.com'
+      - key: MAIL_PORT
+        value: '465'
       - key: MAIL_USER
         value: 'resend'
       - key: MAIL_PASSWORD
         sync: false
       - key: MAIL_FROM
-        value: 'onboarding@resend.dev'
+        sync: false

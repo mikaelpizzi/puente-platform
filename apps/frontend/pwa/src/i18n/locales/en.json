@@ -288,7 +288,10 @@
     "orderSuccess": "Order placed successfully!",
     "emptyCart": "Your cart is empty",
     "quantity": "Quantity",
-    "addToCart": "Add to cart"
+    "addToCart": "Add to cart",
+    "item": "item",
+    "items": "items",
+    "proceedToCheckout": "Proceed to Checkout"
   },
   "logistics": {
     "title": "Logistics",

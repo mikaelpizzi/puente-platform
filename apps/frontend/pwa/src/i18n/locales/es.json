@@ -289,7 +289,10 @@
     "orderSuccess": "¡Pedido realizado con éxito!",
     "emptyCart": "Tu carrito está vacío",
     "quantity": "Cantidad",
-    "addToCart": "Añadir al carrito"
+    "addToCart": "Añadir al carrito",
+    "item": "artículo",
+    "items": "artículos",
+    "proceedToCheckout": "Proceder al Pago"
   },
   "logistics": {
     "title": "Logística",

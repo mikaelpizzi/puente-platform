@@ -1,0 +1,78 @@
+services:
+  # 1. API GATEWAY
+  - type: web
+    name: puente-gateway
+    env: docker
+    dockerContext: .
+    dockerfilePath: apps/backend/api-gateway/Dockerfile
+    plan: free
+    envVars:
+      - key: PORT
+        value: 3000
+      - key: DATABASE_URL
+        sync: false # Se configurará en el dashboard
+
+  # 2. AUTH SERVICE
+  - type: web
+    name: puente-auth
+    env: docker
+    dockerContext: .
+    dockerfilePath: apps/backend/auth-service/Dockerfile
+    plan: free
+    envVars:
+      - key: PORT
+        value: 3001
+      - key: DATABASE_URL
+        sync: false
+
+  # 3. PRODUCTS SERVICE
+  - type: web
+    name: puente-products
+    env: docker
+    dockerContext: .
+    dockerfilePath: apps/backend/products-service/Dockerfile
+    plan: free
+    envVars:
+      - key: PORT
+        value: 3002
+      - key: DATABASE_URL
+        sync: false
+
+  # 4. FINANCE SERVICE
+  - type: web
+    name: puente-finance
+    env: docker
+    dockerContext: .
+    dockerfilePath: apps/backend/finance-service/Dockerfile
+    plan: free
+    envVars:
+      - key: PORT
+        value: 3003
+      - key: DATABASE_URL
+        sync: false
+
+  # 5. LOGISTICS SERVICE
+  - type: web
+    name: puente-logistics
+    env: docker
+    dockerContext: .
+    dockerfilePath: apps/backend/logistics-service/Dockerfile
+    plan: free
+    envVars:
+      - key: PORT
+        value: 3004
+      - key: DATABASE_URL
+        sync: false
+
+  # 6. NOTIFICATION SERVICE
+  - type: web
+    name: puente-notifications
+    env: docker
+    dockerContext: .
+    dockerfilePath: apps/backend/notification-service/Dockerfile
+    plan: free
+    envVars:
+      - key: PORT
+        value: 3005
+      - key: DATABASE_URL
+        sync: false

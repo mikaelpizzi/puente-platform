@@ -1,0 +1,38 @@
+name: Pipeline Backend (CI Only)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/backend/**'
+      - 'packages/**'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'apps/backend/**'
+      - 'packages/**'
+
+jobs:
+  quality-check:
+    name: 🛡️ Lint & Test Backend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint Backend
+        run: pnpm --filter "./apps/backend/*" run lint
+
+      - name: Test Backend
+        run: pnpm --filter "./apps/backend/*" run test

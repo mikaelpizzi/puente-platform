@@ -1,4 +1,4 @@
-app = "puente-notification-service"
+app = "puente-notification-mikaelpizzi"
 primary_region = "mia"
 
 [build]

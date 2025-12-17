@@ -1,4 +1,4 @@
-app = "puente-finance-service"
+app = "puente-finance-mikaelpizzi"
 primary_region = "mia"
 
 [build]

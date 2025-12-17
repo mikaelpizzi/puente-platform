@@ -1,4 +1,4 @@
-app = "puente-auth-service"
+app = "puente-auth-mikaelpizzi"
 primary_region = "mia"
 
 [build]

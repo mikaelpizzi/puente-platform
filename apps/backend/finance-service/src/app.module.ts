@@ -3,6 +3,8 @@ import { ConfigModule } from '@nestjs/config';
 import { LoggerModule } from 'nestjs-pino';
 import { PrismaModule } from './prisma/prisma.module';
 import { FinanceModule } from './finance/finance.module';
+import { WebhookModule } from './webhook/webhook.module';
+import { RedisModule } from './redis/redis.module';
 import { HealthController } from './health/health.controller';
 import { SanityCheckMiddleware } from './common/middleware/sanity-check.middleware';
 import type { IncomingHttpHeaders, IncomingMessage } from 'http';
@@ -84,8 +86,10 @@ const shouldSkipAutoLogging = (req: IncomingMessage) => req.url?.includes('/heal
       isGlobal: true,
       envFilePath: ['.env.local', '.env', '../../.env', '../../../.env'],
     }),
+    RedisModule,
     PrismaModule,
     FinanceModule,
+    WebhookModule,
   ],
   controllers: [HealthController],
 })

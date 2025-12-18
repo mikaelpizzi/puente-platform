@@ -1,29 +1,30 @@
-# syntax=docker/dockerfile:1.7
-
 FROM node:20-alpine AS base
-WORKDIR /repo
-ENV PNPM_HOME="/repo/.pnpm"
+ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
-ENV HUSKY=0
-RUN apk add --no-cache libc6-compat python3 make g++ \
-    && corepack enable
+RUN corepack enable
 
 FROM base AS builder
-ARG SERVICE_NAME=@puente/auth-service
-ARG SERVICE_PATH=apps/backend/auth-service
-ARG SERVICE_PORT=3001
-COPY . .
-RUN pnpm install --filter ${SERVICE_NAME}... --frozen-lockfile
-RUN pnpm --filter ${SERVICE_NAME}... build
-RUN pnpm deploy --filter ${SERVICE_NAME}... --prod /opt/app
-RUN cp -r ${SERVICE_PATH}/dist /opt/app/dist
-
-FROM node:20-alpine AS runner
-ARG SERVICE_PORT=3001
-ENV NODE_ENV=production
-ENV PORT=${SERVICE_PORT}
 WORKDIR /app
-RUN apk add --no-cache libc6-compat
-COPY --from=builder /opt/app ./
-EXPOSE ${SERVICE_PORT}
+COPY . .
+RUN pnpm install --frozen-lockfile
+
+# Generate Prisma Client (required for auth-service)
+RUN cd apps/backend/auth-service && npx prisma generate
+
+# Build the service
+RUN pnpm --filter @puente/auth-service build
+
+# Isolate production dependencies
+RUN pnpm deploy --filter @puente/auth-service --prod /prod/app
+
+FROM base AS runner
+WORKDIR /app
+ENV NODE_ENV=production
+
+# Copy dependencies and final build
+COPY --from=builder /prod/app/node_modules ./node_modules
+COPY --from=builder /app/apps/backend/auth-service/dist ./dist
+COPY --from=builder /prod/app/package.json ./package.json
+
+USER node
 CMD ["node", "dist/main.js"]

@@ -3,28 +3,16 @@ WORKDIR /app
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 RUN corepack enable
-
-# Copy all source code
 COPY . .
-
-# Install all dependencies
 RUN pnpm install --frozen-lockfile
+RUN pnpm --filter ./apps/backend/notification-service build
 
-# Build the service
-RUN pnpm --filter @puente/notification-service build
-
-# --- RUNNER STAGE ---
 FROM node:20-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
-
-# Copy everything from builder to guarantee no missing files
 COPY --from=builder /app .
-
-# Security user
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nestjs
 USER nestjs
-
 EXPOSE 3005
 CMD ["node", "apps/backend/notification-service/dist/main.js"]

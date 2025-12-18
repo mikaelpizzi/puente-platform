@@ -17,8 +17,8 @@ async function bootstrap() {
   // Setup Swagger documentation
   setupSwagger(app);
 
-  const port = process.env.PRODUCTS_SERVICE_PORT || 3002;
-  await app.listen(port);
+  const port = process.env.PORT || process.env.PRODUCTS_SERVICE_PORT || 3002;
+  await app.listen(port, '0.0.0.0');
   const logger = app.get(Logger);
   logger.log(`🚀 Products service running on port ${port}`);
   logger.log(`📚 Swagger docs at http://localhost:${port}/docs`);

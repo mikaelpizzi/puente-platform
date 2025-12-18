@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useCallback, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useMemo, ReactNode } from 'react';
 import { useSocket } from '../hooks/useSocket';
 import { useDispatch, useSelector } from 'react-redux';
 import { addNotification, NotificationType } from '../features/notifications/notificationsSlice';
@@ -30,20 +30,11 @@ interface SocketProviderProps {
 
 /**
  * Provider component that wraps the app with Socket.IO connection.
- * Automatically subscribes to user notifications when authenticated.
+ * Uses singleton socket manager - no re-initialization issues.
  */
 export function SocketProvider({ children }: SocketProviderProps) {
   const dispatch = useDispatch();
-
-  // Get user ID from auth state
   const userId = useSelector((state: RootState) => state.auth?.user?.id);
-
-  // IMPORTANT: Memoize callback to prevent socket reconnection loop
-  // Without useCallback, a new function reference would trigger useSocket
-  // to disconnect and reconnect on every render
-  const handleFallbackToPolling = useCallback(() => {
-    console.warn('[SocketProvider] Falling back to polling mode');
-  }, []);
 
   const {
     isConnected,
@@ -54,16 +45,12 @@ export function SocketProvider({ children }: SocketProviderProps) {
     leaveRoom,
     subscribe,
     emit,
-  } = useSocket({
-    autoConnect: true,
-    onFallbackToPolling: handleFallbackToPolling,
-  });
+  } = useSocket();
 
   // Join user room when connected and authenticated
   useEffect(() => {
     if (isConnected && userId) {
       joinRoom('user:join', { userId });
-      console.log(`[SocketProvider] Joined user room: ${userId}`);
     }
   }, [isConnected, userId, joinRoom]);
 
@@ -76,11 +63,8 @@ export function SocketProvider({ children }: SocketProviderProps) {
         type: string;
         title: string;
         message: string;
-        timestamp: number;
-        data?: Record<string, unknown>;
       };
 
-      // Map incoming type string to NotificationType enum
       const typeMap: Record<string, NotificationType> = {
         order_created: NotificationType.ORDER_CREATED,
         order_accepted: NotificationType.ORDER_ACCEPTED,

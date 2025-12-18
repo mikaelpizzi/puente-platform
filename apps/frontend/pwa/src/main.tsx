@@ -15,6 +15,13 @@ import './index.css';
 initSentry();
 initPostHog();
 
+// DEBUG: Remove after verifying Vercel env vars
+console.log('🔧 DEBUG VITE_API_URL:', import.meta.env.VITE_API_URL);
+console.log('🔧 DEBUG VITE_WS_URL:', import.meta.env.VITE_WS_URL);
+console.log('🔧 DEBUG VITE_ENABLE_SOCKET:', import.meta.env.VITE_ENABLE_SOCKET);
+console.log('🔧 DEBUG MODE:', import.meta.env.MODE);
+console.log('🔧 DEBUG PROD:', import.meta.env.PROD);
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <Provider store={store}>

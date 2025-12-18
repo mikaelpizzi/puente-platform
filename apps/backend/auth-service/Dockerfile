@@ -1,30 +1,36 @@
-FROM node:20-alpine AS base
+FROM node:20-alpine AS builder
+WORKDIR /app
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 RUN corepack enable
 
-FROM base AS builder
-WORKDIR /app
+# Copy all source code
 COPY . .
+
+# Install all dependencies
 RUN pnpm install --frozen-lockfile
 
-# FIX: Variables falsas para Prisma
-ENV AUTH_DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
+# --- PRISMA BLOCK (Required for auth-service) ---
 ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
-
+ENV AUTH_DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
 RUN cd apps/backend/auth-service && npx prisma generate
+# ------------------------------------------------
 
+# Build the service
 RUN pnpm --filter @puente/auth-service build
-RUN pnpm deploy --filter @puente/auth-service --prod /prod/app
 
-FROM base AS runner
+# --- RUNNER STAGE ---
+FROM node:20-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 
-COPY --from=builder /prod/app/node_modules ./node_modules
-# FIX: Copiar 'dist' desde la ruta ORIGINAL
-COPY --from=builder /app/apps/backend/auth-service/dist ./dist
-COPY --from=builder /prod/app/package.json ./package.json
+# Copy everything from builder to guarantee no missing files
+COPY --from=builder /app .
 
-USER node
-CMD ["node", "dist/main.js"]
+# Security user
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nestjs
+USER nestjs
+
+EXPOSE 3001
+CMD ["node", "apps/backend/auth-service/dist/main.js"]

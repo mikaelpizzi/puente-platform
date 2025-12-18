@@ -19,8 +19,15 @@ interface SocketState {
   socketId: string | null;
 }
 
-// Check if socket is enabled - allows complete disable via env var
-const SOCKET_ENABLED = import.meta.env.VITE_ENABLE_SOCKET !== 'false';
+// Socket is enabled if:
+// 1. VITE_ENABLE_SOCKET is explicitly set to 'true', OR
+// 2. VITE_ENABLE_SOCKET is not set AND we're in development mode
+// This means in production, socket is disabled by default unless explicitly enabled
+const isProduction = import.meta.env.PROD;
+const hasExplicitSetting = import.meta.env.VITE_ENABLE_SOCKET !== undefined;
+const SOCKET_ENABLED = hasExplicitSetting
+  ? import.meta.env.VITE_ENABLE_SOCKET === 'true'
+  : !isProduction; // Enabled in dev, disabled in prod by default
 
 /**
  * Custom hook for Socket.IO connection management.

@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useMemo, useCallback, ReactNode } from 'react';
 import { useSocket } from '../hooks/useSocket';
 import { useDispatch, useSelector } from 'react-redux';
 import { addNotification, NotificationType } from '../features/notifications/notificationsSlice';
@@ -38,6 +38,13 @@ export function SocketProvider({ children }: SocketProviderProps) {
   // Get user ID from auth state
   const userId = useSelector((state: RootState) => state.auth?.user?.id);
 
+  // IMPORTANT: Memoize callback to prevent socket reconnection loop
+  // Without useCallback, a new function reference would trigger useSocket
+  // to disconnect and reconnect on every render
+  const handleFallbackToPolling = useCallback(() => {
+    console.warn('[SocketProvider] Falling back to polling mode');
+  }, []);
+
   const {
     isConnected,
     isReconnecting,
@@ -49,9 +56,7 @@ export function SocketProvider({ children }: SocketProviderProps) {
     emit,
   } = useSocket({
     autoConnect: true,
-    onFallbackToPolling: () => {
-      console.log('[SocketProvider] Falling back to polling mode');
-    },
+    onFallbackToPolling: handleFallbackToPolling,
   });
 
   // Join user room when connected and authenticated

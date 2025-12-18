@@ -1,16 +1,11 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
-import { io, Socket } from 'socket.io-client';
-
-interface UseSocketOptions {
-  /** WebSocket server URL */
-  url?: string;
-  /** Auto-connect on mount */
-  autoConnect?: boolean;
-  /** Reconnection attempts before fallback */
-  reconnectionAttempts?: number;
-  /** Callback when fallback to polling is needed */
-  onFallbackToPolling?: () => void;
-}
+import { useEffect, useState, useCallback } from 'react';
+import {
+  initializeSocket,
+  getConnectionState,
+  subscribeToState,
+  emit as socketEmit,
+  on as socketOn,
+} from '../lib/socketManager';
 
 interface SocketState {
   isConnected: boolean;
@@ -19,175 +14,51 @@ interface SocketState {
   socketId: string | null;
 }
 
-// Socket is enabled if:
-// 1. VITE_ENABLE_SOCKET is explicitly set to 'true', OR
-// 2. VITE_ENABLE_SOCKET is not set AND we're in development mode
-// This means in production, socket is disabled by default unless explicitly enabled
-const isProduction = import.meta.env.PROD;
-const hasExplicitSetting = import.meta.env.VITE_ENABLE_SOCKET !== undefined;
-const SOCKET_ENABLED = hasExplicitSetting
-  ? import.meta.env.VITE_ENABLE_SOCKET === 'true'
-  : !isProduction; // Enabled in dev, disabled in prod by default
-
 /**
- * Custom hook for Socket.IO connection management.
- * Provides automatic reconnection and fallback to polling.
- *
- * Set VITE_ENABLE_SOCKET=false to completely disable socket connections.
+ * Hook to use the singleton socket manager.
+ * The socket is initialized once globally, not per component.
  */
-export function useSocket(options: UseSocketOptions = {}) {
-  const {
-    url = import.meta.env.VITE_WS_URL || 'http://localhost:3002',
-    autoConnect = true,
-    reconnectionAttempts = 5,
-    onFallbackToPolling,
-  } = options;
+export function useSocket() {
+  const [state, setState] = useState<SocketState>(getConnectionState);
 
-  const socketRef = useRef<Socket | null>(null);
-  const isInitializedRef = useRef(false);
-
-  const [state, setState] = useState<SocketState>({
-    isConnected: false,
-    isReconnecting: false,
-    useFallback: !SOCKET_ENABLED, // If disabled, mark as fallback mode
-    socketId: null,
-  });
-
-  // Initialize socket connection - runs only once
+  // Initialize socket on first use (singleton - runs once globally)
   useEffect(() => {
-    // Skip if socket is disabled or already initialized
-    if (!SOCKET_ENABLED || !autoConnect || isInitializedRef.current) {
-      if (!SOCKET_ENABLED) {
-        console.log('[Socket] Socket disabled via VITE_ENABLE_SOCKET=false');
-      }
-      return;
-    }
+    initializeSocket();
 
-    isInitializedRef.current = true;
-
-    const socket = io(url, {
-      transports: ['websocket', 'polling'],
-      reconnection: true,
-      reconnectionAttempts,
-      reconnectionDelay: 1000,
-      reconnectionDelayMax: 5000,
-      timeout: 10000,
+    // Subscribe to state changes
+    const unsubscribe = subscribeToState((newState) => {
+      setState(newState);
     });
 
-    socketRef.current = socket;
-
-    socket.on('connect', () => {
-      setState({
-        isConnected: true,
-        isReconnecting: false,
-        useFallback: false,
-        socketId: socket.id ?? null,
-      });
-    });
-
-    socket.on('disconnect', (reason) => {
-      console.log('[Socket] Disconnected:', reason);
-      setState((prev) => ({
-        ...prev,
-        isConnected: false,
-        socketId: null,
-      }));
-    });
-
-    let errorCount = 0;
-    socket.on('connect_error', (error) => {
-      errorCount++;
-
-      // Only log the first error
-      if (errorCount === 1) {
-        console.error('[Socket] Connection error:', error.message);
-      }
-
-      if (errorCount >= reconnectionAttempts) {
-        console.warn('[Socket] Max reconnection attempts reached, disabling socket');
-        setState({
-          isConnected: false,
-          isReconnecting: false,
-          useFallback: true,
-          socketId: null,
-        });
-        onFallbackToPolling?.();
-        socket.disconnect();
-        socket.off(); // Remove all listeners
-      } else {
-        setState((prev) => ({
-          ...prev,
-          isReconnecting: true,
-        }));
-      }
-    });
-
-    socket.io.on('reconnect', () => {
-      console.log('[Socket] Reconnected');
-      errorCount = 0;
-      setState({
-        isConnected: true,
-        isReconnecting: false,
-        useFallback: false,
-        socketId: socket.id ?? null,
-      });
-    });
-
-    socket.on('heartbeat', () => {
-      socket.emit('pong');
-    });
-
-    return () => {
-      socket.off();
-      socket.disconnect();
-      socketRef.current = null;
-      // Don't reset isInitializedRef to prevent re-initialization on StrictMode remount
-    };
-  }, [url, autoConnect, reconnectionAttempts, onFallbackToPolling]);
+    return unsubscribe;
+  }, []);
 
   // Join a room
   const joinRoom = useCallback((event: string, data: Record<string, string>) => {
-    socketRef.current?.emit(event, data);
+    socketEmit(event, data);
   }, []);
 
   // Leave a room
   const leaveRoom = useCallback((event: string, data: Record<string, string>) => {
-    socketRef.current?.emit(event, data);
+    socketEmit(event, data);
   }, []);
 
   // Subscribe to an event
   const subscribe = useCallback((event: string, handler: (data: unknown) => void) => {
-    socketRef.current?.on(event, handler);
-    return () => {
-      socketRef.current?.off(event, handler);
-    };
+    return socketOn(event, handler);
   }, []);
 
   // Emit an event
   const emit = useCallback((event: string, data: unknown) => {
-    socketRef.current?.emit(event, data);
-  }, []);
-
-  // Manual connect
-  const connect = useCallback(() => {
-    if (!SOCKET_ENABLED) return;
-    socketRef.current?.connect();
-  }, []);
-
-  // Manual disconnect
-  const disconnect = useCallback(() => {
-    socketRef.current?.disconnect();
+    socketEmit(event, data);
   }, []);
 
   return {
-    socket: socketRef.current,
     ...state,
     joinRoom,
     leaveRoom,
     subscribe,
     emit,
-    connect,
-    disconnect,
   };
 }
 

@@ -4,7 +4,7 @@ ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 RUN corepack enable
 COPY . .
-RUN pnpm install --frozen-lockfile
+RUN pnpm install
 # Variables Dummy para Prisma
 ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
 ENV AUTH_DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"

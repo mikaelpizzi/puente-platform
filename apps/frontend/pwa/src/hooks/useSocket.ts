@@ -33,6 +33,15 @@ export function useSocket(options: UseSocketOptions = {}) {
 
   const socketRef = useRef<Socket | null>(null);
   const reconnectAttemptsRef = useRef(0);
+  // Store callback in ref to avoid useEffect dependency
+  const onFallbackRef = useRef(onFallbackToPolling);
+  // Track if we've already given up to prevent infinite retries
+  const hasGivenUpRef = useRef(false);
+
+  // Keep ref in sync with latest callback
+  useEffect(() => {
+    onFallbackRef.current = onFallbackToPolling;
+  }, [onFallbackToPolling]);
 
   const [state, setState] = useState<SocketState>({
     isConnected: false,
@@ -41,9 +50,14 @@ export function useSocket(options: UseSocketOptions = {}) {
     socketId: null,
   });
 
-  // Initialize socket connection
+  // Initialize socket connection - runs only once on mount
   useEffect(() => {
     if (!autoConnect) return;
+
+    // If we've already given up, don't try to connect again
+    if (hasGivenUpRef.current) {
+      return;
+    }
 
     const socket = io(url, {
       transports: ['websocket', 'polling'],
@@ -58,6 +72,7 @@ export function useSocket(options: UseSocketOptions = {}) {
 
     socket.on('connect', () => {
       reconnectAttemptsRef.current = 0;
+      hasGivenUpRef.current = false;
       setState((prev) => ({
         ...prev,
         isConnected: true,
@@ -77,17 +92,27 @@ export function useSocket(options: UseSocketOptions = {}) {
     });
 
     socket.on('connect_error', (error) => {
-      console.error('[Socket] Connection error:', error.message);
+      // Only log once per connection attempt cycle
+      if (reconnectAttemptsRef.current === 0) {
+        console.error('[Socket] Connection error:', error.message);
+      }
       reconnectAttemptsRef.current++;
 
       if (reconnectAttemptsRef.current >= reconnectionAttempts) {
+        // Mark as given up to prevent further connection attempts
+        hasGivenUpRef.current = true;
+
         console.warn('[Socket] Max reconnection attempts reached, falling back to polling');
         setState((prev) => ({
           ...prev,
           isReconnecting: false,
           useFallback: true,
         }));
-        onFallbackToPolling?.();
+
+        // Use ref to call callback without causing re-render loop
+        onFallbackRef.current?.();
+
+        // Disconnect and stop all reconnection attempts
         socket.disconnect();
       } else {
         setState((prev) => ({
@@ -98,13 +123,17 @@ export function useSocket(options: UseSocketOptions = {}) {
     });
 
     socket.io.on('reconnect_attempt', (attempt) => {
-      console.log(`[Socket] Reconnection attempt ${attempt}`);
-      setState((prev) => ({ ...prev, isReconnecting: true }));
+      // Only log if we haven't given up
+      if (!hasGivenUpRef.current) {
+        console.log(`[Socket] Reconnection attempt ${attempt}`);
+        setState((prev) => ({ ...prev, isReconnecting: true }));
+      }
     });
 
     socket.io.on('reconnect', () => {
       console.log('[Socket] Reconnected');
       reconnectAttemptsRef.current = 0;
+      hasGivenUpRef.current = false;
       setState((prev) => ({
         ...prev,
         isConnected: true,
@@ -122,7 +151,8 @@ export function useSocket(options: UseSocketOptions = {}) {
       socket.disconnect();
       socketRef.current = null;
     };
-  }, [url, autoConnect, reconnectionAttempts, onFallbackToPolling]);
+    // Intentionally exclude onFallbackToPolling - using ref instead
+  }, [url, autoConnect, reconnectionAttempts]);
 
   // Join a room
   const joinRoom = useCallback((event: string, data: Record<string, string>) => {
@@ -149,6 +179,9 @@ export function useSocket(options: UseSocketOptions = {}) {
 
   // Manual connect
   const connect = useCallback(() => {
+    // Reset the given up flag to allow manual reconnection
+    hasGivenUpRef.current = false;
+    reconnectAttemptsRef.current = 0;
     socketRef.current?.connect();
   }, []);
 

@@ -8,21 +8,24 @@ WORKDIR /app
 COPY . .
 RUN pnpm install --frozen-lockfile
 
-# Generate Prisma Client (required for finance-service)
+# FIX: Variables falsas para que 'prisma generate' no falle al leer la config
+ENV FINANCE_DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
+ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
+
+# Generar Prisma
 RUN cd apps/backend/finance-service && npx prisma generate
 
-# Build the service
+# Build y Deploy
 RUN pnpm --filter @puente/finance-service build
-
-# Isolate production dependencies
 RUN pnpm deploy --filter @puente/finance-service --prod /prod/app
 
 FROM base AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 
-# Copy dependencies and final build
+# Copiar dependencias limpias
 COPY --from=builder /prod/app/node_modules ./node_modules
+# FIX: Copiar 'dist' desde la ruta ORIGINAL de construcción
 COPY --from=builder /app/apps/backend/finance-service/dist ./dist
 COPY --from=builder /prod/app/package.json ./package.json
 

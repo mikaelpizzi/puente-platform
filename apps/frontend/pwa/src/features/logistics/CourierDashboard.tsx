@@ -3,9 +3,9 @@ import {
   useGetAvailableJobsQuery,
   useAcceptJobMutation,
   useUpdateLocationMutation,
-  Job,
   Location,
 } from './logisticsApi';
+import { Order } from '../orders/ordersApi';
 import { DeliveryMap } from './DeliveryMap';
 import { MapPin, Navigation, Package, DollarSign, Bell, BellOff } from 'lucide-react';
 
@@ -71,7 +71,7 @@ const LongPressButton: React.FC<{
 export const CourierDashboard: React.FC = () => {
   // --- State ---
   const [currentLocation, setCurrentLocation] = useState<Location | undefined>(undefined);
-  const [selectedJob, setSelectedJob] = useState<Job | null>(null);
+  const [selectedJob, setSelectedJob] = useState<Order | null>(null);
   const [handsFreeMode, setHandsFreeMode] = useState(false);
   const [permissionStatus, setPermissionStatus] = useState<PermissionState | 'unknown'>('unknown');
 
@@ -188,11 +188,7 @@ export const CourierDashboard: React.FC = () => {
 
       {/* Map Layer */}
       <div className="flex-1 z-0">
-        <DeliveryMap
-          courierLocation={currentLocation}
-          pickup={selectedJob?.pickupLocation}
-          dropoff={selectedJob?.dropoffLocation}
-        />
+        <DeliveryMap courierLocation={currentLocation} pickup={undefined} dropoff={undefined} />
       </div>
 
       {/* Bottom Sheet / Job List */}
@@ -217,23 +213,27 @@ export const CourierDashboard: React.FC = () => {
               <p className="text-sm">Espera en una zona concurrida.</p>
             </div>
           ) : (
-            jobs?.map((job) => (
+            jobs?.map((order) => (
               <div
-                key={job.id}
-                onClick={() => setSelectedJob(job)}
-                className={`border rounded-xl p-4 transition-all ${selectedJob?.id === job.id ? 'border-emerald-500 bg-emerald-50 ring-2 ring-emerald-200' : 'border-gray-200 bg-white'}`}
+                key={order._id}
+                onClick={() => setSelectedJob(order)}
+                className={`border rounded-xl p-4 transition-all ${selectedJob?._id === order._id ? 'border-emerald-500 bg-emerald-50 ring-2 ring-emerald-200' : 'border-gray-200 bg-white'}`}
               >
                 <div className="flex justify-between items-start mb-3">
                   <div>
-                    <h3 className="font-bold text-gray-900">{job.title}</h3>
-                    <p className="text-sm text-gray-500">{job.description}</p>
+                    <h3 className="font-bold text-gray-900">
+                      Pedido #{order._id.slice(-8).toUpperCase()}
+                    </h3>
+                    <p className="text-sm text-gray-500">
+                      {order.items.map((i) => `${i.quantity}x ${i.name}`).join(', ')}
+                    </p>
                   </div>
                   <div className="text-right">
                     <span className="block text-lg font-bold text-green-600 flex items-center justify-end">
                       <DollarSign size={16} />
-                      {job.earnings}
+                      {order.total.toFixed(2)}
                     </span>
-                    <span className="text-xs text-gray-400">{job.distance} km</span>
+                    <span className="text-xs text-gray-400">{order.items.length} items</span>
                   </div>
                 </div>
 
@@ -245,14 +245,14 @@ export const CourierDashboard: React.FC = () => {
                   <div className="h-px w-8 bg-gray-300" />
                   <div className="flex items-center gap-1">
                     <MapPin size={14} className="text-red-500" />
-                    <span>Entrega</span>
+                    <span>{order.shippingAddress?.city || 'Entrega'}</span>
                   </div>
                 </div>
 
-                {selectedJob?.id === job.id && (
+                {selectedJob?._id === order._id && (
                   <LongPressButton
                     label="Mantén presionado para ACEPTAR"
-                    onComplete={() => handleAcceptJob(job.id)}
+                    onComplete={() => handleAcceptJob(order._id)}
                     className="w-full bg-gray-900 text-white py-3 rounded-lg font-bold shadow-lg active:bg-gray-800"
                   />
                 )}

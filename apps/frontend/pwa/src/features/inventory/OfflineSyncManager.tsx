@@ -77,7 +77,7 @@ export const OfflineSyncManager: React.FC = () => {
               resourceId: item.tempId,
               localVersion: item as unknown as Record<string, unknown>,
               serverVersion: error.data?.serverVersion || {},
-              localTimestamp: item.timestamp,
+              localTimestamp: new Date(item.timestamp).toISOString(),
               serverTimestamp: error.data?.serverTimestamp || new Date().toISOString(),
               fields: error.data?.conflictingFields || Object.keys(item),
             }),

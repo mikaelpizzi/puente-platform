@@ -175,7 +175,7 @@ export const MarketplacePage: React.FC = () => {
                   const isSelected = selectedTags.includes(tag.name);
                   return (
                     <button
-                      key={tag.id || tag._id}
+                      key={tag._id}
                       onClick={() => toggleTag(tag.name)}
                       className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
                         isSelected
@@ -205,7 +205,7 @@ export const MarketplacePage: React.FC = () => {
               product={product}
               variant="buyer"
               onAddToCart={handleAddToCart}
-              onView={(p) => navigate(`/marketplace/${p.id || p._id}`)}
+              onView={(p) => navigate(`/marketplace/${(p as any).id || (p as any)._id}`)}
             />
           ))
         )}

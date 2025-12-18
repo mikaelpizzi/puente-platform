@@ -320,7 +320,6 @@ export const LogisticsPage: React.FC = () => {
   const [podModalOrderId, setPodModalOrderId] = useState<string | null>(null);
   const [isCompletingDelivery, setIsCompletingDelivery] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
-  const [activeTab, setActiveTab] = useState<'jobs' | 'history'>('jobs');
 
   const activeDeliveries = myDeliveries?.filter((o) => o.status === 'shipped') || [];
   const completedDeliveries = myDeliveries?.filter((o) => o.status === 'delivered') || [];

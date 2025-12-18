@@ -11,7 +11,10 @@ export interface EmailPayload {
 /**
  * Email Channel
  *
- * Sends emails using Nodemailer with Gmail SMTP.
+ * Sends emails using Nodemailer.
+ * Supports dual mode:
+ * - Cloud (Resend): Uses SMTP auth with MAIL_USER/MAIL_PASSWORD
+ * - Local (MailHog): No auth required, uses MAIL_HOST:MAIL_PORT
  */
 @Injectable()
 export class EmailChannel {
@@ -23,20 +26,29 @@ export class EmailChannel {
   }
 
   private initTransporter() {
-    const user = process.env.SMTP_USER;
-    const pass = process.env.SMTP_PASS;
+    const host = process.env.MAIL_HOST || 'localhost';
+    const port = parseInt(process.env.MAIL_PORT || '1025', 10);
+    const user = process.env.MAIL_USER;
+    const pass = process.env.MAIL_PASSWORD;
 
-    if (!user || !pass) {
-      this.logger.warn('SMTP credentials not configured, email channel disabled');
-      return;
+    // Determine if we're in cloud mode (has auth credentials)
+    const isCloudMode = user && pass;
+
+    const transportConfig: nodemailer.TransportOptions = {
+      host,
+      port,
+      secure: port === 465, // SSL for port 465 (Resend)
+    } as nodemailer.TransportOptions;
+
+    // Only add auth if credentials are provided (cloud mode)
+    if (isCloudMode) {
+      (transportConfig as any).auth = { user, pass };
+      this.logger.log(`📧 Email channel initialized (Cloud mode: ${host}:${port})`);
+    } else {
+      this.logger.log(`📧 Email channel initialized (Local mode: ${host}:${port} - no auth)`);
     }
 
-    this.transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: { user, pass },
-    });
-
-    this.logger.log('📧 Email channel initialized');
+    this.transporter = nodemailer.createTransport(transportConfig);
   }
 
   async send(payload: EmailPayload): Promise<boolean> {
@@ -47,7 +59,7 @@ export class EmailChannel {
 
     try {
       await this.transporter.sendMail({
-        from: process.env.SMTP_FROM || process.env.SMTP_USER,
+        from: process.env.MAIL_FROM || 'noreply@puente.app',
         to: payload.to,
         subject: payload.subject,
         html: payload.html,

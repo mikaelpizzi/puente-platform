@@ -37,6 +37,10 @@ services:
         value: 3002
       - key: DATABASE_URL
         sync: false
+      - key: MEILISEARCH_HOST
+        sync: false
+      - key: MEILISEARCH_API_KEY
+        sync: false
 
   # 4. FINANCE SERVICE
   - type: web
@@ -49,6 +53,8 @@ services:
       - key: PORT
         value: 3003
       - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
         sync: false
 
   # 5. LOGISTICS SERVICE
@@ -63,6 +69,12 @@ services:
         value: 3004
       - key: DATABASE_URL
         sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: MONGO_URI
+        sync: false
+      - key: OSRM_API_URL
+        sync: false
 
   # 6. NOTIFICATION SERVICE
   - type: web
@@ -75,4 +87,16 @@ services:
       - key: PORT
         value: 3005
       - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: MAIL_HOST
+        value: 'smtp.resend.com'
+      - key: MAIL_PORT
+        value: '465'
+      - key: MAIL_USER
+        value: 'resend'
+      - key: MAIL_PASSWORD
+        sync: false
+      - key: MAIL_FROM
         sync: false

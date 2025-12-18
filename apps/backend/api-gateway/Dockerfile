@@ -20,7 +20,7 @@ ENV NODE_ENV=production
 
 # Copy dependencies and final build
 COPY --from=builder /prod/app/node_modules ./node_modules
-COPY --from=builder /prod/app/dist ./dist
+COPY --from=builder /app/apps/backend/api-gateway/dist ./dist
 COPY --from=builder /prod/app/package.json ./package.json
 
 USER node

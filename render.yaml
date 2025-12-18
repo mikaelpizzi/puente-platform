@@ -57,6 +57,8 @@ services:
         value: 'production'
       - key: OTEL_SDK_DISABLED
         value: 'true'
+      - key: ENABLE_SEARCH
+        value: 'false'
       - key: MONGO_URI
         sync: false
       - key: MEILISEARCH_HOST
@@ -97,6 +99,8 @@ services:
         value: 'production'
       - key: OTEL_SDK_DISABLED
         value: 'true'
+      - key: ENABLE_OSRM
+        value: 'false'
       - key: MONGO_URI
         sync: false
       - key: REDIS_URL

@@ -4,7 +4,7 @@ ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 RUN corepack enable
 COPY . .
-RUN pnpm install --frozen-lockfile
+RUN pnpm install
 # FIX: Usar ruta relativa para asegurar que encuentre el proyecto
 RUN pnpm --filter ./apps/backend/api-gateway build
 

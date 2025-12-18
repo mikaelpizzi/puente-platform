@@ -4,7 +4,7 @@ ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 RUN corepack enable
 COPY . .
-RUN pnpm install --frozen-lockfile
+RUN pnpm install
 ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
 ENV FINANCE_DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
 RUN cd apps/backend/finance-service && npx prisma generate

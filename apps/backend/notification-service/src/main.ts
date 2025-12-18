@@ -14,7 +14,7 @@ async function bootstrap() {
   // Setup Swagger documentation
   setupSwagger(app);
 
-  const port = process.env.NOTIFICATION_SERVICE_PORT || 3006;
+  const port = process.env.PORT || process.env.NOTIFICATION_SERVICE_PORT || 3005;
   await app.listen(port, '0.0.0.0');
 
   logger.log(`🔔 Notification Service running on port ${port}`);

@@ -124,7 +124,13 @@ if (shouldInitialize && !global.__otelSdkInitialized) {
   const startSdk = async () => {
     try {
       await sdk.start();
+      console.log('✅ OpenTelemetry SDK started successfully');
     } catch (error: unknown) {
+      // Ignore duplicate registration errors - SDK already registered by another module
+      if (error instanceof Error && error.message.includes('duplicate registration')) {
+        console.log('⚠️ OpenTelemetry SDK already registered, skipping...');
+        return;
+      }
       console.error('Failed to initialize OpenTelemetry SDK', error);
     }
   };

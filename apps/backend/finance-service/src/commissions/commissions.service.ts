@@ -8,7 +8,7 @@ import { UpdateCommissionRuleDto } from './dto/update-rule.dto';
 // Platform account ID (fixed identifier for ledger entries)
 const PLATFORM_ACCOUNT_ID = 'PLATFORM';
 
-interface CommissionResult {
+export interface CommissionResult {
   totalAmount: number;
   sellerAmount: number;
   platformFee: number;

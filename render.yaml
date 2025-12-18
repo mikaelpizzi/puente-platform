@@ -8,9 +8,24 @@ services:
     plan: free
     envVars:
       - key: PORT
-        value: 3000
-      - key: DATABASE_URL
-        sync: false # Se configurará en el dashboard
+        value: '3000'
+      - key: NODE_ENV
+        value: 'production'
+      # JWT Secret for auth verification
+      - key: AUTH_JWT_ACCESS_SECRET
+        sync: false
+      # Service URLs - configure after all services are deployed
+      - key: AUTH_SERVICE_URL
+        sync: false
+      - key: PRODUCTS_SERVICE_URL
+        sync: false
+      - key: FINANCE_SERVICE_URL
+        sync: false
+      - key: LOGISTICS_SERVICE_URL
+        sync: false
+      # Disable OpenTelemetry by default (can enable later)
+      - key: OTEL_SDK_DISABLED
+        value: 'true'
 
   # 2. AUTH SERVICE
   - type: web
@@ -21,8 +36,11 @@ services:
     plan: free
     envVars:
       - key: PORT
-        value: 3001
-      - key: DATABASE_URL
+        value: '3001'
+      - key: NODE_ENV
+        value: 'production'
+      # Prisma uses AUTH_DATABASE_URL (see schema.prisma)
+      - key: AUTH_DATABASE_URL
         sync: false
 
   # 3. PRODUCTS SERVICE
@@ -34,9 +52,9 @@ services:
     plan: free
     envVars:
       - key: PORT
-        value: 3002
-      - key: DATABASE_URL
-        sync: false
+        value: '3002'
+      - key: NODE_ENV
+        value: 'production'
       - key: MEILISEARCH_HOST
         sync: false
       - key: MEILISEARCH_API_KEY
@@ -51,8 +69,11 @@ services:
     plan: free
     envVars:
       - key: PORT
-        value: 3003
-      - key: DATABASE_URL
+        value: '3003'
+      - key: NODE_ENV
+        value: 'production'
+      # Prisma uses FINANCE_DATABASE_URL (see schema.prisma)
+      - key: FINANCE_DATABASE_URL
         sync: false
       - key: REDIS_URL
         sync: false
@@ -66,12 +87,12 @@ services:
     plan: free
     envVars:
       - key: PORT
-        value: 3004
-      - key: DATABASE_URL
+        value: '3004'
+      - key: NODE_ENV
+        value: 'production'
+      - key: MONGO_URI
         sync: false
       - key: REDIS_URL
-        sync: false
-      - key: MONGO_URI
         sync: false
       - key: OSRM_API_URL
         sync: false
@@ -85,9 +106,9 @@ services:
     plan: free
     envVars:
       - key: PORT
-        value: 3005
-      - key: DATABASE_URL
-        sync: false
+        value: '3005'
+      - key: NODE_ENV
+        value: 'production'
       - key: REDIS_URL
         sync: false
       - key: MAIL_HOST

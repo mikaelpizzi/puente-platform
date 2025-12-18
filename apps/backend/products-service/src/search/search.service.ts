@@ -1,7 +1,7 @@
 import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
 import { MeiliSearch, Index, SearchParams, SearchResponse } from 'meilisearch';
 
-interface ProductDocument {
+export interface ProductDocument {
   id: string;
   title: string;
   description: string;
@@ -15,7 +15,7 @@ interface ProductDocument {
   updatedAt: string;
 }
 
-interface SearchResult {
+export interface SearchResult {
   hits: ProductDocument[];
   totalHits: number;
   query: string;

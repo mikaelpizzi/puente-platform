@@ -50,17 +50,7 @@ export const MainLayout: React.FC = () => {
     navigate('/login');
   };
 
-  const isDarkMode = document.documentElement.classList.contains('dark');
-
-  const _toggleTheme = () => {
-    if (isDarkMode) {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
-    } else {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
-    }
-  };
+  // Theme toggle is handled via SettingsDrawer
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col transition-colors duration-200">

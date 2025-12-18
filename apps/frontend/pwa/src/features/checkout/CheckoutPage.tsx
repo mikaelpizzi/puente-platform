@@ -61,6 +61,7 @@ export const CheckoutPage: React.FC = () => {
         name: product.name,
         price: Number(product.price),
         quantity: 1,
+        sellerId: product.sellerId || 'system',
       }),
     );
     toast.success(t('pos.productAdded'));

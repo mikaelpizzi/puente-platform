@@ -63,7 +63,7 @@ export const MarketplacePage: React.FC = () => {
   const handleAddToCart = (product: any) => {
     dispatch(
       addToCart({
-        id: product._id,
+        id: product.id,
         name: product.name,
         price: product.price,
         quantity: 1,
@@ -175,7 +175,7 @@ export const MarketplacePage: React.FC = () => {
                   const isSelected = selectedTags.includes(tag.name);
                   return (
                     <button
-                      key={tag._id}
+                      key={tag.id || tag._id}
                       onClick={() => toggleTag(tag.name)}
                       className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
                         isSelected
@@ -201,11 +201,11 @@ export const MarketplacePage: React.FC = () => {
         ) : (
           availableProducts.map((product: any) => (
             <ProductCard
-              key={product._id}
+              key={product.id || product._id}
               product={product}
               variant="buyer"
               onAddToCart={handleAddToCart}
-              onView={(p) => navigate(`/marketplace/${p._id || p.id}`)}
+              onView={(p) => navigate(`/marketplace/${p.id || p._id}`)}
             />
           ))
         )}

@@ -52,7 +52,7 @@ export const MainLayout: React.FC = () => {
 
   const isDarkMode = document.documentElement.classList.contains('dark');
 
-  const toggleTheme = () => {
+  const _toggleTheme = () => {
     if (isDarkMode) {
       document.documentElement.classList.remove('dark');
       localStorage.setItem('theme', 'light');

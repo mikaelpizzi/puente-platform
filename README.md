@@ -365,4 +365,4 @@ This roadmap tracks the evolution of **Puente Platform** from a conceptual MVP t
 
 ---
 
-**Engineered by Mikael Pizzi** | Product-Minded Software Engineer | Full-Cycle & Distributed Systems
+**Engineered by [Mikael Pizzi](https://linkedin.com/in/mikaelpizzi)** | Product-Minded Software Engineer | Full-Cycle & Distributed Systems

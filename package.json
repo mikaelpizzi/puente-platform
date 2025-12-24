@@ -16,6 +16,7 @@
     "dev:db": "pnpm --filter @puente/auth-service prisma db push && pnpm --filter @puente/finance-service prisma db push",
     "dev:backend": "tsx ./scripts/dev-backend.ts",
     "dev:stack": "pnpm dev:backend",
+    "dev:frontend": "pnpm --filter @puente/pwa run dev",
     "docker:up": "docker compose up -d",
     "docker:down": "docker compose down",
     "docker:logs": "docker compose logs -f",

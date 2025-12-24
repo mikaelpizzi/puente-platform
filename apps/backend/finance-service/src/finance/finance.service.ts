@@ -123,6 +123,21 @@ export class FinanceService {
       `Split Order completed: ${orders.length} orders created, grandTotal: ${grandTotal}`,
     );
 
+    // 4. Publish order.created events for notification-service
+    for (const order of orders) {
+      try {
+        await this.eventsService.publishOrderCreated(
+          order.id,
+          order.sellerId,
+          order.buyerId,
+          Number(order.totalAmount),
+        );
+      } catch (error) {
+        // Log but don't fail - order was already created
+        this.logger.error(`Failed to publish order.created event for ${order.id}:`, error);
+      }
+    }
+
     return {
       orders,
       paymentLink,

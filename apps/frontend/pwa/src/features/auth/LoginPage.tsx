@@ -91,7 +91,7 @@ export const LoginPage: React.FC = () => {
         name: account.name,
       };
 
-      dispatch(setCredentials({ user, token }));
+      dispatch(setCredentials({ user, token, refreshToken: loginResponse.refreshToken }));
       toast.success(t('auth.welcomeUser', { name: account.name }), {
         id: loadingToast,
         style: { background: '#10B981', color: '#fff' },
@@ -141,7 +141,7 @@ export const LoginPage: React.FC = () => {
         name: decoded.email.split('@')[0],
       };
 
-      dispatch(setCredentials({ user, token }));
+      dispatch(setCredentials({ user, token, refreshToken: loginResponse.refreshToken }));
       toast.success(t('auth.welcomeBack'), { id: loadingToast });
 
       if (user.role === 'SELLER') navigate('/inventory');

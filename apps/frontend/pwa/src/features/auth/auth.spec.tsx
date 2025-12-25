@@ -46,6 +46,7 @@ describe('Auth Feature', () => {
       setCredentials({
         user: { id: '1', email: 'test@test.com', role: 'seller' },
         token: 'fake-token',
+        refreshToken: 'fake-refresh-token',
       }),
     );
 

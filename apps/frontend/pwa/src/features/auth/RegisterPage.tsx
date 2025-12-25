@@ -26,7 +26,13 @@ export const RegisterPage: React.FC = () => {
     e.preventDefault();
     try {
       const user = await register(formData).unwrap();
-      dispatch(setCredentials({ user: user.user, token: user.accessToken }));
+      dispatch(
+        setCredentials({
+          user: user.user,
+          token: user.accessToken,
+          refreshToken: user.refreshToken,
+        }),
+      );
       navigate('/');
     } catch (err: any) {
       console.error('Failed to register:', err);

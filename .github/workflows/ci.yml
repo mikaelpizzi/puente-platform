@@ -13,25 +13,27 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # 👇 Install pnpm FIRST (required for Node.js cache to work)
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 9
+
+      # 👇 Now setup Node (it will find pnpm for caching)
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'pnpm'
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: 9
-
       - name: Install Dependencies
         run: pnpm install --frozen-lockfile
 
-      # 👇 Generate Prisma Client before linting (types are generated dynamically)
+      # Generate Prisma Client (required for TypeScript types)
       - name: Generate Prisma Client
         run: |
-          cd apps/backend/finance-service && npx prisma generate
-          cd ../auth-service && npx prisma generate
+          if [ -d "apps/backend/finance-service" ]; then cd apps/backend/finance-service && npx prisma generate && cd ../../..; fi
+          if [ -d "apps/backend/auth-service" ]; then cd apps/backend/auth-service && npx prisma generate && cd ../../..; fi
 
       - name: Lint Check
         run: pnpm lint

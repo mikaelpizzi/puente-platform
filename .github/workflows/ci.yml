@@ -1,36 +1,40 @@
-name: CI - Code Quality Check
+name: CI - Health Check
 
 on:
   push:
-    branches: [main]
+    branches: ['main']
   pull_request:
-    branches: [main]
+    branches: ['main']
 
 jobs:
-  quality-check:
-    name: ✅ Lint & Build Verification
+  build-and-test:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: 9
+      - uses: actions/checkout@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: '20'
           cache: 'pnpm'
 
-      - name: Install dependencies
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 9
+
+      - name: Install Dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Lint all workspaces
+      # 👇 Generate Prisma Client before linting (types are generated dynamically)
+      - name: Generate Prisma Client
+        run: |
+          cd apps/backend/finance-service && npx prisma generate
+          cd ../auth-service && npx prisma generate
+
+      - name: Lint Check
         run: pnpm lint
 
-      - name: Build verification (Frontend PWA)
+      - name: Build Check (Frontend PWA)
         run: pnpm --filter ./apps/frontend/pwa run build

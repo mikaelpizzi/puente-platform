@@ -23,7 +23,23 @@
   <img alt="Puente Platform Architecture" src="docs/system-overview.svg">
 </picture>
 
----
+<div align="center">
+  <br/>
+  <h3>🚀 ARCHITECTURE SHOWCASE</h3>
+  <p>
+    <a href="https://puente-architecture.vercel.app/">
+      <img src="https://img.shields.io/badge/View_Technical_Case_Study-000000?style=for-the-badge&logo=vercel&logoColor=white" alt="Case Study"/>
+    </a>
+  </p>
+  <p>
+    Due to cloud infrastructure costs for a multi-service architecture (6 containers + 3 databases),<br/>
+    this system is showcased in a <b>local Dockerized environment</b>.
+  </p>
+  <p>
+    👉 <a href="https://puente-architecture.vercel.app/"><b>Watch the full End-to-End System Demo</b></a> including:<br/>
+    <i>Offline-first routing (OSRM) • Async notifications • Real-time WebSocket tracking</i>
+  </p>
+</div>
 
 ## ⚡ Quick Summary
 

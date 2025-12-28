@@ -1,18 +1,25 @@
 name: Pipeline Backend (CI Only)
 
+# ⚠️ AUTO-DEPLOY DISABLED: Infrastructure costs for 6+ containers
+# Preserved as documentation of CI/CD capabilities.
+# To re-enable, uncomment the 'on:' block below.
+
+# on:
+#   push:
+#     branches: [main]
+#     paths:
+#       - 'apps/backend/**'
+#       - 'packages/**'
+#       - 'package.json'
+#       - 'pnpm-lock.yaml'
+#   pull_request:
+#     branches: [main]
+#     paths:
+#       - 'apps/backend/**'
+#       - 'packages/**'
+
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'apps/backend/**'
-      - 'packages/**'
-      - 'package.json'
-      - 'pnpm-lock.yaml'
-  pull_request:
-    branches: [main]
-    paths:
-      - 'apps/backend/**'
-      - 'packages/**'
+  workflow_dispatch: # Manual trigger only
 
 jobs:
   quality-check:

@@ -1,0 +1,51 @@
+name: CI - Health Check
+
+on:
+  push:
+    branches: ['main']
+  pull_request:
+    branches: ['main']
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    # Dummy env vars for Prisma generate (it needs them even for type generation)
+    env:
+      DATABASE_URL: 'postgresql://dummy:dummy@localhost:5432/dummy'
+      FINANCE_DATABASE_URL: 'postgresql://dummy:dummy@localhost:5432/dummy'
+      AUTH_DATABASE_URL: 'postgresql://dummy:dummy@localhost:5432/dummy'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Install pnpm FIRST (required for Node.js cache to work)
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 9
+
+      # Now setup Node (it will find pnpm for caching)
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Generate Prisma Client for ALL services that use it
+      - name: Generate Prisma Client (finance-service)
+        working-directory: apps/backend/finance-service
+        run: npx prisma generate
+
+      - name: Generate Prisma Client (auth-service)
+        working-directory: apps/backend/auth-service
+        run: npx prisma generate
+
+      - name: Lint Check
+        run: pnpm lint
+
+      - name: Build Check (Frontend PWA)
+        run: pnpm --filter ./apps/frontend/pwa run build

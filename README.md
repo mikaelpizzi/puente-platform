@@ -4,7 +4,7 @@
 
   <p>
     <a href="https://github.com/mikaelpizzi/puente-platform/actions/workflows/ci.yml">
-      <img src="https://github.com/mikaelpizzi/puente-platform/actions/workflows/ci.yml/badge.svg" alt="CI Status" />
+      <img src="https://img.shields.io/github/actions/workflow/status/mikaelpizzi/puente-platform/ci.yml?style=for-the-badge&logo=github-actions&logoColor=white&label=CI&labelColor=1f2937" alt="CI Status" />
     </a>
     <img src="https://img.shields.io/badge/Tests-Passing-success?style=for-the-badge&logo=vitest&labelColor=1f2937" alt="Tests" />
     <img src="https://img.shields.io/badge/Architecture-Event--Driven_Microservices-blueviolet?style=for-the-badge&logo=nestjs&logoColor=white&labelColor=1f2937" alt="Architecture" />

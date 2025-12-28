@@ -1,14 +1,20 @@
 name: Pipeline Frontend (PWA)
 
+# ⚠️ AUTO-DEPLOY DISABLED: Infrastructure costs for 6+ containers
+# Preserved as documentation of CI/CD capabilities.
+# To re-enable, uncomment the 'on:' block below.
+
+# on:
+#   push:
+#     branches: [main]
+#     paths:
+#       - 'apps/frontend/pwa/**'
+#       - 'packages/**'
+#       - 'package.json'
+#       - 'pnpm-lock.yaml'
+
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'apps/frontend/pwa/**'
-      - 'packages/**'
-      - 'package.json'
-      - 'pnpm-lock.yaml'
-  workflow_dispatch:
+  workflow_dispatch: # Manual trigger only
 
 jobs:
   # 1. VALIDACIÓN: Si esto falla, NO se despliega nada.
